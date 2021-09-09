@@ -1,89 +1,36 @@
-import datetime
 import sqlite3
-import json
 import os
 import pandas as pd
 import requests
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 
-url_address_date = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
-url_address_odds = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
-STATS_HEADERS = {
-        'Host': 'stats.nba.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'x-nba-stats-origin': 'stats',
-        'x-nba-stats-token': 'true',
-        'Connection': 'keep-alive',
-        'Referer': 'https://stats.nba.com/',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache'}
-SEASON_TYPES = [
-    "Regular+Season",
-    "Playoffs",
-    "All+Star"
-]
-DATABASE_NAME = "boxscores_full_database"
-API_COUNT_THRESHOLD = 30000
-files_template_quick = "quick_cache/boxscore_%s_%s_%s.json"
-odds_files_template = "quick_cache/odds_%s.html"
+import OddsCacheHandler
+from OddsCacheHandler import OddsCacheHandler
+from constants import *
+from BoxScoreCacheHandler import BoxScoreCacheHandler
 
 
 def create_data_frame(data, headers):
     return pd.DataFrame(data=data, columns=headers)
 
 
-def handle_cache(cache_handler, filename_template, load_file, downloader, cacher, *args):
+def handle_cache(cache_handler):
     file_name = cache_handler.get_filename()
     if os.path.isfile(file_name):
         print(f"found {file_name} in cache.")
         with open(file_name, "rb") as f:
-            to_ret = load_file(f)
+            to_ret = cache_handler.load_file(f)
     else:
-        to_ret = downloader(args)
+        with open(missing_files, "r+") as f:
+            if file_name in [line.strip() for line in f.readlines()]:
+                print(f"file {file_name} is missing. skipping.")
+                raise ValueError()
+        to_ret = cache_handler.downloader()
         print(f"Downloaded {file_name}.")
-        with open(file_name, "w") as f2:
-            f2.write(to_ret)
-        print(f"Cached {file_name}.")
-    return to_ret
-
-def get_cached_odds(season):
-    file_name = odds_files_template % season
-    if os.path.isfile(file_name):
-        print(f"found {file_name} in cache.")
-        with open(file_name, "rb") as f:
-            to_ret = f.read()
-    else:
-        to_send = url_address_odds % f"{season}-{season + 1}"
-        to_ret = requests.get(to_send, headers=STATS_HEADERS).text
-        print(f"Downloaded {file_name}.")
-        with open(file_name, "w") as f2:
-            f2.write(to_ret)
-        print(f"Cached {file_name}.")
-    return to_ret
-
-
-def get_cached_boxscores(date_from, season_type_index, box_score_type):
-    date_tmp = date_from
-    if date_tmp == "":
-        date_tmp = "first"
-    file_name = files_tempplate_quick % (date_tmp, season_type_index, box_score_type)
-    if os.path.isfile(file_name):
-        print(f"found {file_name} in cache.")
-        with open(file_name, "rb") as f:
-            to_ret = json.load(f)
-    else:
-        to_send = url_address_date % (date_from, box_score_type, SEASON_TYPES[season_type_index])
-        to_ret = requests.get(to_send, headers=STATS_HEADERS).json()
-        data = to_ret["resultSets"][0]
-        results = data["rowSet"]
-        print(f"Downloaded {file_name}.")
-        if len(results) >= API_COUNT_THRESHOLD:
+        if cache_handler.to_cache(to_ret):
             with open(file_name, "w") as f2:
-                json.dump(to_ret, f2)
+                cache_handler.cache(to_ret, f2)
             print(f"Cached {file_name}.")
     return to_ret
 
@@ -93,7 +40,7 @@ def collect_all_boxscores(season_type_index, box_score_type):
     date_from = ""
     continue_loop = True
     while continue_loop:
-        data = get_cached_boxscores(date_from, season_type_index, box_score_type)
+        data = handle_cache(BoxScoreCacheHandler(date_from, season_type_index, box_score_type))
         data = data["resultSets"][0]
         headers = data["headers"]
         results = data["rowSet"]
@@ -136,6 +83,34 @@ def create_boxscores_table(conn, box_score_type):
     all_boxscores_df.to_sql(f'BoxScore{box_score_type}', conn, if_exists='replace', index=False)
 
 
+def collect_season_odds(season):
+    df = handle_cache(OddsCacheHandler(season))
+    to_ret = None
+    for j, odds_round in enumerate(ODDS_TYPES):
+        round_df = df["Team"].join(df["Playoffs,prior to..."][odds_round]).dropna().rename(columns={odds_round: "odd"})
+        round_df["ROUND"] = j
+        round_df["SEASON"] = season
+        to_ret = round_df if to_ret is None else pd.concat([to_ret, round_df], ignore_index=True)
+    return to_ret
+
+
+def collect_all_odds():
+    df = None
+    for i in range(1972, LAST_SEASON):
+        try:
+            new_df = collect_season_odds(i)
+        except ValueError:
+            print(f"not found season {i}.")
+            continue
+        df = new_df if df is None else pd.concat([df, new_df], ignore_index=True)
+    return df
+
+
+def create_odds_table(conn):
+    df = collect_all_odds()
+    df.to_sql("Odds", conn, if_exists='replace', index=False)
+
+
 def get_connection():
     return sqlite3.connect(f"Database/{DATABASE_NAME}.sqlite")
 
@@ -144,6 +119,7 @@ def create_database():
     conn = get_connection()
     create_boxscores_table(conn, "P")
     create_boxscores_table(conn, "T")
+    create_odds_table(conn)
     conn.commit()
 
 
@@ -231,4 +207,3 @@ def test():
     a = 0
 
 print("Boxscore DB: Select algorithm")
-scrape_odds()

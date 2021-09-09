@@ -1,7 +1,6 @@
 import json
 import requests
-from boxscores_db import files_template_quick, url_address_date, SEASON_TYPES, STATS_HEADERS, API_COUNT_THRESHOLD
-
+from constants import *
 
 class BoxScoreCacheHandler:
     def __init__(self, date_from, season_type_index, box_score_type):
