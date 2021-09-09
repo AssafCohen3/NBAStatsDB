@@ -1,14 +1,15 @@
 import datetime
+import re
 import sqlite3
 import json
 import os
 import pandas as pd
 import requests
 import matplotlib.pyplot as plt
-from bs4 import BeautifulSoup
 
-url_address_date = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
-url_address_odds = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
+url_address = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=&DateTo=&Direction=ASC&LeagueID=00&PlayerOrTeam=P&Season=%s&SeasonType=%s&Sorter=DATE"
+url_address_date = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=&Direction=ASC&LeagueID=00&PlayerOrTeam=P&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
+
 STATS_HEADERS = {
         'Host': 'stats.nba.com',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
@@ -28,55 +29,39 @@ SEASON_TYPES = [
 ]
 DATABASE_NAME = "boxscores_full_database"
 API_COUNT_THRESHOLD = 30000
-files_template_quick = "quick_cache/boxscore_%s_%s_%s.json"
-odds_files_template = "quick_cache/odds_%s.html"
-
+files_tempplate = "cache/boxscore_%s_%s.json"
+files_tempplate_quick = "quick_cache/boxscore_%s_%s.json"
 
 def create_data_frame(data, headers):
     return pd.DataFrame(data=data, columns=headers)
 
 
-def handle_cache(cache_handler, filename_template, load_file, downloader, cacher, *args):
-    file_name = cache_handler.get_filename()
-    if os.path.isfile(file_name):
-        print(f"found {file_name} in cache.")
-        with open(file_name, "rb") as f:
-            to_ret = load_file(f)
-    else:
-        to_ret = downloader(args)
-        print(f"Downloaded {file_name}.")
-        with open(file_name, "w") as f2:
-            f2.write(to_ret)
-        print(f"Cached {file_name}.")
-    return to_ret
-
-def get_cached_odds(season):
-    file_name = odds_files_template % season
-    if os.path.isfile(file_name):
-        print(f"found {file_name} in cache.")
-        with open(file_name, "rb") as f:
-            to_ret = f.read()
-    else:
-        to_send = url_address_odds % f"{season}-{season + 1}"
-        to_ret = requests.get(to_send, headers=STATS_HEADERS).text
-        print(f"Downloaded {file_name}.")
-        with open(file_name, "w") as f2:
-            f2.write(to_ret)
-        print(f"Cached {file_name}.")
-    return to_ret
-
-
-def get_cached_boxscores(date_from, season_type_index, box_score_type):
-    date_tmp = date_from
-    if date_tmp == "":
-        date_tmp = "first"
-    file_name = files_tempplate_quick % (date_tmp, season_type_index, box_score_type)
+def get_boxscores(season, season_type_index):
+    file_name = files_tempplate % (season, season_type_index)
     if os.path.isfile(file_name):
         print(f"found {file_name} in cache.")
         with open(file_name, "rb") as f:
             to_ret = json.load(f)
     else:
-        to_send = url_address_date % (date_from, box_score_type, SEASON_TYPES[season_type_index])
+        to_send = url_address % (f"{season}-{str(season + 1)[-2:]}", SEASON_TYPES[season_type_index])
+        to_ret = requests.get(to_send, headers=STATS_HEADERS).json()
+        with open(file_name, "w") as f2:
+            json.dump(to_ret, f2)
+        print(f"Downloaded and cached {file_name}.")
+    return to_ret
+
+
+def get_cached_boxscores_quick(date_from, season_type_index):
+    date_tmp = date_from
+    if date_tmp == "":
+        date_tmp = "first"
+    file_name = files_tempplate_quick % (date_tmp.replace("/", ""), season_type_index)
+    if os.path.isfile(file_name):
+        print(f"found {file_name} in cache.")
+        with open(file_name, "rb") as f:
+            to_ret = json.load(f)
+    else:
+        to_send = url_address_date % (date_from, SEASON_TYPES[season_type_index])
         to_ret = requests.get(to_send, headers=STATS_HEADERS).json()
         data = to_ret["resultSets"][0]
         results = data["rowSet"]
@@ -88,16 +73,28 @@ def get_cached_boxscores(date_from, season_type_index, box_score_type):
     return to_ret
 
 
-def collect_all_boxscores(season_type_index, box_score_type):
+def collect_seasongames(season, season_type_index):
+    data = get_boxscores(season, season_type_index)
+    data = data["resultSets"][0]
+    headers = data["headers"]
+    results = data["rowSet"]
+    print(f"found {len(results)} games in {SEASON_TYPES[season_type_index].replace('+', ' ')} of season {season}")
+    new_df = create_data_frame(results, headers)
+    new_df['SEASON'] = season
+    new_df['SEASON_TYPE'] = season_type_index
+    return new_df
+
+
+def collect_seasons_quick(season_type_index):
     df = None
     date_from = ""
     continue_loop = True
     while continue_loop:
-        data = get_cached_boxscores(date_from, season_type_index, box_score_type)
+        data = get_cached_boxscores_quick(date_from, season_type_index)
         data = data["resultSets"][0]
         headers = data["headers"]
         results = data["rowSet"]
-        print(f"found {len(results)} games in {SEASON_TYPES[season_type_index].replace('+', ' ')} of type {box_score_type} from date {date_from}")
+        print(f"found {len(results)} games in {SEASON_TYPES[season_type_index].replace('+', ' ')} from date {date_from}")
         if len(results) >= API_COUNT_THRESHOLD:
             game_date_index = headers.index("GAME_DATE")
             count = 0
@@ -110,30 +107,38 @@ def collect_all_boxscores(season_type_index, box_score_type):
         else:
             continue_loop = False
         new_df = create_data_frame(results, headers)
+        new_df['SEASON_TYPE'] = season_type_index
         df = new_df if df is None else pd.concat([df, new_df], ignore_index=True)
     return df
 
 
-def add_sorted_teams_matchups(df):
-    matchup_re_str = r'(.*) (?:@|vs.) (.*)'
-    a = df['MATCHUP'].str.extract(matchup_re_str)
-    a = a.to_numpy()
-    a.sort(axis=1)
-    a = pd.DataFrame(data=a, columns=["team1", "team2"])
-    df["MATCHUP_TEAM1"] = a["team1"]
-    df["MATCHUP_TEAM2"] = a["team2"]
+def collect_seasons(season_type_index):
+    df = None
+    for i in range(1946, 2021):
+        df = collect_seasongames(i, season_type_index) if df is None else pd.concat([df, collect_seasongames(i, season_type_index)], ignore_index=True)
+        print(f"{len(df)=}")
+    return df
 
 
-def create_boxscores_table(conn, box_score_type):
-    all_boxscores_df = None
-    for i in range(0, len(SEASON_TYPES)):
-        new_df = collect_all_boxscores(i, box_score_type)
-        all_boxscores_df = new_df if all_boxscores_df is None else pd.concat([all_boxscores_df, new_df], ignore_index=True)
-    season_and_type = all_boxscores_df["SEASON_ID"].str.extract(r'(\d)(\d*)')
-    all_boxscores_df["SEASON_TYPE"] = season_and_type[0]
-    all_boxscores_df["SEASON"] = season_and_type[1]
-    add_sorted_teams_matchups(all_boxscores_df)
-    all_boxscores_df.to_sql(f'BoxScore{box_score_type}', conn, if_exists='replace', index=False)
+def test_collections():
+    df1 = collect_seasons(0)
+    df2 = collect_seasons_quick(0)
+    print(f"{len(df1) = }")
+    print(f"{len(df2) = }")
+    df1.drop(columns=["SEASON"],inplace=True)
+    print(df1)
+    print(df2)
+    df11 = df1.sort_values(by=df1.columns.tolist()).reset_index(drop=True)
+    df21 = df2.sort_values(by=df2.columns.tolist()).reset_index(drop=True)
+    print("*****************************")
+    print(df11["PLAYER_ID"].equals(df21["PLAYER_ID"]))
+
+
+def create_boxscores_table(conn):
+    playoff_boxscores_df = collect_seasons(1)
+    regular_boxscores_df = collect_seasons(0)
+    all_boxscores_df = pd.concat([regular_boxscores_df, playoff_boxscores_df], ignore_index=True)
+    all_boxscores_df.to_sql('BoxScore', conn, if_exists='replace', index=False)
 
 
 def get_connection():
@@ -142,8 +147,7 @@ def get_connection():
 
 def create_database():
     conn = get_connection()
-    create_boxscores_table(conn, "P")
-    create_boxscores_table(conn, "T")
+    create_boxscores_table(conn)
     conn.commit()
 
 
@@ -207,28 +211,24 @@ def plot_average_player_teams_number():
     plt.show()
 
 
+def find_first_year(max_year=datetime.datetime.now().year-1):
+    high = max_year
+    low = 0
+    while low <= high:
+        middle = (high + low) // 2
+        season_str = f"{middle}-{str(middle + 1)[-2:]}"
+        to_send = url_address % season_str
+        data = requests.get(to_send, headers=STATS_HEADERS)
+        if data and data.json()["resultSets"][0]["rowSet"]:
+            high = middle - 1
+        else:
+            low = middle + 1
+    return high + 1
+
+
 def differ(list1, list2):
     differ_list = [x for x in list2 if x not in list1]
     print(differ_list)
 
-
-def scrape_odds():
-    url_address = "https://www.sportsoddshistory.com/nba-main/?y=1972-1973&sa=nba&a=finals&o=r"
-    r = requests.get(url_address)
-    df = None
-    if r.status_code == 200:
-        soup = BeautifulSoup(r.content, 'html.parser')
-        table = soup.find('table', {"class": "soh1"})
-        df = pd.read_html(str(table))[0]
-        print(df)
-        a = 0
-
-def test():
-    url_address = "https://stats.nba.com/stats/commonplayoffseries?LeagueID=00&Season=1946-47&SeriesID="
-    res = requests.get(url_address, headers=STATS_HEADERS).json()
-    data = res["resultSets"][0]
-    results = data["rowSet"]
-    a = 0
-
 print("Boxscore DB: Select algorithm")
-scrape_odds()
+test_collections()
