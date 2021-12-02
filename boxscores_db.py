@@ -1,5 +1,8 @@
 import sqlite3
 import os
+
+import numpy as np
+import pandas
 import pandas as pd
 import requests
 import matplotlib.pyplot as plt
@@ -183,6 +186,78 @@ def plot_average_player_teams_number():
     plt.show()
 
 
+def triple_doubles_record(conn):
+    cmd = """
+        select
+           PLAYER_NAME,
+           sum(case when WL = 'W' then 1 else 0 end) as wins,
+           sum(case when WL = 'L' then 1 else 0 end) as loses
+           from BoxScoreP
+        where
+            case when PTS >= 10 then 1 else 0 end +
+            case when REB >= 10 then 1 else 0 end +
+            case when AST >= 10 then 1 else 0 end +
+            case when STL >= 10 then 1 else 0 end +
+            case when BLK >= 10 then 1 else 0 end >= 3
+        group by PLAYER_ID
+        order by count(*) desc
+        """
+    df = pandas.read_sql_query(cmd, conn, index_col='PLAYER_NAME')
+    return df
+
+
+def plot_triple_double_record(df, limit):
+    sum_row = df.sum(numeric_only=True)
+    df = df[:limit]
+    df.loc["Total"] = sum_row
+    # this will contain the data for the second y-axis
+    df2 = df.copy()
+    # this will contain the data for the first y-axis
+    df.at["Total"] = [0, 0]
+
+    fig, ax = plt.subplots()
+    df.plot(kind="bar", stacked=True, legend=False, ax=ax)
+    ax.tick_params(axis='x', labelsize=8)
+    plt.xlabel("")
+
+    # calculate total games and percentages for each row
+    df_total = df2["wins"] + df2["loses"]
+    df_rel = df2[df2.columns[0]].div(df_total, 0) * 100
+
+    # zero all rows except total for the second y-axis
+    df2[df.index != "Total"] = [0, 0]
+    ax2 = ax.twinx()
+    df2.plot(kind="bar", stacked=True, ax=ax2, legend=False)
+
+    plt.title("Triple doubles split - top 25")
+    fig.tight_layout()
+
+    # add percentages above bars
+    for i, v in enumerate(df_total):
+        ax.text(x=i-0.35, y=v+1, s=f"{int(df_rel[i])}%", fontdict={"fontsize": 6})
+    ax2.text(x=limit - 0.35, y=df_total[limit] + 1, s=f"{int(df_rel[limit])}%", fontdict={"fontsize": 6})
+    #ax.legend(loc='center left', bbox_to_anchor=(1,0.5))
+
+    plt.show()
+
+
+def get_underdog_data(conn, min_threshold):
+    cmd = """select PS.PLAYER_ID, PS.PLAYER_NAME, count(distinct SERIES_START) as SERIES_COUNT,
+             sum(case PS.SHOULD_WON = 1 and PS.WON = 1 when true then 1 else 0 end) as FAVOURITE_WINS,
+             sum(case PS.SHOULD_WON = 1 and PS.WON = 0 when true then 1 else 0 end) as FAVOURITE_LOSES,
+             sum(case PS.SHOULD_LOST = 1 and PS.WON = 1 when true then 1 else 0 end) as UNDERDOG_WINS,
+             sum(case PS.SHOULD_LOST = 1 and PS.WON = 0 when true then 1 else 0 end) as UNDERDOG_LOSES,
+             sum(case PS.SHOULD_LOST = 1 and PS.WON = 1 when true then 1 else 0 end) - sum(case PS.SHOULD_WON = 1 and PS.WON = 0 when true then 1 else 0 end) as RATIO
+      from PlayerSeriesWithOdds PS inner join Teams T on T.TEAM_ABBREVIATION = PS.TEAM_SERIE and PS.SEASON <= T.LAST_USED and PS.SEASON >= T.FIRST_USED
+      where AVG_MIN >= :minimum_minutes
+      group by PS.PLAYER_ID
+      order by SERIES_COUNT desc"""
+    cur = conn.cursor()
+    cur.execute(cmd, {"minimum_minutes": min_threshold})
+    rows = cur.fetchall()
+    return rows
+
+
 def differ(list1, list2):
     differ_list = [x for x in list2 if x not in list1]
     print(differ_list)
@@ -191,19 +266,23 @@ def differ(list1, list2):
 def scrape_odds():
     url_address = "https://www.sportsoddshistory.com/nba-main/?y=1972-1973&sa=nba&a=finals&o=r"
     r = requests.get(url_address)
-    df = None
     if r.status_code == 200:
         soup = BeautifulSoup(r.content, 'html.parser')
         table = soup.find('table', {"class": "soh1"})
         df = pd.read_html(str(table))[0]
         print(df)
-        a = 0
+
 
 def test():
     url_address = "https://stats.nba.com/stats/commonplayoffseries?LeagueID=00&Season=1946-47&SeriesID="
     res = requests.get(url_address, headers=STATS_HEADERS).json()
     data = res["resultSets"][0]
     results = data["rowSet"]
-    a = 0
+    return results
+
 
 print("Boxscore DB: Select algorithm")
+
+conn = get_connection()
+dff = triple_doubles_record(conn)
+plot_triple_double_record(dff, 25)
