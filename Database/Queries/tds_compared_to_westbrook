@@ -1,0 +1,23 @@
+with PLAYERS_CAREER_TDS as (select PLAYER_ID, PLAYER_NAME, count(*) as GAMES_COUNT, SUM(case
+    ((case PTS >= 10 when true then 1 else 0 end +
+      case REB >= 10 when true then 1 else 0 end +
+      case AST >= 10 when true then 1 else 0 end +
+      case STL >= 10 when true then 1 else 0 end +
+      case BLK >= 10 when true then 1 else 0 end) >= 3)
+    when true then 1 else 0 end) as TD_COUNT, max(GAME_DATE) as PLAYER_LAST_GAME
+from BoxScoreP where SEASON_TYPE = 2
+group by PLAYER_ID),
+     WESTBROOK_RUNNING_TDS as
+        (select row_number() over (partition by PLAYER_ID order by GAME_DATE) as GAMES_COUNT, SUM(case
+                ((case PTS >= 10 when true then 1 else 0 end +
+                  case REB >= 10 when true then 1 else 0 end +
+                  case AST >= 10 when true then 1 else 0 end +
+                  case STL >= 10 when true then 1 else 0 end +
+                  case BLK >= 10 when true then 1 else 0 end) >= 3)
+                when true then 1 else 0 end) over (partition by PLAYER_ID order by GAME_DATE ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as TD_COUNT_WESTBROOK
+            from BoxScoreP where PLAYER_ID = '201566' and SEASON_TYPE = 2)
+select PLAYER_ID, PLAYER_NAME, PLAYERS_CAREER_TDS.GAMES_COUNT as PLAYER_GAMES_COUNT, TD_COUNT, WESTBROOK_RUNNING_TDS.TD_COUNT_WESTBROOK as TD_COUNT_WESTBROOK,
+       ROUND(cast(TD_COUNT as REAL)/cast(WESTBROOK_RUNNING_TDS.TD_COUNT_WESTBROOK as REAL), 2) as PCT
+from PLAYERS_CAREER_TDS inner join WESTBROOK_RUNNING_TDS on PLAYERS_CAREER_TDS.GAMES_COUNT == WESTBROOK_RUNNING_TDS.GAMES_COUNT
+where TD_COUNT >= 5 and PLAYERS_CAREER_TDS.GAMES_COUNT <= 500 and PLAYER_LAST_GAME between datetime('now', '-5 years') and datetime('now')
+order by PCT desc
