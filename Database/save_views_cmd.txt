@@ -1,1 +1,0 @@
-sqlite3 "dbname" "select name from sqlite_master where type = 'view';" | while read line; do echo $line; sqlite3 "dbname" ".schema $line"; echo '***********************************'; done > "output_name".txt
