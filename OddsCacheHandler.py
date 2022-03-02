@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -11,23 +13,18 @@ class OddsCacheHandler:
         self.season = season
 
     def get_filename(self):
-        return odds_files_template % self.season
+        return ODDS_FILE_TEMPLATE % self.season
 
     def load_file(self, f):
         df = pd.read_html(f.read())[0]
         return df
 
     def downloader(self):
-        to_send = url_address_odds % f"{self.season}-{self.season+1}"
+        to_send = ODDS_ENDPOINT % f"{self.season}-{self.season + 1}"
         r = requests.get(to_send)
         soup = BeautifulSoup(r.content, 'html.parser')
         table = soup.find('table', {'class': "soh1"})
-        try:
-            df = pd.read_html(str(table))[0]
-        except ValueError:
-            with open(constants.missing_files, "a") as f:
-                f.write(self.get_filename() + "\n")
-            raise ValueError()
+        df = pd.read_html(str(table))[0]
         return df
 
     def to_cache(self, data):

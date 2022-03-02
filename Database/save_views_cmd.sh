@@ -1,1 +1,1 @@
-sqlite3 "boxscores_full_database.sqlite" "select name from sqlite_master where type = 'view';" | while read line; do echo $line; sqlite3 "boxscores_full_database.sqlite" ".schema $line"; echo '***********************************'; done > "all_views_updated".txt
+sqlite3 "boxscores_full_database.sqlite" "select name from sqlite_master where type = 'view';" | while read line; do sqlite3 "boxscores_full_database.sqlite" ".schema $line" | sed -e 's/CREATE VIEW/CREATE VIEW IF NOT EXISTS/'; done > "views".txt

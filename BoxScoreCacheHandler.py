@@ -10,14 +10,14 @@ class BoxScoreCacheHandler:
 
     def get_filename(self):
         if self.date_from:
-            return files_template_quick % (self.date_from, self.season_type_index, self.box_score_type)
-        return files_template_quick % ("first", self.season_type_index, self.box_score_type)
+            return BOXSCORE_FILE_TEMPLATE % (self.date_from, self.season_type_index, self.box_score_type)
+        return BOXSCORE_FILE_TEMPLATE % ("first", self.season_type_index, self.box_score_type)
 
     def load_file(self, f):
         return json.load(f)
 
     def downloader(self):
-        to_send = url_address_date % (self.date_from, self.box_score_type, SEASON_TYPES[self.season_type_index])
+        to_send = BOXSCORES_ENDPOINT % (self.date_from, self.box_score_type, SEASON_TYPES[self.season_type_index]['name'])
         return requests.get(to_send, headers=STATS_HEADERS).json()
 
     def to_cache(self, data):
