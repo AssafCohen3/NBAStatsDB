@@ -25,7 +25,9 @@ python3 boxscores_db.py -m #update only the boxscore tables with misses caching(
 python3 boxscores_db.py -o #updates the boxscore tables and the odds table
 ```
 
-after that step you can start query all the boxscores that had been collected
+after that step you can start query all the boxscores that had been collected. <br/>
+the database path is Database/boxscores_full_database.sqlite
+
 # Downloading options
 *  -c, Cache downloaded files
 *  -m, Cache and ignore missing files
