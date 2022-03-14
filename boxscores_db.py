@@ -1,24 +1,34 @@
+import re
 import sqlite3
 import os
 from pathlib import Path
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 from numpy import int32, int64
 import argparse
+#  very important for pbp. fix some issues
+from requests import HTTPError
 
+import pbp.Patcher
+import EventMaker
 import OddsCacheHandler
+from BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
 from OddsCacheHandler import OddsCacheHandler
+from PBPCacheHandler import PBPCacheHandler
 from constants import *
 from BoxScoreCacheHandler import BoxScoreCacheHandler
 
 
 class DatabaseHandler:
-    def __init__(self, use_cache=False, cache_missing_files=False, download_odds=True):
+    def __init__(self, use_cache=False, cache_missing_files=False, download_odds=False, download_pbps=False):
         sqlite3.register_adapter(int64, int)
         sqlite3.register_adapter(int32, int)
         self.conn = self.get_connection()
         self.use_cache = use_cache
         self.cache_missing_files = cache_missing_files
         self.download_odds = download_odds
+        self.download_pbps = download_pbps
         self.create_folders()
         if self.cache_missing_files:
             self.missing_files = self.get_missing_files()
@@ -60,8 +70,18 @@ class DatabaseHandler:
         self.conn.executemany(aaa, boxscores)
         self.conn.commit()
 
+    def insert_pbps(self, headers, events):
+        aaa = f"""insert or ignore into Event ({', '.join(h for h in headers)}) values ({', '.join('?' for _ in headers)})"""
+        self.conn.executemany(aaa, events)
+        self.conn.commit()
+
     def insert_odds(self, odds):
         self.conn.executemany(f"""insert or ignore into Odds (Team, odd, ROUND, SEASON) values (?, ?, ?, ?)""", odds)
+        self.conn.commit()
+
+    def insert_series_summary(self, summeries):
+        self.conn.executemany(f"""insert or ignore into PlayoffSerieSummary (Season, TeamAAbbrevation, TeamBAbbrevation, TeamAWins, TeamBWins, WinnerAbbrevation, LoserAbbrevation, SerieOrder, LevelTitle)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?)""", summeries)
         self.conn.commit()
 
     def save_odds_dataframe(self, df):
@@ -71,6 +91,12 @@ class DatabaseHandler:
         to_save = pd.DataFrame(data=rows, columns=headers)
         self.transform_boxscores(to_save)
         self.insert_boxscores(to_save.columns, list(to_save.to_records(index=False)), table_type)
+
+    def save_pbps(self, rows, headers):
+        self.insert_pbps(headers, rows)
+
+    def save_summeries(self, summeries):
+        self.insert_series_summary(summeries)
 
     def create_players_boxscores_table(self):
         self.conn.execute("""
@@ -169,6 +195,64 @@ class DatabaseHandler:
             )
         """)
 
+    def create_pbp_table(self):
+        self.conn.execute("""
+            create table if not exists Event
+            (
+                GameId text,
+                EventNumber integer,
+                EventType integer,
+                EventActionType integer,
+                Period integer,
+                RealTime text,
+                Clock text,
+                RemainingSeconds real,
+                Description text,
+                TeamAScore integer,
+                TeamBScore integer,
+                ScoreMargin integer,
+                ShotValue integer,
+                PersonAType integer,
+                PlayerAId integer,
+                PlayerATeamId integer,
+                PersonBType integer,
+                PlayerBId integer,
+                PlayerBTeamId integer,
+                PersonCType integer,
+                PlayerCId integer,
+                PlayerCTeamId integer,
+                VideoAvailable integer,
+                CountAsPossession integer,
+                IsPossessionEndingEvent integer,
+                SecondsSincePreviousEvent real,
+                TeamALineupIds text,
+                TeamBLineupIds text,
+                TeamAFoulsToGive integer,
+                TeamBFoulsToGive integer,
+                PreviousEventNumber integer,
+                NextEventNumber integer,
+                EventOrder integer,
+                primary key (GameId, EventNumber)
+            );""")
+        self.conn.commit()
+
+    def create_series_levels_table(self):
+        self.conn.execute("""
+            create table if not exists PlayoffSerieSummary
+            (
+                Season integer,
+                TeamAAbbrevation text,
+                TeamBAbbrevation text,
+                TeamAWins integer,
+                TeamBWins integer,
+                WinnerAbbrevation text,
+                LoserAbbrevation text,
+                SerieOrder integer,
+                LevelTitle text,
+                primary key (SEASON, TeamAAbbrevation, TeamBAbbrevation)
+            )
+        """)
+
     # returns the last saved date of some box score type plus 1 day(empty string if none found)
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
@@ -184,6 +268,34 @@ class DatabaseHandler:
             res = self.conn.execute(f"""select SEASON+1 from Odds order by SEASON desc limit 1""").fetchall()
             return res[0][0] if res else FIRST_ODDS_SEASON
         return FIRST_ODDS_SEASON
+
+    def get_games_without_events(self, season_type_code):
+        tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=? or name=?""", [f'Event', 'BoxScoreT']).fetchall()
+        if len(tables) > 1:
+            res = self.conn.execute(f"""select BoxScoreT.GAME_ID, max(iif(TEAM_ABBREVIATION=MATCHUP_TEAM1, TEAM_ID, null)), max(iif(TEAM_ABBREVIATION=MATCHUP_TEAM2, TEAM_ID, null)) from BoxScoreT left join Event e on e.GameId = BoxScoreT.GAME_ID where e.GameId is null and BoxScoreT.SEASON_TYPE=? and SEASON >= ? group by BoxScoreT.GAME_ID""", [season_type_code, PBP_FIRST_SEASON]).fetchall()
+            return res
+        return []
+
+    def get_br_seasons_links(self):
+        sql = """
+            select Season from PlayoffSerieSummary group by Season
+        """
+        fetched_seasons = self.conn.execute(sql).fetchall()
+        fetched_seasons = [s[0] for s in fetched_seasons]
+        url = 'https://www.basketball-reference.com/leagues/'
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        seasons_rows = soup.select('.stats_table tr')
+        seasons_rows = [s for s in seasons_rows if not s.has_attr('class')]
+        to_ret = []
+        for s in seasons_rows:
+            season = s.select('[data-stat=\"season\"] a')[0]
+            season_number = int(re.findall(r'^(.+?)-', season.getText())[0])
+            season_link = season['href']
+            league_id = s.select('[data-stat=\"lg_id\"] a')[0].getText()
+            if season_number not in fetched_seasons and (league_id == 'BAA' or league_id == 'NBA'):
+                to_ret.append([season_number, season_link])
+        return to_ret
 
     # download the resource represented by the handler
     def handle_cache(self, cache_handler):
@@ -236,6 +348,53 @@ class DatabaseHandler:
                 continue_loop = False
             self.save_boxscores(results, headers, box_score_type)
 
+    # download and saves all events of a game
+    def collect_all_game_events(self, game_id, teamaid, teambid):
+        data = self.handle_cache(PBPCacheHandler(game_id))
+        if not data:
+            return
+        try:
+            transformed_events = EventMaker.transform_game_events(game_id, teamaid, teambid, data)
+        except HTTPError as e:
+            print(f'failed transforming {game_id} events. try again later. error: {str(e)}')
+            return
+        headers = [
+            'GameId',
+            'EventNumber',
+            'EventType',
+            'EventActionType',
+            'Period',
+            'RealTime',
+            'Clock',
+            'RemainingSeconds',
+            'Description',
+            'TeamAScore',
+            'TeamBScore',
+            'ScoreMargin',
+            'ShotValue',
+            'PersonAType',
+            'PlayerAId',
+            'PlayerATeamId',
+            'PersonBType',
+            'PlayerBId',
+            'PlayerBTeamId',
+            'PersonCType',
+            'PlayerCId',
+            'PlayerCTeamId',
+            'VideoAvailable',
+            'CountAsPossession',
+            'IsPossessionEndingEvent',
+            'SecondsSincePreviousEvent',
+            'TeamALineupIds',
+            'TeamBLineupIds',
+            'TeamAFoulsToGive',
+            'TeamBFoulsToGive',
+            'PreviousEventNumber',
+            'NextEventNumber',
+            'EventOrder'
+        ]
+        self.save_pbps(transformed_events, headers)
+
     # updates(starts from the last saved date) all box scores of all season types of box score type
     def update_boxscores_table(self, box_score_type):
         print(f'updating boxscores of type {box_score_type}')
@@ -243,6 +402,28 @@ class DatabaseHandler:
             last_date = self.get_last_game_date(SEASON_TYPES[i]['code'], box_score_type)
             print(f'updating boxscores of type {box_score_type} and season type {SEASON_TYPES[i]["name"]}... current last saved date: {last_date if last_date else "None"}')
             self.collect_all_boxscores(i, box_score_type, start_date=last_date)
+
+    # updates(starts from the last saved date) all box scores of all season types of box score type
+    def update_missing_events(self, season_type):
+        print(f'updating missing events from {season_type["name"]}')
+        games_missing_events = self.get_games_without_events(season_type["code"])
+        for gid, teamaid, teambid in games_missing_events:
+            print(f'updating events of game {gid}...')
+            self.collect_all_game_events(gid, teamaid, teambid)
+
+    def update_all_missing_events(self):
+        for season_type in SEASON_TYPES:
+            self.update_missing_events(season_type)
+
+    # updates(starts from the last saved date) all box scores of all season types of box score type
+    def update_playoff_summary(self, season, season_link):
+        data = self.handle_cache(BRPlayoffsSummaryHandler(season, season_link))
+        self.save_summeries(data)
+
+    def update_playoffs_summeries(self):
+        seasons = self.get_br_seasons_links()
+        for season, season_link in seasons:
+            self.update_playoff_summary(season, season_link)
 
     # download and saves odds for a season
     def collect_season_odds(self, season):
@@ -284,12 +465,37 @@ class DatabaseHandler:
         print('setting boxscore tables...')
         self.create_players_boxscores_table()
         self.create_teams_boxscores_table()
+        self.create_series_levels_table()
         self.update_boxscores_table('P')
         self.update_boxscores_table('T')
+        self.update_playoffs_summeries()
+        if self.download_pbps:
+            print('setting pbps table')
+            self.create_pbp_table()
+            self.update_missing_events(SEASON_TYPES[2])  # for now update only playoffs
+            #  self.update_all_missing_events()
         if self.download_odds:
             print('setting odds table...')
             self.create_odds_table()
             self.update_odds()
+
+    def fix_abbrs(self):
+        all_series = self.conn.execute("""select Season, TeamAAbbrevation, TeamBAbbrevation, WinnerAbbrevation, LoserAbbrevation from PlayoffSerieSummary""")
+        to_fix = set()
+        for s in all_series:
+            try:
+                self.conn.execute("""update PlayoffSerieSummary set TeamAAbbrevation=?, TeamBAbbrevation=?, WinnerAbbrevation=?, LoserAbbrevation=?
+                where Season=? and TeamAAbbrevation=? and TeamBAbbrevation = ? and WinnerAbbrevation = ? and LoserAbbrevation = ?""",
+                                  [BR_ABBR_TO_NBA_ABBR[s[1]],
+                                   BR_ABBR_TO_NBA_ABBR[s[2]],
+                                   BR_ABBR_TO_NBA_ABBR[s[3]],
+                                   BR_ABBR_TO_NBA_ABBR[s[4]],
+                                   *s
+                                   ])
+                self.conn.commit()
+            except Exception as e:
+                to_fix.add(str(e))
+        print('\n'.join(sorted(to_fix)))
 
 
 def main():
@@ -297,17 +503,22 @@ def main():
     parser.add_argument('-c', '--cache', help='Cache downloaded files', default=False, action='store_true')
     parser.add_argument('-m', '--missing', help='Cache and ignore missing files', default=False, action='store_true')
     parser.add_argument('-o', '--odds', help='Update Odds table', default=False, action='store_true')
+    parser.add_argument('-e', '--events', help='Update Events table', default=False, action='store_true')
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
     parser.add_argument('-wv', '--views_out', type=str, help='Write views to file(override other options)')
     args = parser.parse_args()
-    handler = DatabaseHandler(use_cache=args.cache, cache_missing_files=args.missing, download_odds=args.odds)
+    handler = DatabaseHandler(use_cache=args.cache, cache_missing_files=args.missing, download_odds=args.odds, download_pbps=args.events)
     if args.views_in is not None:
         handler.load_views(args.views_in)
     elif args.views_out is not None:
         handler.save_views(args.views_out)
     else:
         handler.create_database()
+    # handler.fix_abbrs()
 
 
 if __name__ == '__main__':
     main()
+
+
+

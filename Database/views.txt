@@ -1,10 +1,3 @@
-CREATE VIEW IF NOT EXISTS PlayoffSeries as
-select SEASON, MATCHUP_TEAM1, MATCHUP_TEAM2, min(GAME_DATE) as SERIES_START, max(GAME_DATE) as SERIES_END,
-       sum(case WINNING_TEAM when MATCHUP_TEAM1 then 1 else 0 end) as TEAM1_WINS,
-       sum(case WINNING_TEAM when MATCHUP_TEAM2 then 1 else 0 end) as TEAM2_WINS,
-       case sum(case WINNING_TEAM when MATCHUP_TEAM1 then 1 else 0 end) > sum(case WINNING_TEAM when MATCHUP_TEAM2 then 1 else 0 end) when true then MATCHUP_TEAM1 else MATCHUP_TEAM2 end as SERIES_WINNER,
-       case sum(case WINNING_TEAM when MATCHUP_TEAM1 then 1 else 0 end) > sum(case WINNING_TEAM when MATCHUP_TEAM2 then 1 else 0 end) when true then MATCHUP_TEAM2 else MATCHUP_TEAM1 end as SERIES_LOSER
-       from Games where SEASON_TYPE=4 group by SEASON, MATCHUP_TEAM1, MATCHUP_TEAM2;
 CREATE VIEW IF NOT EXISTS Teams as
 select TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION, min(SEASON) as FIRST_USED, max(SEASON) as LAST_USED from BoxScoreT group by TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION;
 CREATE VIEW IF NOT EXISTS PlayoffSeriesWithOddsRound as
@@ -311,3 +304,22 @@ CREATE VIEW IF NOT EXISTS PlayerAdjustedTeamsNumber as
        round(PlayerTeamNumber * (30/avg(TC.TeamsNumber)), 2) as AdjustedTeamNumber from PlayerSeasonFullStats PSFS
     join TeamsCount TC on PSFS.SEASON = TC.SEASON
     join PlayerTeamsCount PTC on PSFS.PLAYER_ID = PTC.PLAYER_ID group by PSFS.PLAYER_ID;
+CREATE VIEW IF NOT EXISTS PlayoffSeries as
+select SEASON, MATCHUP_TEAM1, TA.TEAM_ID as TEAM1_ID, MATCHUP_TEAM2, TB.TEAM_ID as TEAM2_ID, min(GAME_DATE) as SERIES_START, max(GAME_DATE) as SERIES_END,
+       sum(case WINNING_TEAM when MATCHUP_TEAM1 then 1 else 0 end) as TEAM1_WINS,
+       sum(case WINNING_TEAM when MATCHUP_TEAM2 then 1 else 0 end) as TEAM2_WINS,
+       case sum(case WINNING_TEAM when MATCHUP_TEAM1 then 1 else 0 end) > sum(case WINNING_TEAM when MATCHUP_TEAM2 then 1 else 0 end) when true then MATCHUP_TEAM1 else MATCHUP_TEAM2 end as SERIES_WINNER,
+       case sum(case WINNING_TEAM when MATCHUP_TEAM1 then 1 else 0 end) > sum(case WINNING_TEAM when MATCHUP_TEAM2 then 1 else 0 end) when true then MATCHUP_TEAM2 else MATCHUP_TEAM1 end as SERIES_LOSER
+       from Games
+    inner join Teams TA on TA.TEAM_ABBREVIATION = MATCHUP_TEAM1
+    inner join Teams TB on TB.TEAM_ABBREVIATION = MATCHUP_TEAM2
+where SEASON_TYPE=4 group by SEASON, MATCHUP_TEAM1, MATCHUP_TEAM2;
+CREATE VIEW IF NOT EXISTS PlayoffSerieWithStage as
+select PS.SEASON, MATCHUP_TEAM1, TEAM1_ID, MATCHUP_TEAM2, TEAM2_ID, TeamAWins, TeamBWins, SerieOrder, LevelTitle from PlayoffSerieSummary PSS
+    inner join Teams TA on TA.TEAM_ABBREVIATION=PSS.TeamAAbbrevation
+    inner join Teams TB on TB.TEAM_ABBREVIATION=PSS.TeamBAbbrevation
+    left join PlayoffSeries PS on
+        PSS.Season = PS.SEASON and
+        ((TA.TEAM_ID = PS.TEAM1_ID and TB.TEAM_ID = PS.TEAM2_ID) or
+        (TB.TEAM_ID = PS.TEAM1_ID and TA.TEAM_ID = PS.TEAM2_ID))
+group by PS.SEASON, TEAM1_ID, TEAM2_ID;
