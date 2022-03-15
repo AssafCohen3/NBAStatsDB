@@ -1,0 +1,37 @@
+with GROUPED_SHOTS as (
+    select PlayerAId, PLAYER_NAME, Stages.Stage, SecondsLeft.Seconds,
+           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS
+    from PlayoffShots,
+         (select 4 as Stage union all select 3 union all select 2 union all select 1) Stages,
+         (select 300 as Seconds union all
+         select 240 union all
+         select 180 union all
+         select 120 union all
+         select 60 union all
+         select 50 union all
+         select 40 union all
+         select 30 union all
+         select 20 union all
+         select 10) SecondsLeft
+    where RemainingSeconds <= SecondsLeft.Seconds and Period >= 4 and abs(ScoreMargin) <= 5 and SerieOrder <= Stages.Stage
+    group by PlayerAId, Stages.Stage, SecondsLeft.Seconds
+), WITH_PERCENTS as (
+select playeraid, player_name, Stage, Seconds,
+       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
+       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
+       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
+       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+from GROUPED_SHOTS
+where FGA >= 20
+)
+
+select PlayerAId, PLAYER_NAME, Stage, group_concat(Seconds),
+       (count(*) * sum(Seconds * (EFG * 100)) - sum(Seconds) * sum((EFG * 100))) /
+        (count(*) * sum(Seconds * Seconds) - sum(Seconds) * sum(Seconds)) as EFG_SLOPE
+       from WITH_PERCENTS
+group by PlayerAId, Stage
+having count(*) >= 6

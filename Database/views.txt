@@ -17,7 +17,7 @@ CREATE VIEW IF NOT EXISTS Games as
     select SEASON, SEASON_TYPE, GAME_ID, GAME_DATE, MATCHUP_TEAM1, MATCHUP_TEAM2,
        sum(case TEAM_ABBREVIATION when MATCHUP_TEAM1 then PTS else 0 end) as TEAM1_SCORE,
        sum(case TEAM_ABBREVIATION when MATCHUP_TEAM2 then PTS else 0 end) as TEAM2_SCORE,
-       max(case WL when "W" then TEAM_ABBREVIATION else 0 end) as WINNING_TEAM
+       max(case WL when 'W' then TEAM_ABBREVIATION else 0 end) as WINNING_TEAM
     from BoxScoreT group by GAME_ID;
 CREATE VIEW IF NOT EXISTS TeamSeriesWithOdds as
 select PO.*, PO.SERIES_WINNER as TEAM_SERIE, 1 as WON,
@@ -365,3 +365,43 @@ from PlayoffSerieSummary PSS
         TSB.FirstSeason <= PSS.Season and
         TSB.LastSeason >= PSS.Season
 group by PSS.SEASON, PSS.TeamAId, PSS.TeamBId;
+CREATE VIEW IF NOT EXISTS Shots as
+select *, iif(Description like '%MISS%', 0, 1) as MadeShot from Event
+where EventType in (1, 2, 3);
+CREATE VIEW IF NOT EXISTS PlayoffShots as
+select
+    PlayerAId, PLAYER_NAME, TEAM_ID as PlayerTeamId, TEAM_NAME as PlayerTeamName,
+       PSWS.TeamAId, PSWS.TeamAName, PSWS.TeamBId, TeamBName, GWOTI.GAME_DATE, SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot, ScoreMargin, S.TeamAScore, S.TeamBScore, Description, EventOrder from Shots S
+    inner join GamesWithOrderedTeamIds GWOTI on S.GameId = GWOTI.GAME_ID
+    inner join PlayoffSerieWithStage PSWS on GWOTI.SEASON = PSWS.Season and PSWS.TeamAId = GWOTI.TeamAId and PSWS.TeamBId = GWOTI.TeamBId
+    inner join BoxScoreP BSP on GWOTI.GAME_ID = BSP.GAME_ID and PlayerAId = BSP.PLAYER_ID
+where GWOTI.SEASON_TYPE = 4;
+CREATE VIEW IF NOT EXISTS PlayoffShotsGroupedByStageAndTimeLeft as
+with GROUPED_SHOTS as (
+    select PlayerAId, PLAYER_NAME, Stages.Stage, SecondsLeft.Seconds,
+           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS
+    from PlayoffShots,
+         (select 4 as Stage union all select 3 union all select 2 union all select 1) Stages,
+         (select 300 as Seconds union all
+         select 240 union all
+         select 180 union all
+         select 120 union all
+         select 60 union all
+         select 50 union all
+         select 40 union all
+         select 30 union all
+         select 20 union all
+         select 10) SecondsLeft
+    where RemainingSeconds <= SecondsLeft.Seconds and Period >= 4 and abs(ScoreMargin) <= 5 and SerieOrder <= Stages.Stage
+    group by PlayerAId, Stages.Stage, SecondsLeft.Seconds
+)
+select playeraid, player_name, Stage, Seconds,
+       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
+       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
+       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
+       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+from GROUPED_SHOTS;

@@ -233,7 +233,7 @@ class DatabaseHandler:
                 TeamAScore integer,
                 TeamBScore integer,
                 ScoreMargin integer,
-                ShotValue integer,
+                ShotValue real,
                 PersonAType integer,
                 PlayerAId integer,
                 PlayerATeamId integer,
