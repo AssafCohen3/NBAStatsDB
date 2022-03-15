@@ -59,6 +59,28 @@ class DatabaseHandler:
         df["SEASON_TYPE"] = season_and_type[0]
         df["SEASON"] = season_and_type[1]
 
+    def collect_teams(self):
+        boxscore_teams_table = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name='BoxScoreT'""").fetchall()
+        if len(boxscore_teams_table):
+            sql = """with
+            TEAMS_SEASONS as (
+                select SEASON, TEAM_ID, TEAM_ABBREVIATION, TEAM_NAME from BoxScoreT
+                group by SEASON, TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION
+            ),
+            WITH_PREVIOUS_SEASON as (
+                select SEASON, TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION,
+                    row_number() over (partition by TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION order by SEASON) as SEASON_NUMBER
+                from TEAMS_SEASONS
+            )
+            select TEAM_ID, TEAM_ABBREVIATION, TEAM_NAME, min(SEASON) as FirstSeason, max(SEASON) as LastSeason
+            from WITH_PREVIOUS_SEASON
+            group by TEAM_ID, TEAM_ABBREVIATION, TEAM_NAME, SEASON - SEASON_NUMBER
+            order by FirstSeason
+            """
+            res = self.conn.execute(sql).fetchall()
+            return res
+        return []
+
     # creating cache and database folders
     def create_folders(self):
         if self.use_cache or self.cache_missing_files:
@@ -80,7 +102,7 @@ class DatabaseHandler:
         self.conn.commit()
 
     def insert_series_summary(self, summeries):
-        self.conn.executemany(f"""insert or ignore into PlayoffSerieSummary (Season, TeamAAbbrevation, TeamBAbbrevation, TeamAWins, TeamBWins, WinnerAbbrevation, LoserAbbrevation, SerieOrder, LevelTitle)
+        self.conn.executemany(f"""insert into PlayoffSerieSummary (Season, TeamAId, TeamBId, TeamAWins, TeamBWins, WinnerId, LoserId, SerieOrder, LevelTitle)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?)""", summeries)
         self.conn.commit()
 
@@ -241,15 +263,15 @@ class DatabaseHandler:
             create table if not exists PlayoffSerieSummary
             (
                 Season integer,
-                TeamAAbbrevation text,
-                TeamBAbbrevation text,
+                TeamAId integer,
+                TeamBId integer,
                 TeamAWins integer,
                 TeamBWins integer,
-                WinnerAbbrevation text,
-                LoserAbbrevation text,
+                WinnerId integer,
+                LoserId integer,
                 SerieOrder integer,
                 LevelTitle text,
-                primary key (SEASON, TeamAAbbrevation, TeamBAbbrevation)
+                primary key (SEASON, TeamAId, TeamBId)
             )
         """)
 
@@ -416,14 +438,15 @@ class DatabaseHandler:
             self.update_missing_events(season_type)
 
     # updates(starts from the last saved date) all box scores of all season types of box score type
-    def update_playoff_summary(self, season, season_link):
-        data = self.handle_cache(BRPlayoffsSummaryHandler(season, season_link))
+    def update_playoff_summary(self, season, season_link, current_teams):
+        data = self.handle_cache(BRPlayoffsSummaryHandler(season, season_link, current_teams))
         self.save_summeries(data)
 
     def update_playoffs_summeries(self):
+        current_teams = self.collect_teams()
         seasons = self.get_br_seasons_links()
         for season, season_link in seasons:
-            self.update_playoff_summary(season, season_link)
+            self.update_playoff_summary(season, season_link, current_teams)
 
     # download and saves odds for a season
     def collect_season_odds(self, season):
@@ -478,24 +501,6 @@ class DatabaseHandler:
             print('setting odds table...')
             self.create_odds_table()
             self.update_odds()
-
-    def fix_abbrs(self):
-        all_series = self.conn.execute("""select Season, TeamAAbbrevation, TeamBAbbrevation, WinnerAbbrevation, LoserAbbrevation from PlayoffSerieSummary""")
-        to_fix = set()
-        for s in all_series:
-            try:
-                self.conn.execute("""update PlayoffSerieSummary set TeamAAbbrevation=?, TeamBAbbrevation=?, WinnerAbbrevation=?, LoserAbbrevation=?
-                where Season=? and TeamAAbbrevation=? and TeamBAbbrevation = ? and WinnerAbbrevation = ? and LoserAbbrevation = ?""",
-                                  [BR_ABBR_TO_NBA_ABBR[s[1]],
-                                   BR_ABBR_TO_NBA_ABBR[s[2]],
-                                   BR_ABBR_TO_NBA_ABBR[s[3]],
-                                   BR_ABBR_TO_NBA_ABBR[s[4]],
-                                   *s
-                                   ])
-                self.conn.commit()
-            except Exception as e:
-                to_fix.add(str(e))
-        print('\n'.join(sorted(to_fix)))
 
 
 def main():

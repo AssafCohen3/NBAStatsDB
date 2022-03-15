@@ -314,12 +314,54 @@ select SEASON, MATCHUP_TEAM1, TA.TEAM_ID as TEAM1_ID, MATCHUP_TEAM2, TB.TEAM_ID 
     inner join Teams TA on TA.TEAM_ABBREVIATION = MATCHUP_TEAM1
     inner join Teams TB on TB.TEAM_ABBREVIATION = MATCHUP_TEAM2
 where SEASON_TYPE=4 group by SEASON, MATCHUP_TEAM1, MATCHUP_TEAM2;
+CREATE VIEW IF NOT EXISTS TeamSequence as
+with
+     TEAMS_SEASONS as (
+         select SEASON, TEAM_ID, TEAM_ABBREVIATION, TEAM_NAME from BoxScoreT
+         group by SEASON, TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION
+     ),
+     WITH_PREVIOUS_SEASON as (
+         select SEASON, TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION,
+                row_number() over (partition by TEAM_ID, TEAM_NAME, TEAM_ABBREVIATION order by SEASON) as SEASON_NUMBER
+         from TEAMS_SEASONS
+    )
+select TEAM_ID, TEAM_ABBREVIATION, TEAM_NAME, min(SEASON) as FirstSeason, max(SEASON) as LastSeason
+from WITH_PREVIOUS_SEASON
+group by TEAM_ID, TEAM_ABBREVIATION, TEAM_NAME, SEASON - SEASON_NUMBER
+order by FirstSeason;
+CREATE VIEW IF NOT EXISTS GamesWithOrderedTeamIds as
+with BoxScoreTWithOrderedIds as (
+    select *, rank() over (partition by GAME_ID order by TEAM_ID) as TeamOrder from BoxScoreT
+)
+select
+       SEASON, SEASON_TYPE, GAME_ID, GAME_DATE,
+       min(TEAM_ID) as TeamAId,
+       max(TEAM_ID) as TeamBId,
+       max(iif(TeamOrder = 1, PTS, 0)) as TeamAScore,
+       max(iif(TeamOrder=2, PTS, 0)) as TeamBScore,
+       max(iif(WL = 'W', TEAM_ID, null)) as WinnerId
+from BoxScoreTWithOrderedIds group by GAME_ID;
+CREATE VIEW IF NOT EXISTS PlayoffSerieByTeamsId as
+select SEASON, TeamAId, TeamBId, min(GAME_DATE) as SERIES_START, max(GAME_DATE) as SERIES_END,
+       sum(case WinnerId when TeamAId then 1 else 0 end) as TEAM1_WINS,
+       sum(case WinnerId when TeamBId then 1 else 0 end) as TEAM2_WINS,
+       case sum(case WinnerId when TeamAId then 1 else 0 end) > sum(case WinnerId when TeamBId then 1 else 0 end) when true then TeamAId else TeamBId end as SERIES_WINNER,
+       case sum(case WinnerId when TeamAId then 1 else 0 end) > sum(case WinnerId when TeamBId then 1 else 0 end) when true then TeamBId else TeamAId end as SERIES_LOSER
+       from GamesWithOrderedTeamIds
+where SEASON_TYPE=4 group by SEASON, TeamAId, TeamBId;
 CREATE VIEW IF NOT EXISTS PlayoffSerieWithStage as
-select PS.SEASON, MATCHUP_TEAM1, TEAM1_ID, MATCHUP_TEAM2, TEAM2_ID, TeamAWins, TeamBWins, SerieOrder, LevelTitle from PlayoffSerieSummary PSS
-    inner join Teams TA on TA.TEAM_ABBREVIATION=PSS.TeamAAbbrevation
-    inner join Teams TB on TB.TEAM_ABBREVIATION=PSS.TeamBAbbrevation
-    left join PlayoffSeries PS on
+select PSS.SEASON, PS.TeamAId, TSA.TEAM_ABBREVIATION as TeamAAbbrevation, TSA.TEAM_NAME as TeamAName, PS.TeamBId, TSA.TEAM_ABBREVIATION as TeamBAbbrevation, TSB.TEAM_NAME as TeamBName, TeamAWins, TeamBWins, SerieOrder, LevelTitle
+from PlayoffSerieSummary PSS
+    left join PlayoffSerieByTeamsId PS on
         PSS.Season = PS.SEASON and
-        ((TA.TEAM_ID = PS.TEAM1_ID and TB.TEAM_ID = PS.TEAM2_ID) or
-        (TB.TEAM_ID = PS.TEAM1_ID and TA.TEAM_ID = PS.TEAM2_ID))
-group by PS.SEASON, TEAM1_ID, TEAM2_ID;
+        PS.TeamAId = PSS.TeamAId and
+        PS.TeamBId = PSS.TeamBId
+    inner join TeamSequence TSA on
+        TSA.TEAM_ID = PSS.TeamAId and
+        TSA.FirstSeason <= PSS.Season and
+        TSA.LastSeason >= PSS.Season
+    inner join TeamSequence TSB on
+        TSB.TEAM_ID = PSS.TeamBId and
+        TSB.FirstSeason <= PSS.Season and
+        TSB.LastSeason >= PSS.Season
+group by PSS.SEASON, PSS.TeamAId, PSS.TeamBId;
