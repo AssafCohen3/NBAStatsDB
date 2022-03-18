@@ -26,6 +26,10 @@ SEASON_TYPES = [
         'name': "Playoffs",
         'code': 4
     },
+    {
+        'name': "PlayIn",
+        'code': 5
+    },
 ]
 ODDS_TYPES = [
     "Round 1",
@@ -107,4 +111,8 @@ BR_ABBR_TO_NBA_ABBR = {
     'WSB': 'WAS',
     'WSC': 'WAS',
     'TOR': 'TOR',
+}
+
+ODDS_TEAM_NAMES = {
+    'Los Angeles Clippers': 'LA Clippers'
 }

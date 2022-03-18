@@ -1,10 +1,12 @@
 #  using https://github.com/dblackrun/pbpstats
+from json import dumps
+
 from pbp.MyPBPLoader import MyPBPLoader
 
 
 def fix_order_when_jumpball_before_start_of_perios(events):
     events = events['resultSets'][0]['rowSet']
-    if events[0][2] != 12 and events[0][2] == 10:
+    if events[0][2] != 12 and events[0][2] in (10, 7):
         if events[1][2] == 12:
             # jump ball and period start switched
             tmp_jump_ball = events[0]
@@ -18,21 +20,48 @@ def fix_order_when_jumpball_before_start_of_perios(events):
                     e[1] = e[1] + 1
 
 
-def inject_period_start_at_need(events):
-    events = events['resultSets'][0]['rowSet']
-    if events[0][2] == 12 and events[1][2] != 12:
-        # jump ball and period start switched
-        tmp_jump_ball = events[0]
-        events[0] = events[1]
-        events[1] = tmp_jump_ball
+def remove_empty_sub_events(events):
+    to_filter = events['resultSets'][0]['rowSet']
+    to_filter = [e for e in to_filter if not (
+        e[2] == 8 and
+        e[12] == 0 and
+        e[19] == 0 and
+        e[26] == 0
+    )]
+    events['resultSets'][0]['rowSet'] = to_filter
 
 
-def transform_game_events(game_id, team_a_id, team_b_id, events):
+def remove_unnecessery_overtimes(events):
+    to_filter = events['resultSets'][0]['rowSet']
+    if to_filter[-1][2] == 12 and to_filter[-1][4] > 4:
+        to_filter.pop(len(to_filter) - 1)
+    events['resultSets'][0]['rowSet'] = to_filter
+
+
+def remove_subtitutions_at_end(events):
+    to_filter = events['resultSets'][0]['rowSet']
+    if to_filter[-1][2] == 8:
+        to_filter.pop(len(to_filter) - 1)
+    events['resultSets'][0]['rowSet'] = to_filter
+
+
+def fix_events(events):
     fix_order_when_jumpball_before_start_of_perios(events)
+    remove_unnecessery_overtimes(events)
+    remove_empty_sub_events(events)
+    remove_subtitutions_at_end(events)
+
+
+def transform_game_events(game_id, team_a_id, team_a_name, team_b_id, team_b_name, events):
+    fix_events(events)
     tranformed_events = MyPBPLoader(game_id, events)
     tranformed_events = [
         [
             e.game_id,
+            team_a_id,
+            team_a_name,
+            team_b_id,
+            team_b_name,
             e.event_num,
             e.event_type,
             e.event_action_type,
@@ -58,8 +87,8 @@ def transform_game_events(game_id, team_a_id, team_b_id, events):
             1 if e.count_as_possession else 0,
             1 if e.is_possession_ending_event else 0,
             e.seconds_since_previous_event,
-            e.lineup_ids[team_a_id],
-            e.lineup_ids[team_b_id],
+            dumps([int(i) for i in e.lineup_ids[team_a_id].split('-')]),
+            dumps([int(i) for i in e.lineup_ids[team_b_id].split('-')]),
             e.fouls_to_give[team_a_id],
             e.fouls_to_give[team_b_id],
             e.previous_event.event_num if e.previous_event else None,

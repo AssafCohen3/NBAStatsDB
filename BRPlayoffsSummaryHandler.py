@@ -56,12 +56,14 @@ class BRPlayoffsSummaryHandler:
             winner_row = winner_row[0]
             loser_row = loser_row[0]
             winner_id = winner_row[0]
+            winner_name = winner_row[2]
             loser_id = loser_row[0]
+            loser_name = loser_row[2]
             results = summary_col.contents[-1].getText().strip().replace('(', '').replace(')', '').split('-')
             winner_wins = int(results[0])
             loser_wins = int(results[1])
-            team_a_id, team_a_wins, team_b_id, team_b_wins = (winner_id, winner_wins, loser_id, loser_wins) if winner_id < loser_id else (loser_id, loser_wins, winner_id, winner_wins)
-            to_ret.append([self.season, team_a_id, team_b_id, team_a_wins, team_b_wins, winner_id, loser_id, level + 1, level_description])
+            team_a_id, team_a_name, team_a_wins, team_b_id, team_b_name, team_b_wins = (winner_id, winner_name, winner_wins, loser_id, loser_name, loser_wins) if winner_id < loser_id else (loser_id, loser_name, loser_wins, winner_id, winner_name, winner_wins)
+            to_ret.append([self.season, team_a_id, team_a_name, team_b_id, team_b_name, team_a_wins, team_b_wins, winner_id, winner_name, loser_id, loser_name, level + 1, level_description])
         return to_ret
 
     def to_cache(self, data):
