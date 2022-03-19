@@ -1,0 +1,26 @@
+with ShotsToTieOrTakeTheLead as (
+    select * from Shots
+    where RemainingSeconds <= 5 and Period >= 4 and TeamAId = PlayerATeamId and ScoreMargin >= -ShotValue and ScoreMargin <= 0
+    union all
+    select * from Shots
+    where RemainingSeconds <= 5 and Period >= 4 and Shots.TeamBId = PlayerATeamId and ScoreMargin <= ShotValue and ScoreMargin >= 0
+),
+     WITH_TOTALS as (
+    select PlayerAId, PLAYER_NAME,
+           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS
+    from ShotsToTieOrTakeTheLead
+        inner join BoxScoreP on GAME_ID = GameId and PLAYER_ID = PlayerAId
+    group by PlayerAId
+     )
+select playeraid, PLAYER_NAME,
+       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
+       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
+       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
+       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+from WITH_TOTALS
+where FGA >= 20
+order by FGA desc

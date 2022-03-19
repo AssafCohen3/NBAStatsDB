@@ -1,5 +1,8 @@
-import matplotlib as plt
+import sqlite3
+
+import matplotlib.pyplot as plt
 import pandas as pd
+from constants import *
 
 
 # get average career length
@@ -118,13 +121,13 @@ def plot_triple_double_record(df, limit):
 
 
 def get_underdog_data(conn, min_threshold):
-    cmd = """select PS.PLAYER_ID, PS.PLAYER_NAME, count(distinct SERIES_START) as SERIES_COUNT,
+    cmd = """select PS.PLAYER_ID, PS.PLAYER_NAME, count(distinct SerieStart) as SERIES_COUNT,
              sum(case PS.SHOULD_WON = 1 and PS.WON = 1 when true then 1 else 0 end) as FAVOURITE_WINS,
              sum(case PS.SHOULD_WON = 1 and PS.WON = 0 when true then 1 else 0 end) as FAVOURITE_LOSES,
              sum(case PS.SHOULD_LOST = 1 and PS.WON = 1 when true then 1 else 0 end) as UNDERDOG_WINS,
              sum(case PS.SHOULD_LOST = 1 and PS.WON = 0 when true then 1 else 0 end) as UNDERDOG_LOSES,
              sum(case PS.SHOULD_LOST = 1 and PS.WON = 1 when true then 1 else 0 end) - sum(case PS.SHOULD_WON = 1 and PS.WON = 0 when true then 1 else 0 end) as RATIO
-      from PlayerSeriesWithOdds PS inner join Teams T on T.TEAM_ABBREVIATION = PS.TEAM_SERIE and PS.SEASON <= T.LAST_USED and PS.SEASON >= T.FIRST_USED
+      from PlayerSeriesWithOdds PS inner join Teams T on T.TEAM_ID = PS.TeamId and PS.SEASON <= T.LAST_USED and PS.SEASON >= T.FIRST_USED
       where AVG_MIN >= :minimum_minutes
       group by PS.PLAYER_ID
       order by SERIES_COUNT desc"""
@@ -137,3 +140,37 @@ def get_underdog_data(conn, min_threshold):
 def differ(list1, list2):
     differ_list = [x for x in list2 if x not in list1]
     print(differ_list)
+
+
+def plot_average_win_percent_on_high_score(conn):
+    df = pd.read_sql_query("""
+    with HIGH_SCORE_GAMES as (
+        select
+               BoxScoreP.SEASON,
+               PLAYER_ID, PLAYER_NAME, TEAM_NAME,
+               PTS, GAME_DATE, TeamAName, TeamBName, TS.WinPercent               
+        from BoxScoreP
+            inner join TeamSeason TS on
+                TS.SEASON = BoxScoreP.SEASON and
+                ((BoxScoreP.TEAM_ID = TeamAId and TeamBId = TS.TEAM_ID) or
+                 (BoxScoreP.TEAM_ID = TeamBId and TeamAId = TS.TEAM_ID))
+        where PTS >= 50
+        )
+    select SEASON as Range, avg(WinPercent) * 100 as AVG_WIN_PCT from HIGH_SCORE_GAMES
+    group by SEASON
+    """, conn)
+    df.plot(x='Range', y='AVG_WIN_PCT', kind='line')
+    plt.show()
+
+
+def get_connection():
+    return sqlite3.connect(DATABASE_PATH + DATABASE_NAME + '.sqlite')
+
+
+def main():
+    conn = get_connection()
+    plot_average_win_percent_on_high_score(conn)
+
+
+if __name__ == '__main__':
+    main()
