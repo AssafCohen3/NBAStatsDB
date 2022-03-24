@@ -1,6 +1,8 @@
 BOXSCORES_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
 PBP_ENDPOINT = 'https://stats.nba.com/stats/playbyplayv2?GameId=%s&StartPeriod=0&EndPeriod=14'
 ODDS_ENDPOINT = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
+PLAYERS_INDEX_ENDPOINT = 'https://stats.nba.com/stats/playerindex?Historical=1&LeagueID=00&Season=%s&SeasonType=Regular+Season'
+TEAM_ROSTER_ENDPOINT = 'https://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=%s&TeamID=%s'
 STATS_HEADERS = {
         'Host': 'stats.nba.com',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
@@ -47,6 +49,8 @@ BOXSCORE_FILE_TEMPLATE = "boxscore_%s_%s_%s.json"
 PBP_FILE_TEMPLATE = "pbp_%s.json"
 ODDS_FILE_TEMPLATE = "odds_%s.html"
 PLAYOFF_PAGE_FILE_TEMPLATE = "playoff_summery_%s.html"
+PLAYERS_INDEX_FILE_TEMPLATE = "players_index_%s.json"
+TEAM_ROSTER_FILE_TEMPLATE = 'team_roster_%s_%s.json'
 MISSING_FILES_FILE = "missing_files.txt"
 PBP_FIRST_SEASON = 1996
 

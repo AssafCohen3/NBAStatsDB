@@ -1,0 +1,23 @@
+with ADJUSTED_POINTS_TO_CRITERIA as (
+    select PlayerSeasonFullStatsWithLastTeam.*, StatsCriteria,
+           iif(GAMES_PLAYED >= StatsCriteria, 1, 0) as MadeCriteria,
+           round(TOTAL_PTS / (1.0 * max(GAMES_PLAYED, StatsCriteria)), 2) as AdjustedAverage
+    from PlayerSeasonFullStatsWithLastTeam
+    inner join SeasonStatsCriteria SSC on PlayerSeasonFullStatsWithLastTeam.SEASON = SSC.SEASON
+),
+     PLAYERS_SCORING_RANKING as (
+    select *,
+           row_number() over (partition by SEASON order by AdjustedAverage desc ) as scoring_rank
+    from ADJUSTED_POINTS_TO_CRITERIA
+),
+     SCORING_CHAMPIONS as (
+        select
+               SEASON, PLAYER_ID, PLAYER_NAME, PLAYER_TEAMS, LastTeamId, LastTeamName, GAMES_PLAYED, StatsCriteria, MadeCriteria, scoring_rank, AdjustedAverage, AVG_PTS, TOTAL_PTS, AVG_FGA, TOTAL_FGA
+        from PLAYERS_SCORING_RANKING
+        where scoring_rank = 1
+        order by SEASON desc
+)
+select SCORING_CHAMPIONS.*, TS.GamesPlayed, TS.Wins, TS.Loses, Ts.WinPercent
+from SCORING_CHAMPIONS
+    inner join TeamSeason TS on TS.SEASON = SCORING_CHAMPIONS.SEASON and TS.TEAM_ID = SCORING_CHAMPIONS.LastTeamId
+order by WinPercent

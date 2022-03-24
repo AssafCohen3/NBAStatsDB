@@ -16,21 +16,22 @@ import OddsCacheHandler
 from BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
 from OddsCacheHandler import OddsCacheHandler
 from PBPCacheHandler import PBPCacheHandler
+from PlayersHandler import PlayersHandler
 from constants import *
 from BoxScoreCacheHandler import BoxScoreCacheHandler
 
 
 class DatabaseHandler:
-    def __init__(self, use_cache=False, cache_missing_files=False, download_odds=False, download_pbps='none'):
+    def __init__(self, use_cache=False, to_cache_missing_files=False, download_odds=False, download_pbps='none'):
         sqlite3.register_adapter(int64, int)
         sqlite3.register_adapter(int32, int)
         self.conn = self.get_connection()
         self.use_cache = use_cache
-        self.cache_missing_files = cache_missing_files
+        self.to_cache_missing_files = to_cache_missing_files
         self.download_odds = download_odds
         self.download_pbps = download_pbps
         self.create_folders()
-        if self.cache_missing_files:
+        if self.to_cache_missing_files:
             self.missing_files = self.get_missing_files()
 
     @staticmethod
@@ -90,7 +91,7 @@ class DatabaseHandler:
 
     # creating cache and database folders
     def create_folders(self):
-        if self.use_cache or self.cache_missing_files:
+        if self.use_cache or self.to_cache_missing_files:
             Path(CACHE_PATH).mkdir(parents=True, exist_ok=True)
         Path(DATABASE_PATH).mkdir(parents=True, exist_ok=True)
 
@@ -113,6 +114,16 @@ class DatabaseHandler:
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", summeries)
         self.conn.commit()
 
+    def insert_players(self, players):
+        self.conn.executemany(f"""insert into Player (PlayerId, FirstName, LastName, PlayerSlug, Active, Position, Height, Weight, College, Country, DraftYear, DraftRound, DraftNumber, BirthDate, UpdatedAtSeason) 
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", players)
+        self.conn.commit()
+
+    def update_players_table(self, players):
+        self.conn.executemany(f"""update Player set FirstName=?, LastName=?, PlayerSlug=?, Active=?, Position=?, Height=?, Weight=?, College=?, Country=?, DraftYear=?, DraftRound=?, DraftNumber=?, UpdatedAtSeason=? 
+        where PlayerId=?""", players)
+        self.conn.commit()
+
     def save_odds_dataframe(self, df):
         self.insert_odds(list(df.to_records(index=False)))
 
@@ -128,6 +139,9 @@ class DatabaseHandler:
 
     def save_summeries(self, summeries):
         self.insert_series_summary(summeries)
+
+    def save_players(self, players):
+        self.insert_players(players)
 
     def create_players_boxscores_table(self):
         self.conn.execute("""
@@ -300,6 +314,30 @@ class DatabaseHandler:
             )
         """)
 
+    def create_players_table(self):
+        self.conn.execute("""
+            create table if not exists Player
+            (
+                PlayerId integer primary key,
+                FirstName text,
+                LastName text,
+                FullName text generated always as ( FirstName || ' ' || LastName ) VIRTUAL,
+                PlayerSlug text,
+                Active integer,
+                Position text,
+                Height text,
+                Weight text,
+                College text,
+                Country text,
+                DraftYear integer,
+                DraftRound integer,
+                DraftNumber integer,
+                BirthDate datetime,
+                UpdatedAtSeason integer
+            )
+        """)
+        self.conn.commit()
+
     # returns the last saved date of some box score type plus 1 day(empty string if none found)
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
@@ -316,19 +354,30 @@ class DatabaseHandler:
             return res[0][0] if res else FIRST_ODDS_SEASON
         return FIRST_ODDS_SEASON
 
+    def is_players_updated(self):
+        tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name='Player'""").fetchall()
+        if tables:
+            res = self.conn.execute(f"""select UpdatedAtSeason from Player order by UpdatedAtSeason desc limit 1""").fetchall()
+            if len(res) > 0:
+                if res[0][0] >= LAST_SEASON:
+                    return 2
+                return 1
+        return 0
+
     def get_games_without_events(self, season_type_code):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=? or name=?""", [f'Event', 'BoxScoreT']).fetchall()
         if len(tables) > 1:
             res = self.conn.execute(f"""
             select distinct
                    BoxScoreT.GAME_ID,
-                   min(TEAM_ID) over (partition by GAME_ID order by TEAM_ID rows between unbounded PRECEDING and unbounded following ),
-                   min(TEAM_NAME) over (partition by GAME_ID order by TEAM_ID rows between unbounded PRECEDING and unbounded following ),
-                   max(TEAM_ID) over (partition by GAME_ID order by TEAM_ID rows between unbounded PRECEDING and unbounded following ),
-                   max(TEAM_NAME) over (partition by GAME_ID order by TEAM_ID rows between unbounded PRECEDING and unbounded following)
+                   first_value(TEAM_ID) over W1 as TeamAId,
+                   first_value(TEAM_NAME) over W1 as TeamAName,
+                   last_value(TEAM_ID) over W1 as TeamBId,
+                   last_value(TEAM_NAME) over W1 as TeamBName
             from BoxScoreT
             left join Event on Event.GameId = BoxScoreT.GAME_ID
-            where Event.GameId is null and BoxScoreT.SEASON_TYPE=? and SEASON >= ? and WL is not null""",
+            where Event.GameId is null and BoxScoreT.SEASON_TYPE=? and SEASON >= ? and WL is not null
+            window W1 as (partition by GAME_ID order by TEAM_ID rows between unbounded preceding and unbounded following)""",
                                     [season_type_code, PBP_FIRST_SEASON]).fetchall()
             return res
         return []
@@ -362,7 +411,7 @@ class DatabaseHandler:
             with open(CACHE_PATH + file_name, "rb") as f:
                 to_ret = cache_handler.load_file(f)
         else:
-            if self.cache_missing_files and file_name in self.missing_files:
+            if self.to_cache_missing_files and file_name in self.missing_files:
                 print(f"file {file_name} is missing. skipping.")
                 return None
             try:
@@ -372,14 +421,14 @@ class DatabaseHandler:
                     with open(CACHE_PATH + file_name, "w") as f2:
                         cache_handler.cache(to_ret, f2)
                     print(f"Cached {file_name}.")
-            except ValueError:
+            except ValueError as e:
                 print(f'failed downloading {file_name}')
-                self.cache_missing_files(file_name)
+                self.cache_missing_file(file_name)
                 return None
         return to_ret
 
     def cache_missing_file(self, file_name):
-        if self.cache_missing_files:
+        if self.to_cache_missing_files:
             with open(CACHE_PATH + MISSING_FILES_FILE, "a") as f:
                 f.write(file_name + "\n")
 
@@ -494,6 +543,16 @@ class DatabaseHandler:
         for season, season_link in seasons:
             self.update_playoff_summary(season, season_link, current_teams)
 
+    def update_players(self):
+        is_updated = self.is_players_updated()
+        if is_updated <= 2:
+            data = self.handle_cache(PlayersHandler(LAST_SEASON))
+            data = data['resultSets'][0]['rowSet']
+            if is_updated > 0:
+                self.update_players_table([[p[2], p[1], p[3], 1 if p[19] else 0, p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], LAST_SEASON, p[0]] for p in data])
+            else:
+                self.insert_players([[p[0], p[2], p[1], p[3], 1 if p[19] else 0, p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], None, LAST_SEASON] for p in data])
+
     # download and saves odds for a season
     def collect_season_odds(self, season):
         df = self.handle_cache(OddsCacheHandler(season))
@@ -532,6 +591,9 @@ class DatabaseHandler:
 
     # create the whole database
     def create_database(self):
+        print('setting players table...')
+        self.create_players_table()
+        self.update_players()
         print('setting boxscore tables...')
         self.create_players_boxscores_table()
         self.create_teams_boxscores_table()
@@ -567,7 +629,7 @@ def main():
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
     parser.add_argument('-wv', '--views_out', type=str, help='Write views to file(override other options)')
     args = parser.parse_args()
-    handler = DatabaseHandler(use_cache=args.cache, cache_missing_files=args.missing, download_odds=args.odds, download_pbps=args.events)
+    handler = DatabaseHandler(use_cache=args.cache, to_cache_missing_files=args.missing, download_odds=args.odds, download_pbps=args.events)
     if args.views_in is not None:
         handler.load_views(args.views_in)
     elif args.views_out is not None:
@@ -579,6 +641,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
