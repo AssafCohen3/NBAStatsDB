@@ -488,3 +488,13 @@ from BoxScoreP
 inner join PLAYERS_WITH_LAST_SEASON on PLAYERS_WITH_LAST_SEASON.PLAYER_ID = BoxScoreP.PLAYER_ID and PLAYERS_WITH_LAST_SEASON.SEASON = BoxScoreP.SEASON
 where SEASON_TYPE=2
 group by BoxScoreP.PLAYER_ID, BoxScoreP.SEASON;
+CREATE VIEW IF NOT EXISTS BoxScorePWithAge as
+select BoxScoreP.*,
+       julianday(GAME_DATE) - julianday(BirthDate) as DaysDiff,
+       cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', BirthDate) as int) as AgeYears,
+       -- AgeDays = days between current date and last birthday = days between Cy/Cm/Cd and (By + (C-B)y)/Bm/Bd
+       cast((julianday(GAME_DATE) -
+       julianday(datetime(BirthDate, '+' || cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', BirthDate) as int) || ' years'))) as integer)
+           as AgeDays
+from BoxScoreP
+inner join Player on PlayerId = PLAYER_ID;

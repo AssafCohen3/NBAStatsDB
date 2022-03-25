@@ -1,0 +1,13 @@
+with
+     WITH_MINS as (
+         select PLAYER_ID,
+                PLAYER_NAME,
+                AgeYears,
+                AgeDays,
+                min(DaysDiff) as MinAgeDays
+         from BoxScorePWithAge
+         group by PLAYER_ID
+)
+select *
+from WITH_MINS
+order by MinAgeDays
