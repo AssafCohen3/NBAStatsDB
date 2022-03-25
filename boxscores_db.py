@@ -7,30 +7,34 @@ import requests
 from bs4 import BeautifulSoup
 from numpy import int32, int64
 import argparse
+from datetime import datetime
 #  very important for pbp. fix some issues
 from requests import HTTPError
 
-import pbp.Patcher
 import EventMaker
-import OddsCacheHandler
-from BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
-from OddsCacheHandler import OddsCacheHandler
-from PBPCacheHandler import PBPCacheHandler
-from PlayersHandler import PlayersHandler
+from Handlers import OddsCacheHandler
+from Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
+from Handlers.OddsCacheHandler import OddsCacheHandler
+from Handlers.PBPCacheHandler import PBPCacheHandler
+from Handlers.PlayerAwardsHandler import PlayerAwardsHandler
+from Handlers.PlayerProfileHandler import PlayerProfileHandler
+from Handlers.TeamDetailsHandler import TeamDetailsHandler
+from PlayersCover import get_teams_cover
+from Handlers.PlayersHandler import PlayersHandler
+from Handlers.TeamRosterHandler import TeamRosterHandler
 from constants import *
-from BoxScoreCacheHandler import BoxScoreCacheHandler
+from Handlers.BoxScoreCacheHandler import BoxScoreCacheHandler
 
 
 class DatabaseHandler:
-    def __init__(self, use_cache=False, to_cache_missing_files=False, download_odds=False, download_pbps='none'):
+    def __init__(self, use_cache=False, to_cache_missing_files=False):
         sqlite3.register_adapter(int64, int)
         sqlite3.register_adapter(int32, int)
         self.conn = self.get_connection()
         self.use_cache = use_cache
         self.to_cache_missing_files = to_cache_missing_files
-        self.download_odds = download_odds
-        self.download_pbps = download_pbps
         self.create_folders()
+        self.current_teams = None
         if self.to_cache_missing_files:
             self.missing_files = self.get_missing_files()
 
@@ -68,6 +72,8 @@ class DatabaseHandler:
         df['TeamBName'] = team_ids.transform(lambda x: df.loc[x.idxmax(), 'TEAM_NAME'])
 
     def collect_teams(self):
+        if self.current_teams is not None:
+            return self.current_teams
         boxscore_teams_table = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name='BoxScoreT'""").fetchall()
         if len(boxscore_teams_table):
             sql = """with
@@ -86,6 +92,7 @@ class DatabaseHandler:
             order by FirstSeason
             """
             res = self.conn.execute(sql).fetchall()
+            self.current_teams = res
             return res
         return []
 
@@ -119,9 +126,19 @@ class DatabaseHandler:
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", players)
         self.conn.commit()
 
+    def insert_awards(self, awards):
+        self.conn.executemany(f"""insert or ignore into Awards (PlayerId, FullName, Jersey, Position, TeamId, TeamName, Description, AllNBATeamNumber, Season, DateAwarded, Confrence, AwardType, SubTypeA, SubTypeB, SubTypeC)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", awards)
+        self.conn.commit()
+
     def update_players_table(self, players):
         self.conn.executemany(f"""update Player set FirstName=?, LastName=?, PlayerSlug=?, Active=?, Position=?, Height=?, Weight=?, College=?, Country=?, DraftYear=?, DraftRound=?, DraftNumber=?, UpdatedAtSeason=? 
         where PlayerId=?""", players)
+        self.conn.commit()
+
+    def update_players_birthdate(self, players_birthdates):
+        self.conn.executemany(f"""update Player set BirthDate=? 
+        where PlayerId=?""", players_birthdates)
         self.conn.commit()
 
     def save_odds_dataframe(self, df):
@@ -338,6 +355,30 @@ class DatabaseHandler:
         """)
         self.conn.commit()
 
+    def create_awards_and_honors_table(self):
+        self.conn.execute("""
+            create table if not exists Awards
+            (
+                PlayerId integer,
+                FullName text,
+                Jersey text,
+                Position text,
+                TeamId integer,
+                TeamName text,
+                Description text,
+                AllNBATeamNumber integer,
+                Season integer,
+                DateAwarded datetime,
+                Confrence text,
+                AwardType text,
+                SubTypeA text,
+                SubTypeB text,
+                SubTypeC text,
+                unique (PlayerId, FullName, Position, Jersey, TeamId, Season, Description, DateAwarded)
+            )
+        """)
+        self.conn.commit()
+
     # returns the last saved date of some box score type plus 1 day(empty string if none found)
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
@@ -415,13 +456,15 @@ class DatabaseHandler:
                 print(f"file {file_name} is missing. skipping.")
                 return None
             try:
+                print(f'Downloading {file_name}...')
                 to_ret = cache_handler.downloader()
+                # time.sleep(1)
                 print(f"Downloaded {file_name}.")
                 if self.use_cache and cache_handler.to_cache(to_ret):
                     with open(CACHE_PATH + file_name, "w") as f2:
                         cache_handler.cache(to_ret, f2)
                     print(f"Cached {file_name}.")
-            except ValueError as e:
+            except ValueError:
                 print(f'failed downloading {file_name}')
                 self.cache_missing_file(file_name)
                 return None
@@ -553,6 +596,30 @@ class DatabaseHandler:
             else:
                 self.insert_players([[p[0], p[2], p[1], p[3], 1 if p[19] else 0, p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], None, LAST_SEASON] for p in data])
 
+    def update_players_birthdates(self):
+        # this for some reason exist only in the player profile endpoint and the team roster endpoint.
+        # instead of making a request for each player try to find a set of teams rosters which contains all players
+        # this reduce the request to something around 1000(instead of 4000)
+        teams_cover = get_teams_cover(self.conn)
+        print(f'{len(teams_cover)} teams to cover...')
+        for (season, tid), expected_players in teams_cover:
+            handler = TeamRosterHandler(season, tid)
+            data = self.handle_cache(handler)
+            data = data['resultSets'][0]['rowSet']
+            # players_ids = set([p[14] for p in data])
+            # # print('expected ids: ', players_ids.intersection(expected_players))
+            # # print('unexpected ids: ', players_ids - expected_players)
+            # # print('expected and not found ids: ', expected_players - players_ids)
+            players = [(datetime.strptime(p[10], '%b %d, %Y').isoformat(), p[14]) for p in data]
+            self.update_players_birthdate(players)
+        uncovered_players = self.conn.execute("""select PlayerId from Player where BirthDate is null""").fetchall()
+        print(f'{len(uncovered_players)} players not covered. starting profile requests...')
+        for pid in uncovered_players:
+            handler = PlayerProfileHandler(pid)
+            data = self.handle_cache(handler)
+            data = data['resultSets'][0]['rowSet']
+            self.update_players_birthdate([(data[0][7], data[0][0])])
+
     # download and saves odds for a season
     def collect_season_odds(self, season):
         df = self.handle_cache(OddsCacheHandler(season))
@@ -566,6 +633,71 @@ class DatabaseHandler:
             to_ret = round_df if to_ret is None else pd.concat([to_ret, round_df], ignore_index=True)
         to_ret['Team'] = to_ret['Team'].map(ODDS_TEAM_NAMES).fillna(df['Team'])
         self.save_odds_dataframe(to_ret)
+
+    def collect_hofs_and_retires(self):
+        team_ids = self.conn.execute("""select distinct TEAM_ID from Teams""").fetchall()
+        for (tid, ) in team_ids:
+            handler = TeamDetailsHandler(tid)
+            data = self.handle_cache(handler)
+            data = data['resultSets']
+            hof_data = data[6]['rowSet']
+            retired_data = data[7]['rowSet']
+            hof_awards = [[p[0] if p[0] else 0,
+                           p[1],
+                           '#',
+                           '#',
+                           0,
+                           None,
+                           'Hall of Fame Inductee',
+                           None,
+                           p[5] if p[5] else 0,
+                           '',
+                           None, 'Award', 'Hall of Fame', None, None] for p in hof_data]
+            retired_honors = [[p[0] if p[0] else 0,
+                               p[1],
+                               p[3] if p[3] else '#',
+                               p[2] if p[2] else '#',
+                               tid,
+                               None,
+                               'Retired Jersey',
+                               None,
+                               p[5] if p[5] else 0,
+                               '',
+                               None, 'Honor', 'Retired Jersey', None, None] for p in retired_data]
+            self.insert_awards(hof_awards + retired_honors)
+
+    def collect_awards(self):
+        self.collect_teams()
+
+        def transform_award(award_row):
+            full_name = award_row[1] + ' ' + award_row[2]
+            season = int(award_row[6].split('-')[0]) if award_row[6] else 0
+            team_id = [t[0] for t in self.current_teams if t[2] == award_row[3] and t[3] <= season <= t[4]] if award_row[3] else 0
+            if award_row[3]:
+                if len(team_id) == 0:
+                    print(f'****************************************{award_row[3]} - {season}******************************')
+                    team_id = award_row[3]
+                else:
+                    team_id = team_id[0]
+            date_awarded = datetime.strptime(award_row[7], '%m/%d/%Y').isoformat() if award_row[7] else (award_row[8] if award_row[8] else '')
+            return [award_row[0],
+                    full_name,
+                    '#',
+                    '#',
+                    team_id,
+                    award_row[3],
+                    award_row[4] if award_row[4] else '',
+                    int(award_row[5]) if award_row[5] else None,
+                    season,
+                    date_awarded,
+                    award_row[9], award_row[10], award_row[11], award_row[12], award_row[13]]
+        player_ids = self.conn.execute("""select distinct PlayerId from Player""").fetchall()
+        for (pid, ) in player_ids:
+            handler = PlayerAwardsHandler(pid)
+            data = self.handle_cache(handler)
+            data = data['resultSets'][0]['rowSet']
+            awards = [transform_award(p) for p in data]
+            self.insert_awards(awards)
 
     # updates(start form last saved year) odds
     def update_odds(self):
@@ -589,35 +721,48 @@ class DatabaseHandler:
             f.write(output)
         print(f'written successfully {len(sqls)} views.')
 
-    # create the whole database
-    def create_database(self):
+    # the basic and common update
+    def update_base(self):
         print('setting players table...')
         self.create_players_table()
         self.update_players()
         print('setting boxscore tables...')
         self.create_players_boxscores_table()
         self.create_teams_boxscores_table()
-        self.create_series_levels_table()
         self.update_boxscores_table('P')
         self.update_boxscores_table('T')
+        print('setting playoff series table...')
+        self.create_series_levels_table()
         self.update_playoffs_summeries()
-        if self.download_pbps != 'none':
-            print('setting pbps table')
-            self.create_pbp_table()
-            # self.update_missing_events(SEASON_TYPES[2])  # for now update only playoffs
-            if self.download_pbps == 'all':
-                self.update_all_missing_events()
-            elif self.download_pbps == 'playoff':
-                self.update_missing_events(SEASON_TYPES[2])
-            elif self.download_pbps == 'regular':
-                self.update_missing_events(SEASON_TYPES[0])
-            elif self.download_pbps == 'allstar':
-                self.update_missing_events(SEASON_TYPES[1])
 
-        if self.download_odds:
-            print('setting odds table...')
-            self.create_odds_table()
-            self.update_odds()
+    def update_odds_database(self):
+        print('setting odds table...')
+        self.create_odds_table()
+        self.update_odds()
+
+    def update_hof_database(self):
+        print('setting awards table...')
+        self.create_awards_and_honors_table()
+        self.collect_hofs_and_retires()
+
+    def update_awards_database(self):
+        print('setting awards table...')
+        self.create_awards_and_honors_table()
+        self.collect_awards()
+
+    def update_events_database(self, option):
+        print('setting pbps table')
+        self.create_pbp_table()
+        if option == 'all':
+            self.update_all_missing_events()
+        elif option == 'playoff':
+            self.update_missing_events(SEASON_TYPES[2])
+        elif option == 'regular':
+            self.update_missing_events(SEASON_TYPES[0])
+        elif option == 'allstar':
+            self.update_missing_events(SEASON_TYPES[1])
+        elif option == 'playin':
+            self.update_missing_events(SEASON_TYPES[3])
 
 
 def main():
@@ -626,16 +771,30 @@ def main():
     parser.add_argument('-m', '--missing', help='Cache and ignore missing files', default=False, action='store_true')
     parser.add_argument('-o', '--odds', help='Update Odds table', default=False, action='store_true')
     parser.add_argument('-e', '--events', help='Update Events table', nargs='?', default='none', action='store', const='all')
+    parser.add_argument('-b', '--birthdates', help='Update Players birthdates', default=False, action='store_true')
+    parser.add_argument('-hof', '--hof', help='Update Hall of fame inductees and retired jersys players', default=False, action='store_true')
+    parser.add_argument('-aw', '--awards', help='Update Players awards', default=False, action='store_true')
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
     parser.add_argument('-wv', '--views_out', type=str, help='Write views to file(override other options)')
     args = parser.parse_args()
-    handler = DatabaseHandler(use_cache=args.cache, to_cache_missing_files=args.missing, download_odds=args.odds, download_pbps=args.events)
+    handler = DatabaseHandler(use_cache=args.cache, to_cache_missing_files=args.missing)
     if args.views_in is not None:
         handler.load_views(args.views_in)
     elif args.views_out is not None:
         handler.save_views(args.views_out)
     else:
-        handler.create_database()
+        handler.update_base()
+        if args.odds:
+            handler.update_odds_database()
+        if args.events:
+            handler.update_events_database(args.events)
+        if args.birthdates:
+            handler.update_players_birthdates()
+        if args.hof:
+            handler.update_hof_database()
+        if args.awards:
+            handler.update_awards_database()
+
     # handler.fix_abbrs()
 
 

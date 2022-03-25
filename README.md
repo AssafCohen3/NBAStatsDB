@@ -1,4 +1,4 @@
-A collection of my scripts to download and analyze nba boxscores and play by play data.
+A collection of my scripts to download and analyze nba boxscores, awards, and play by play data.
 
 # Examples
 * Players stats at elimination games
@@ -13,6 +13,13 @@ A collection of my scripts to download and analyze nba boxscores and play by pla
 * there is arround 27000 games to be collected so it will take a lot of time(12 hours for me)
 * the cache can grow up to gigabytes so consider running without caching
 * the database will also take a lot of space
+
+# Awards
+* i added awards downloader but yet to fully tested it.
+* it looks like the data in this endpoint is inconsistent so consider give up on this one.
+* the hof and retired jerseys is quick since it can be retrieved through the teams endpoint so only 50 requests is required
+* other awards require a request per player which means arround 5000 requests(this will take some hours)
+* like the play by play, the cache can grow up to gigabytes so consider running without caching
 
 # Setting up
 * requires Python >=3.6  
@@ -32,6 +39,9 @@ python3 boxscores_db.py -c #update only the boxscore tables with caching(downloa
 python3 boxscores_db.py -m #update only the boxscore tables with misses caching(files the script failed to download will be mark as missing and be ignored next time)
 python3 boxscores_db.py -o #updates the boxscore tables and the odds table
 python3 boxscores_db.py -e all #updates the boxscore tables and the play by play data of all games
+python3 boxscores_db.py -b #updates the boxscore tables and the players birthdate(may take some time)
+python3 boxscores_db.py -hof #updates the boxscore tables and the hall of fame inductees(not complete without awards option but almost complete)
+python3 boxscores_db.py -aw #updates the boxscore tables and the awards table(will take some time)
 ```
 
 after that step you can start query all the boxscores that had been collected. <br/>
