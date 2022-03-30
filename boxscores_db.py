@@ -9,6 +9,7 @@ from numpy import int32, int64
 import argparse
 from datetime import datetime
 #  very important for pbp. fix some issues
+import pbp.Patcher
 from requests import HTTPError
 
 import EventMaker
@@ -306,6 +307,7 @@ class DatabaseHandler:
                 PreviousEventNumber integer,
                 NextEventNumber integer,
                 EventOrder integer,
+                RealPossesionNumber integer,
                 primary key (GameId, EventNumber)
             );""")
         self.conn.commit()
@@ -551,7 +553,8 @@ class DatabaseHandler:
             'TeamBFoulsToGive',
             'PreviousEventNumber',
             'NextEventNumber',
-            'EventOrder'
+            'EventOrder',
+            'RealPossesionNumber'
         ]
         self.save_pbps(transformed_events, headers)
 
@@ -766,6 +769,7 @@ class DatabaseHandler:
 
 
 def main():
+    pbp.Patcher.foo()  # just for making sure formatter wont optimize out the Patcher import
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--cache', help='Cache downloaded files', default=False, action='store_true')
     parser.add_argument('-m', '--missing', help='Cache and ignore missing files', default=False, action='store_true')

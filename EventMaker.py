@@ -52,9 +52,19 @@ def fix_events(events):
     remove_subtitutions_at_end(events)
 
 
+def add_possesion_number(events):
+    current_possesion = 0
+    sorted_events = sorted(events, key=lambda ev: ev.order)
+    for e in sorted_events:
+        setattr(e, 'possesion_number', current_possesion)
+        if e.is_possession_ending_event:
+            current_possesion += 1
+
+
 def transform_game_events(game_id, team_a_id, team_a_name, team_b_id, team_b_name, events):
     fix_events(events)
     tranformed_events = MyPBPLoader(game_id, events)
+    add_possesion_number(tranformed_events.items)
     tranformed_events = [
         [
             e.game_id,
@@ -93,7 +103,8 @@ def transform_game_events(game_id, team_a_id, team_a_name, team_b_id, team_b_nam
             e.fouls_to_give[team_b_id],
             e.previous_event.event_num if e.previous_event else None,
             e.next_event.event_num if e.next_event else None,
-            e.order
+            e.order,
+            e.possesion_number
         ]
         for e in tranformed_events.items
     ]

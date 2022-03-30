@@ -1,4 +1,7 @@
 import pbpstats
+from pbpstats.resources.enhanced_pbp.rebound import EventOrderError
+from pbpstats.resources.enhanced_pbp.stats_nba import StatsViolation
+
 pbpstats.REQUEST_TIMEOUT = 60
 import requests
 from pbpstats import HEADERS, REQUEST_TIMEOUT
@@ -151,6 +154,7 @@ def get_offense_team_id(self):
             )
         return event_to_check.get_offense_team_id()
 
+
 @property
 def new_rebound_missed_shot_property(self):
     """
@@ -182,6 +186,44 @@ def new_rebound_missed_shot_property(self):
     return to_ret
 
 
+@property
+def missed_shot(self):
+    """
+    returns :obj:`~pbpstats.resources.enhanced_pbp.field_goal.FieldGoal` or
+    :obj:`~pbpstats.resources.enhanced_pbp.free_throw.FreeThrow` object
+    for shot that was missed
+
+    :raises: :obj:`~pbpstats.resources.enhanced_pbp.rebound.EventOrderError`:
+        If rebound event is not immediately following a missed shot event.
+    """
+    if isinstance(self.previous_event, (FieldGoal, FreeThrow)):
+        if not self.previous_event.is_made:
+            return self.previous_event
+    elif (
+        isinstance(self.previous_event, Turnover)
+        and self.previous_event.is_shot_clock_violation
+    ):
+        if isinstance(self.previous_event, FieldGoal):
+            return self.previous_event.previous_event
+    elif isinstance(self.previous_event, JumpBall):
+        prev_event = self.previous_event.previous_event
+        while isinstance(prev_event, (Substitution, Timeout)):
+            prev_event = prev_event.previous_event
+        if isinstance(prev_event, (FieldGoal, FreeThrow)):
+            return prev_event
+    elif isinstance(self.previous_event, StatsViolation) and self.previous_event.is_lane_violation \
+            and isinstance(self.previous_event.previous_event, (FieldGoal, FreeThrow)):
+        if not self.previous_event.previous_event.is_made:
+            return self.previous_event.previous_event
+    raise EventOrderError(
+        f"previous event: {self.previous_event} is not a missed free throw or field goal"
+    )
+
+
 setattr(StatsRebound, 'missed_shot', new_rebound_missed_shot_property)
 setattr(StatsEnhancedPbpItem, 'get_offense_team_id', get_offense_team_id)
 setattr(StatsStartOfPeriod, '_get_starters_from_boxscore_request', _get_starters_from_boxscore_request)
+
+
+def foo():
+    return 8

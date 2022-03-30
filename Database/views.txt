@@ -498,3 +498,48 @@ select BoxScoreP.*,
            as AgeDays
 from BoxScoreP
 inner join Player on PlayerId = PLAYER_ID;
+CREATE VIEW IF NOT EXISTS AndOnes as
+select distinct E1.*, iif(E1.Description like '%MISS%', 0, 1) as MadeShot
+from Event E1
+    inner join Event E2 on E1.GameId = E2.GameId and E1.Period = E2.Period and E1.RemainingSeconds = E2.RemainingSeconds and E2.EventType = 1 and E2.PlayerAId = E1.PlayerAId and E1.EventOrder > E2.EventOrder
+where E1.EventType=3 and E1.EventActionType=10;
+CREATE VIEW IF NOT EXISTS EventWithPossesionNumber as
+    with
+     WITH_POSESSION_NUMBER as (
+        select
+               *,
+               Event.EventOrder + 1 - row_number() over W1 as diff1
+        from Event
+        window
+            W1 as (partition by GameId, IsPossessionEndingEvent order by EventOrder)
+     )
+select *,
+       iif(IsPossessionEndingEvent = 1, lag(diff1) over W2, diff1) as RealPossesionNumber
+from WITH_POSESSION_NUMBER
+window W2 as (partition by GameId order by EventOrder);
+CREATE VIEW IF NOT EXISTS PlayerCareerPBPSeasonFullStats as
+select PLAYER_ID, PLAYER_NAME,
+        count(*) as GAMES_PLAYED,
+        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
+        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
+        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
+        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
+        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
+        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
+        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
+        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
+        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
+        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
+        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
+        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
+        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
+        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
+        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
+        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
+        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
+        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
+        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
+        round(avg(FTM)/avg(FTA), 2) as FT_PCT
+    from BoxScoreP BSP
+    where SEASON_TYPE = 2 and SEASON >= 1996
+    group by PLAYER_ID;
