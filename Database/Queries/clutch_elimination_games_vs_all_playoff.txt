@@ -1,0 +1,55 @@
+with
+
+     GROUPED_SHOTS as (
+    select PlayerAId, PLAYER_NAME,
+           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS
+    from PlayoffShots
+    inner join EliminationGames EG on EG.GAME_ID=PlayoffShots.GameId
+    where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5
+    group by PlayerAId
+), WITH_PERCENTS as (
+select playeraid, player_name,
+       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
+       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
+       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
+       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+from GROUPED_SHOTS
+),
+     ALL_GROUPED_SHOTS as (
+    select PlayerAId, PLAYER_NAME,
+           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS
+    from PlayoffShots
+    where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5
+    group by PlayerAId
+), ALL_WITH_PERCENTS as (
+select playeraid, player_name,
+       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
+       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
+       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
+       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+from ALL_GROUPED_SHOTS
+)
+select AP.PlayerAId, AP.PLAYER_NAME,
+       AP.FTM as AllFTM, AP.FTA as AllFTA, AP.FT_PCT as AllFT_PCT,
+       EP.FTM as ElFTM, EP.FTA as ElFTA, EP.FT_PCT as ElFT_PCT,
+       AP.FGM as AllFGM, AP.FGA as AllFGA, AP.FG_PCT as AllFG_PCT,
+       EP.FGM as ElFGM, EP.FGA as ElFGA, EP.FG_PCT as ElFG_PCT,
+       AP.FG3M as AllFG3M, AP.FG3A as AllFG3A, AP.FG3_PCT as AllFG3_PCT,
+       EP.FG3M as ElFG3M, EP.FG3A as ElFG3A, EP.FG3_PCT as ElFG3_PCT,
+       AP.EFG as AllEFG, EP.EFG as ElEFG,
+       AP.TS as AllTS, EP.TS as ElTS,
+       EP.FG_PCT - AP.FG_PCT as FG_PCT_DIFF,
+       EP.EFG - AP.EFG as EFG_DIFF,
+       EP.TS - AP.TS as TS_DIFF
+from ALL_WITH_PERCENTS AP
+    left join WITH_PERCENTS EP on AP.PlayerAId = EP.PlayerAId
+where ElFGA >= 20
+order by EFG_DIFF desc

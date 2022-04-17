@@ -23,58 +23,6 @@ order by PLAYER_ID, START_DATE;
 CREATE VIEW IF NOT EXISTS PlayerCareer as
 select PLAYER_ID, PLAYER_NAME, min(SEASON) as FIRST_SEASON, max(SEASON) as LAST_SEASON, count(distinct SEASON) as SEASONS_NUM, sum(MIN) as TOTAL_MINS, sum(PTS) as TOTAL_PTS, sum(REB) as TOTAL_REBS,
        sum(AST)  as TOTAL_ASTS from BoxScoreP group by PLAYER_ID;
-CREATE VIEW IF NOT EXISTS PlayerSeasonFullStats as
-select PLAYER_ID, PLAYER_NAME, SEASON, group_concat(distinct TEAM_ABBREVIATION) as PLAYER_TEAMS,
-        count(*) as GAMES_PLAYED,
-        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
-        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
-        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
-        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
-        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
-        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
-        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
-        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
-        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
-        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
-        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
-        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
-        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
-        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
-        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
-        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
-        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
-        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
-        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
-        round(avg(FTM)/avg(FTA), 2) as FT_PCT
-    from BoxScoreP BSP
-    where SEASON_TYPE=2
-    group by PLAYER_ID, SEASON;
-CREATE VIEW IF NOT EXISTS PlayerSeasonFullStat as
-select PLAYER_ID, PLAYER_NAME, SEASON, group_concat(distinct TEAM_ABBREVIATION) as PLAYER_TEAMS,
-        count(*) as GAMES_PLAYED,
-        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
-        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
-        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
-        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
-        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
-        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
-        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
-        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
-        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
-        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
-        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
-        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
-        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
-        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
-        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
-        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
-        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
-        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
-        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
-        round(avg(FTM)/avg(FTA), 2) as FT_PCT
-    from BoxScoreP BSP
-    where SEASON_TYPE=2
-    group by PLAYER_ID, SEASON;
 CREATE VIEW IF NOT EXISTS PlayerCareerFullStats as
 select PLAYER_ID, PLAYER_NAME,
         count(*) as GAMES_PLAYED,
@@ -125,8 +73,6 @@ select count(*) as GAMES_PLAYED,
         round(avg(FTM)/avg(FTA), 2) as FT_PCT
     from BoxScoreP BSP
     where SEASON_TYPE in (2, 4);
-CREATE VIEW IF NOT EXISTS PlayerSeasonAtTeam as
-    select SEASON, PLAYER_NAME, PLAYER_ID, TEAM_ID, TEAM_NAME from BoxScoreP group by SEASON, PLAYER_ID, TEAM_ID;
 CREATE VIEW IF NOT EXISTS PlayerCareerTeams as
     select PLAYER_NAME, PLAYER_ID, TEAM_NAME, TEAM_ID, count(distinct SEASON) as SeasonsAt from PlayerSeasonAtTeam group by PLAYER_ID, TEAM_ID;
 CREATE VIEW IF NOT EXISTS PlayerTeamMostSeasons as
@@ -135,10 +81,6 @@ CREATE VIEW IF NOT EXISTS PlayerTeamMostSeasons as
     FROM PlayerCareerTeams
 ) C
 WHERE RowNum = 1;
-CREATE VIEW IF NOT EXISTS TeamsCount as
-    select SEASON, count(distinct TEAM_ID) as TeamsNumber from BoxScoreP group by SEASON;
-CREATE VIEW IF NOT EXISTS PlayerTeamsCount as
-    select PLAYER_NAME, PLAYER_ID, count(distinct TEAM_ID) as PlayerTeamNumber from BoxScoreP group by PLAYER_ID;
 CREATE VIEW IF NOT EXISTS PlayerAdjustedTeamsNumber as
     select PSFS.PLAYER_NAME, PSFS.PLAYER_ID, round(avg(TC.TeamsNumber), 2) as AverageTeamNumber,
        min(PSFS.SEASON) as FirstYear, count(distinct PSFS.SEASON) as CareerLength,
@@ -193,43 +135,6 @@ select playeraid, player_name, Stage, Seconds,
        iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
        round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
 from GROUPED_SHOTS;
-CREATE VIEW IF NOT EXISTS EliminationGames as
-with
-     PLAYOFF_GAME_STATUS as (
-         select GAME_ID, TEAM_ID, WL, GAME_DATE,
-                count(*) filter ( where WL='L' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID order by GAME_DATE rows between unbounded preceding and 1 preceding) as lostGames,
-                count(*) filter ( where WL='W' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID) as seriesWins,
-                count(*) filter ( where WL='L' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID) as seriesLoses
-         from BoxScoreT
-         where SEASON_TYPE=4
-         )
-select
-PLAYER_ID, PLAYER_NAME,
-        count(*) as GAMES_PLAYED,
-        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
-        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
-        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
-        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
-        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
-        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
-        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
-        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
-        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
-        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
-        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
-        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
-        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
-        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
-        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
-        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
-        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
-        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
-        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
-        round(avg(FTM)/avg(FTA), 2) as FT_PCT
-from BoxScoreP
-    inner join PLAYOFF_GAME_STATUS on PLAYOFF_GAME_STATUS.GAME_ID = BoxScoreP.GAME_ID and PLAYOFF_GAME_STATUS.TEAM_ID = BoxScoreP.TEAM_ID
-where lostGames = max(seriesWins, seriesLoses) - 1
-group by PLAYER_ID;
 CREATE VIEW IF NOT EXISTS Finals as
 select
        Season,
@@ -238,39 +143,6 @@ select
        LoserId as LOSER_ID,
        LoserName as LOSER_NAME
 from PlayoffSerieSummary where SerieOrder=1;
-CREATE VIEW IF NOT EXISTS GameLineups as
-with ISLANDS as (
-    select GameId, Period, RemainingSeconds, TeamAScore as TeamScore, TeamBScore as OponentScore,
-           EventOrder, ScoreMargin,
-           TeamAId as TeamId, TeamAName as TeamName,  TeamALineupIds as LineupIds,
-           row_number() over (partition by GameId order by EventOrder) - row_number() over (partition by GameId, TeamALineupIds order by EventOrder) as diff
-    from Event
-    union all
-    select GameId, Period, RemainingSeconds, TeamBScore as TeamScore, TeamAScore as OponentScore,
-           EventOrder, -ScoreMargin,
-           TeamBId as TeamId, TeamBName as TeamName,  TeamBLineupIds as LineupIds,
-           row_number() over (partition by GameId order by EventOrder) - row_number() over (partition by GameId, TeamBLineupIds order by EventOrder) as diff
-    from Event
-), EXTRA as (
-    select GameId,
-           TeamId,
-           TeamName,
-           LineupIds,
-           group_concat(distinct PLAYER_NAME),
-           max(TeamScore) - min(TeamScore)                                           as ScoredPoints,
-           max(OponentScore) - min(OponentScore)                                     as ScoredAgainst,
-           max(TeamScore) - min(TeamScore) - (max(OponentScore) - min(OponentScore)) as PlusMinus,
-           min(iif(Period <= 4, (Period - 1) * 12, 48 + (Period - 5)) * 60 +
-               (iif(Period <= 4, 720 - RemainingSeconds, 300 - RemainingSeconds)))   as BeginingSecondsFromStart,
-           max(iif(Period <= 4, (Period - 1) * 12, 48 + (Period - 5)) * 60 +
-               (iif(Period <= 4, 720 - RemainingSeconds, 300 - RemainingSeconds)))   as FinishSecondsFromStart
-    from ISLANDS, json_each(LineupIds) playerId
-             left join
-         PlayerCareer on playerId.Value = PlayerCareer.PLAYER_ID
-    group by GameId, LineupIds, diff
-    having BeginingSecondsFromStart < FinishSecondsFromStart
-)
-select *, FinishSecondsFromStart - BeginingSecondsFromStart as Duration from EXTRA;
 CREATE VIEW IF NOT EXISTS Games as
     select SEASON, SEASON_TYPE, GAME_ID, GAME_DATE, TeamAId, TeamAName, TeamBId, TeamBName,
        sum(case TEAM_ID when TeamAId then PTS else 0 end) as TeamAScore,
@@ -379,15 +251,6 @@ select PlayoffSeriesWithOddsRound.*,
 left join Odds OW on PlayoffSeriesWithOddsRound.SEASON = OW.SEASON and PlayoffSeriesWithOddsRound.ODDS_ROUND = OW.ROUND and WinnerName = OW.Team
 left join Odds OL on PlayoffSeriesWithOddsRound.SEASON = OL.SEASON and PlayoffSeriesWithOddsRound.ODDS_ROUND = OL.ROUND and LoserName = OL.Team
 group by PlayoffSeriesWithOddsRound.SEASON, TeamAId, TeamBId;
-CREATE VIEW IF NOT EXISTS PlayoffShots as
-select
-    PlayerAId, PLAYER_NAME, TEAM_ID as PlayerTeamId, TEAM_NAME as PlayerTeamName,
-       PSWS.TeamAId, PSWS.TeamAName, PSWS.TeamBId, PSWS.TeamBName, GWOTI.GAME_DATE, SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot, ScoreMargin, S.TeamAScore, S.TeamBScore, Description, EventOrder
-from Shots S
-    inner join Games GWOTI on S.GameId = GWOTI.GAME_ID
-    inner join PlayoffSerieSummary PSWS on GWOTI.SEASON = PSWS.Season and PSWS.TeamAId = GWOTI.TeamAId and PSWS.TeamBId = GWOTI.TeamBId
-    inner join BoxScoreP BSP on GWOTI.GAME_ID = BSP.GAME_ID and PlayerAId = BSP.PLAYER_ID
-where GWOTI.SEASON_TYPE = 4;
 CREATE VIEW IF NOT EXISTS TeamSeriesWithOdds as
 select PO.*, WinnerId as TeamId, WinnerName as TeamName, 1 as WON,
         case PO.WINNER_ODDS < PO.LOSER_ODDS when true then 1 else 0 end as SHOULD_WON,
@@ -449,45 +312,6 @@ select
        ceil(0.7 * max(GamesPlayed)) as StatsCriteria
 from TeamSeason
 group by SEASON;
-CREATE VIEW IF NOT EXISTS PlayerSeasonFullStatsWithLastTeam as
-with PLAYERS_WITH_LAST_SEASON as (
-    select
-           distinct
-           PLAYER_ID, SEASON,
-           first_value(TEAM_ID) over W1 as LastTeamId,
-           first_value(TEAM_NAME) over W1 as LastTeamName
-    from BoxScoreP
-    where SEASON_TYPE=2
-    window W1 as (partition by PLAYER_ID, SEASON order by GAME_DATE desc rows between unbounded preceding and unbounded following)
-)
-select
-       BoxScoreP.PLAYER_ID, PLAYER_NAME, BoxScoreP.SEASON, group_concat(distinct TEAM_ABBREVIATION) as PLAYER_TEAMS,
-       LastTeamId, LastTeamName,
-       count(distinct GAME_ID) as GAMES_PLAYED,
-       sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
-       sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
-sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
-sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
-sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
-sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
-sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
-sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
-sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
-sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
-sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
-sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
-sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
-sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
-sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
-sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
-sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
-round(avg(FGM)/avg(FGA), 2) as FG_PCT,
-round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
-round(avg(FTM)/avg(FTA), 2) as FT_PCT
-from BoxScoreP
-inner join PLAYERS_WITH_LAST_SEASON on PLAYERS_WITH_LAST_SEASON.PLAYER_ID = BoxScoreP.PLAYER_ID and PLAYERS_WITH_LAST_SEASON.SEASON = BoxScoreP.SEASON
-where SEASON_TYPE=2
-group by BoxScoreP.PLAYER_ID, BoxScoreP.SEASON;
 CREATE VIEW IF NOT EXISTS BoxScorePWithAge as
 select BoxScoreP.*,
        julianday(GAME_DATE) - julianday(BirthDate) as DaysDiff,
@@ -503,20 +327,6 @@ select distinct E1.*, iif(E1.Description like '%MISS%', 0, 1) as MadeShot
 from Event E1
     inner join Event E2 on E1.GameId = E2.GameId and E1.Period = E2.Period and E1.RemainingSeconds = E2.RemainingSeconds and E2.EventType = 1 and E2.PlayerAId = E1.PlayerAId and E1.EventOrder > E2.EventOrder
 where E1.EventType=3 and E1.EventActionType=10;
-CREATE VIEW IF NOT EXISTS EventWithPossesionNumber as
-    with
-     WITH_POSESSION_NUMBER as (
-        select
-               *,
-               Event.EventOrder + 1 - row_number() over W1 as diff1
-        from Event
-        window
-            W1 as (partition by GameId, IsPossessionEndingEvent order by EventOrder)
-     )
-select *,
-       iif(IsPossessionEndingEvent = 1, lag(diff1) over W2, diff1) as RealPossesionNumber
-from WITH_POSESSION_NUMBER
-window W2 as (partition by GameId order by EventOrder);
 CREATE VIEW IF NOT EXISTS PlayerCareerPBPSeasonFullStats as
 select PLAYER_ID, PLAYER_NAME,
         count(*) as GAMES_PLAYED,
@@ -543,3 +353,345 @@ select PLAYER_ID, PLAYER_NAME,
     from BoxScoreP BSP
     where SEASON_TYPE = 2 and SEASON >= 1996
     group by PLAYER_ID;
+CREATE VIEW IF NOT EXISTS Starters as
+select GameId, TeamAId as TeamId, Starter.value as StarterId
+from Event, json_each(TeamALineupIds) Starter
+where EventOrder=0
+union all
+select GameId, TeamBId, Starter.value as StarterId
+from Event, json_each(TeamBLineupIds) Starter
+where EventOrder=0;
+CREATE VIEW IF NOT EXISTS PlayerSeasonFullStatsWithLastTeam as
+with PLAYERS_WITH_LAST_SEASON as (
+    select
+           distinct
+           PLAYER_ID, SEASON,
+           first_value(TEAM_ID) over W1 as LastTeamId,
+           first_value(TEAM_NAME) over W1 as LastTeamName
+    from BoxScoreP
+    where SEASON_TYPE=2
+    window W1 as (partition by PLAYER_ID, SEASON order by GAME_DATE desc rows between unbounded preceding and unbounded following)
+)
+select
+       BoxScoreP.PLAYER_ID, PLAYER_NAME, BoxScoreP.SEASON, group_concat(distinct TEAM_ABBREVIATION) as PLAYER_TEAMS,
+       LastTeamId, LastTeamName,
+       count(distinct GAME_ID) as GAMES_PLAYED,
+       sum(iif(WL = 'W', 1, 0)) as Wins,
+       sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
+       sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
+sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
+sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
+sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
+sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
+sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
+sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
+sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
+sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
+sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
+sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
+sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
+sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
+sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
+sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
+sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
+round(avg(FGM)/avg(FGA), 2) as FG_PCT,
+round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
+round(avg(FTM)/avg(FTA), 2) as FT_PCT
+from BoxScoreP
+inner join PLAYERS_WITH_LAST_SEASON on PLAYERS_WITH_LAST_SEASON.PLAYER_ID = BoxScoreP.PLAYER_ID and PLAYERS_WITH_LAST_SEASON.SEASON = BoxScoreP.SEASON
+where SEASON_TYPE=2
+group by BoxScoreP.PLAYER_ID, BoxScoreP.SEASON;
+CREATE VIEW IF NOT EXISTS PlayerSeasonFullStats as
+select PLAYER_ID, PLAYER_NAME, SEASON, group_concat(distinct TEAM_ABBREVIATION) as PLAYER_TEAMS,
+        count(*) as GAMES_PLAYED,
+       sum(iif(WL = 'W', 1, 0)) as Wins,
+        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
+        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
+        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
+        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
+        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
+        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
+        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
+        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
+        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
+        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
+        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
+        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
+        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
+        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
+        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
+        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
+        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
+        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
+        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
+        round(avg(FTM)/avg(FTA), 2) as FT_PCT
+    from BoxScoreP BSP
+    where SEASON_TYPE=2
+    group by PLAYER_ID, SEASON;
+CREATE VIEW IF NOT EXISTS GameLineupsWithNames as
+select GameLineups.*, group_concat(FullName) as Players
+from GameLineups, json_each(Lineup) ActivePlayerId
+    inner join Player on Player.PlayerId = ActivePlayerId.value
+group by GameId, TeamId, StartEventOrder, EndEventOrder;
+CREATE VIEW IF NOT EXISTS GameLineups as
+with SUB_EVENTS as (
+    select E1.GameId, E1.EventOrder, E1.PlayerATeamId as TeamId,
+           E1.TeamAScore as Score, E1.TeamBScore as OponentScore, Period, RemainingSeconds, TeamALineupIds as Lineup
+    from Event E1
+    where E1.EventType = 8 and
+          E1.EventActionType=0 and
+          PlayerATeamId = TeamAId
+    union all
+    select E1.GameId, E1.EventOrder, E1.PlayerATeamId as TeamId,
+           E1.TeamBScore as Score, E1.TeamAScore as OponentScore, Period, RemainingSeconds, TeamBLineupIds as Lineup
+    from Event E1
+    where E1.EventType = 8 and
+          E1.EventActionType=0 and
+          PlayerATeamId = TeamBId
+
+    ),
+     PERIOD_STARTS as (
+         select GameId, EventOrder, TeamAId, TeamBId, TeamALineupIds, TeamBLineupIds,
+                E1.TeamAScore, E1.TeamBScore, Period, RemainingSeconds,
+                ifnull(lag(TeamALineupIds) over W1, '') as LastTeamALineup,
+                ifnull(lag(TeamBLineupIds) over W1, '') as LastTeamBLineup
+         from Event E1
+         where EventType = 12 and
+               EventActionType = 0
+         WINDOW W1 as (partition by GameId order by EventOrder)
+     ),
+     PERIOD_SUBS as (
+         select GameId, EventOrder, TeamAId,
+                TeamAScore as Score, TeamBScore as OponentScore, Period, RemainingSeconds, TeamALineupIds
+         from PERIOD_STARTS
+         where TeamALineupIds != LastTeamALineup
+         union all
+         select GameId, EventOrder, TeamBId,
+                TeamBScore as Score, TeamAScore as OponentScore, Period, RemainingSeconds, TeamBLineupIds
+         from PERIOD_STARTS
+         where TeamBLineupIds != LastTeamBLineup
+     ),
+     ALL_SUBS as (
+         select *,
+                iif(Period >= 5, 2880 + (Period - 5) * 300 + (300 - RemainingSeconds),
+                    (Period - 1) * 720 + (720 - RemainingSeconds)) as SecondsFromStart
+         from SUB_EVENTS
+         union all
+         select *,
+                iif(Period >= 5, 2880 + (Period - 5) * 300 + (300 - RemainingSeconds),
+                    (Period - 1) * 720 + (720 - RemainingSeconds)) as SecondsFromStart
+         from PERIOD_SUBS
+         union all
+        select GameId, EventOrder, TeamAId,
+               TeamAScore as Score, TeamBScore as OponentScore, Period, RemainingSeconds, TeamALineupIds as Lineup,
+                iif(Period >= 5, 2880 + (Period - 5) * 300 + (300 - RemainingSeconds),
+                    (Period - 1) * 720 + (720 - RemainingSeconds)) as SecondsFromStart
+         from Event
+         where NextEventNumber is null and Event.Period >= 4 and TeamAScore != Event.TeamBScore
+         union all
+        select GameId, EventOrder, TeamBId,
+               TeamBScore as Score, TeamAScore as OponentScore, Period, RemainingSeconds, TeamBLineupIds as Lineup,
+                iif(Period >= 5, 2880 + (Period - 5) * 300 + (300 - RemainingSeconds),
+                    (Period - 1) * 720 + (720 - RemainingSeconds)) as SecondsFromStart
+         from Event
+         where NextEventNumber is null and Event.Period >= 4 and TeamAScore != Event.TeamBScore
+     ),
+     WITH_NEXT as (
+        select *,
+               lead(EventOrder) over W1 as NextSubOrder,
+               lead(Score) over W1 as NextSubScore,
+               lead(OponentScore) over W1 as NextSubOponenetScore,
+               lead(Period) over W1 as NextSubPeriod,
+               lead(RemainingSeconds) over W1 as NextSubRemainingSeconds,
+               lead(SecondsFromStart) over W1 as NextSubSecondsFromStart
+        from ALL_SUBS
+        window W1 as (partition by GameId, TeamId order by EventOrder)
+     )
+select E1.GameId, E1.TeamId, E1.Lineup,
+       EventOrder as StartEventOrder, NextSubOrder as EndEventOrder,
+       Score as StartScore, NextSubScore as EndScore,
+       OponentScore as StartOponentScore, NextSubOponenetScore as EndOponentScore,
+       E1.NextSubScore - E1.Score as ScoredPoints,
+       E1.NextSubOponenetScore - E1.OponentScore as ScoredAgainst,
+       (E1.NextSubScore - E1.NextSubOponenetScore) - (E1.Score - E1.OponentScore) as PlusMinus,
+       E1.Period as StartPeriod,
+       E1.RemainingSeconds as StartRemainingSeconds,
+       E1.NextSubPeriod as EndPeriod,
+       E1.NextSubRemainingSeconds as EndRemainingSeconds,
+       SecondsFromStart as StartSecondsFromGameStart,
+       NextSubSecondsFromStart as EndSecondsFromGameStart,
+       NextSubSecondsFromStart - SecondsFromStart as LineupSeconds
+from WITH_NEXT E1
+where StartPeriod != EndPeriod or StartRemainingSeconds != EndRemainingSeconds;
+CREATE VIEW IF NOT EXISTS TeamsCount as
+    select SEASON, count(distinct TEAM_ID) as TeamsNumber 
+    from BoxScoreT
+    where SEASON_TYPE=2
+    group by SEASON;
+CREATE VIEW IF NOT EXISTS PlayerTeamsCount as
+    select PLAYER_NAME, PLAYER_ID, count(distinct TEAM_ID) as PlayerTeamNumber 
+    from BoxScoreP 
+    where SEASON_TYPE=2
+    group by PLAYER_ID;
+CREATE VIEW IF NOT EXISTS PlayerSeasonAtTeam as
+    select SEASON, PLAYER_NAME, PLAYER_ID, TEAM_ID, TEAM_NAME,
+           count(*) as GamesNumber,
+       sum(iif(WL = 'W', 1, 0)) as Wins,
+           sum(iif(WL='L', 1, 0)) as Loses,
+        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
+        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
+        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
+        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
+        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
+        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
+        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
+        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
+        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
+        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
+        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
+        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
+        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
+        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
+        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
+        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
+        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
+        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
+        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
+        round(avg(FTM)/avg(FTA), 2) as FT_PCT
+    from BoxScoreP 
+    where SEASON_TYPE=2
+    group by SEASON, PLAYER_ID, TEAM_ID;
+CREATE VIEW IF NOT EXISTS PlayerPlayoffsFullStats as
+select PLAYER_ID, PLAYER_NAME, SEASON,
+       TEAM_ID,
+       TEAM_NAME,
+        count(*) as GAMES_PLAYED,
+       sum(iif(WL = 'W', 1, 0)) as Wins,
+        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
+        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
+        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
+        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
+        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
+        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
+        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
+        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
+        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
+        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
+        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
+        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
+        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
+        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
+        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
+        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
+        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
+        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
+        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
+        round(avg(FTM)/avg(FTA), 2) as FT_PCT
+    from BoxScoreP BSP
+    where SEASON_TYPE=4
+    group by PLAYER_ID, SEASON;
+CREATE VIEW IF NOT EXISTS PlayersWithAgeCorrected as 
+select Player.PlayerId,
+       FirstName,
+       LastName,
+       FullName,
+       PlayerSlug,
+       Active,
+       Position,
+       Height,
+       Weight,
+       College,
+       Country,
+       DraftYear,
+       DraftRound,
+       DraftNumber,
+       iif(AC.PlayerId is not null, RealBirthDate, BirthDate) as BirthDate,
+       UpdatedAtSeason
+from Player
+    left join AgeCorrection AC on Player.PlayerId = AC.PlayerId;
+CREATE VIEW IF NOT EXISTS RegularSeasonShots as
+select
+    PlayerAId, PLAYER_NAME, TEAM_ID as PlayerTeamId, TEAM_NAME as PlayerTeamName,
+       S.TeamAId, S.TeamAName, S.TeamBId, S.TeamBName, GameId, BSP.GAME_DATE,
+       BSP.SEASON_TYPE, BSP.SEASON,
+       Period, RemainingSeconds, ShotValue, MadeShot, ScoreMargin, S.TeamAScore, S.TeamBScore, Description, EventOrder
+from Shots S
+    inner join BoxScoreP BSP on S.GameId = BSP.GAME_ID and PlayerAId = BSP.PLAYER_ID
+where BSP.SEASON_TYPE = 2;
+CREATE VIEW IF NOT EXISTS PlayerGameClutchSeconds as
+select GameId,
+       ActivePlayer.value as PlayerId,
+       sum(min(300, RemainingSeconds + SecondsSincePreviousEvent) - RemainingSeconds) as ClutchTime
+from Event,
+     json_each(rtrim(TeamALineupIds, ']') || ', ' || ltrim(TeamBLineupIds, '[')) ActivePlayer
+where RemainingSeconds <= 300 and abs(ScoreMargin) <= 5 and Period >= 4
+group by GameId, ActivePlayer.value;
+CREATE VIEW IF NOT EXISTS GameClutchSeconds as
+select GameId,
+       sum(min(300, RemainingSeconds + SecondsSincePreviousEvent) - RemainingSeconds) as ClutchTime
+from Event
+where RemainingSeconds <= 300 and abs(ScoreMargin) <= 5 and Period >= 4
+group by GameId;
+CREATE VIEW IF NOT EXISTS PlayoffShots as
+select
+    PlayerAId, PLAYER_NAME, TEAM_ID as PlayerTeamId, TEAM_NAME as PlayerTeamName,
+       PSWS.TeamAId, PSWS.TeamAName, PSWS.TeamBId, PSWS.TeamBName, GWOTI.GAME_DATE, GameId, SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot, ScoreMargin, S.TeamAScore, S.TeamBScore, Description, EventOrder
+from Shots S
+    inner join Games GWOTI on S.GameId = GWOTI.GAME_ID
+    inner join PlayoffSerieSummary PSWS on GWOTI.SEASON = PSWS.Season and PSWS.TeamAId = GWOTI.TeamAId and PSWS.TeamBId = GWOTI.TeamBId
+    inner join BoxScoreP BSP on GWOTI.GAME_ID = BSP.GAME_ID and PlayerAId = BSP.PLAYER_ID
+where GWOTI.SEASON_TYPE = 4;
+CREATE VIEW IF NOT EXISTS PlayersEliminationGames as
+with
+     PLAYOFF_GAME_STATUS as (
+         select GAME_ID, TEAM_ID, WL, GAME_DATE,
+                count(*) filter ( where WL='L' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID order by GAME_DATE rows between unbounded preceding and 1 preceding) as lostGames,
+                count(*) filter ( where WL='W' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID) as seriesWins,
+                count(*) filter ( where WL='L' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID) as seriesLoses
+         from BoxScoreT
+         where SEASON_TYPE=4
+         )
+select
+PLAYER_ID, PLAYER_NAME,
+        count(*) as GAMES_PLAYED,
+        sum(MIN) as TOTAL_MIN, round(avg(MIN), 2) as AVG_MIN,
+        sum(FGM) as TOTAL_FGM, round(avg(FGM), 2) as AVG_FGM,
+        sum(FGA) as TOTAL_FGA, round(avg(FGA), 2) as AVG_FGA,
+        sum(FG3M) as TOTAL_FG3M, round(avg(FG3M), 2) as AVG_FG3M,
+        sum(FG3A) as TOTAL_FG3A, round(avg(FG3A), 2) as AVG_FG3A,
+        sum(FTM) as TOTAL_FTM, round(avg(FTM), 2) as AVG_FTM,
+        sum(FTA) as TOTAL_FTA, round(avg(FTA), 2) as AVG_FTA,
+        sum(OREB) as TOTAL_OREB, round(avg(OREB), 2) as AVG_OREB,
+        sum(DREB) as TOTAL_DREB, round(avg(DREB), 2) as AVG_DREB,
+        sum(REB) as TOTAL_REB, round(avg(REB), 2) as AVG_REB,
+        sum(AST) as TOTAL_AST, round(avg(AST), 2) as AVG_AST,
+        sum(STL) as TOTAL_STL, round(avg(STL), 2) as AVG_STL,
+        sum(BLK) as TOTAL_BLK, round(avg(BLK), 2) as AVG_BLK,
+        sum(TOV) as TOTAL_TOV, round(avg(TOV), 2) as AVG_TOV,
+        sum(PF) as TOTAL_PF, round(avg(PF), 2) as AVG_PF,
+        sum(PTS) as TOTAL_PTS, round(avg(PTS), 2) as AVG_PTS,
+        sum(PLUS_MINUS) as TOTAL_PLUS_MINUS, round(avg(PLUS_MINUS), 2) as AVG_PLUS_MINUS,
+        round(avg(FGM)/avg(FGA), 2) as FG_PCT,
+        round(avg(FG3M)/avg(FG3A), 2) as FG3_PCT,
+        round(avg(FTM)/avg(FTA), 2) as FT_PCT
+from BoxScoreP
+    inner join PLAYOFF_GAME_STATUS on PLAYOFF_GAME_STATUS.GAME_ID = BoxScoreP.GAME_ID and PLAYOFF_GAME_STATUS.TEAM_ID = BoxScoreP.TEAM_ID
+where lostGames = max(seriesWins, seriesLoses) - 1
+group by PLAYER_ID;
+CREATE VIEW IF NOT EXISTS EliminationGames as
+with
+     PLAYOFF_GAME_STATUS as (
+         select GAME_ID, TEAM_ID, TEAM_NAME, WL, GAME_DATE,
+                TeamAId, TeamAName,
+                TeamBId, TeamBName,
+                count(*) filter ( where WL='L' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID order by GAME_DATE rows between unbounded preceding and 1 preceding) as lostGames,
+                count(*) filter ( where WL='W' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID order by GAME_DATE rows between unbounded preceding and 1 preceding) as wonGames,
+                count(*) filter ( where WL='W' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID) as seriesWins,
+                count(*) filter ( where WL='L' ) over (partition by SEASON_TYPE, SEASON, TeamAId, TeamBId, TEAM_ID) as seriesLoses
+         from BoxScoreT
+         where SEASON_TYPE=4
+         )
+select *
+from PLAYOFF_GAME_STATUS
+where lostGames = max(seriesWins, seriesLoses) - 1
+order by GAME_DATE desc;

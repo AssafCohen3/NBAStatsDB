@@ -163,13 +163,195 @@ def plot_average_win_percent_on_high_score(conn):
     plt.show()
 
 
+def plot_careers_averages_ranges(conn, range_size, from_season, until_season):
+    sql = """with
+     PlayersCareers as (
+         select Player.*,
+                min(SEASON) as FirstSeason,
+                max(SEASON) as LastSeason,
+                count(distinct SEASON) as SeasonsCount,
+                min(GAME_DATE) as FirstGameDate,
+                max(GAME_DATE) as LastGameDate
+         from Player
+            inner join BoxScoreP on PlayerId = PLAYER_ID
+         group by PlayerId
+     ),
+     WithAges as (
+         select PC.*,
+                BPFIRST.AgeYears as AgeYearsFirst,
+                BPFIRST.AgeDays as AgeDaysFirst,
+                BPLAST.AgeYears as AgeYearsLast,
+                BPLAST.AgeDays as AgeDaysLast
+         from PlayersCareers PC
+            inner join BoxScorePWithAge BPFIRST on PC.PlayerId = BPFIRST.PLAYER_ID and PC.FirstGameDate = BPFIRST.GAME_DATE
+            inner join BoxScorePWithAge BPLAST on PC.PlayerId = BPLAST.PLAYER_ID and PC.LastGameDate = BPLAST.GAME_DATE
+     ),
+     CareersFullDetails as (
+         select PlayerId,
+                FullName,
+                DraftYear,
+                DraftRound,
+                DraftNumber,
+                FirstSeason,
+                LastSeason,
+                SeasonsCount,
+                LastSeason - FirstSeason + 1 as CareerLength,
+                AgeYearsFirst,
+                AgeDaysFirst,
+                AgeYearsLast,
+                AgeDaysLast
+         from WithAges
+     ),
+     RangeAverages as (
+         select FirstSeason/:range_size * :range_size as Decade,
+                min(FirstSeason) as FirstSeason,
+                max(FirstSeason) as LastSeason,
+                round(avg(FirstSeason), 2) as AverageFirstSeason,
+                round(avg(LastSeason), 2) as AverageLastSeason,
+                round(avg(SeasonsCount), 2) as AverageSeasonsCount,
+                round(avg(CareerLength), 2) as AverageCareerLength,
+                round(avg(AgeYearsFirst), 2) as AverageAgeYearsFirst,
+                round(avg(AgeDaysFirst), 2) as AverageAgeDaysFirst,
+                round(avg(AgeYearsLast), 2) as AverageAgeYearsLast,
+                round(avg(AgeDaysLast), 2) as AverageAgeDaysLast
+         from CareersFullDetails C
+         where FirstSeason >= :from_season and FirstSeason <= :until_season
+         group by FirstSeason / :range_size * :range_size
+     ),
+     IronManStats as (
+         select SSC.SEASON, MaxGames as SeasonGames,
+                round(avg(GAMES_PLAYED), 2) as AveragePlayerGames,
+                sum(iif(GAMES_PLAYED = MaxGames, 1, 0)) as IronMansCount,
+                avg(GAMES_PLAYED) * 1.0 / MaxGames as PlayRatio
+         from PlayerSeasonFullStats
+            inner join SeasonStatsCriteria SSC on PlayerSeasonFullStats.SEASON = SSC.SEASON
+         group by PlayerSeasonFullStats.SEASON
+     ),
+     WithIronManStats as (
+         select RAVG.*,
+                count(*) as SeasonsCount,
+                round(avg(SeasonGames), 2) as SeasonAverageGameCount,
+                sum(IronMansCount) as TotalIronMans,
+                round(avg(IronMansCount), 2) as AverageIronManCount
+         from RangeAverages RAVG
+            inner join IronManStats I on I.SEASON / :range_size * :range_size = RAVG.Decade
+         group by Decade
+     )
+select Decade as Season,
+       AverageIronManCount,
+       AverageSeasonsCount,
+       AverageCareerLength
+from WithIronManStats
+order by Season
+    """
+    df = pd.read_sql_query(sql, conn, params={'range_size': range_size, 'from_season': from_season, 'until_season': until_season})
+    fig, ax = plt.subplots()
+    df.plot(kind="line", ax=ax, x='Season', y='AverageSeasonsCount', legend=True, color='red', label='Average Seasons Count')
+    ax.tick_params(axis='x', labelsize=8)
+    plt.xlabel("")
+    ax2 = ax.twinx()
+    df.plot(kind="line", ax=ax2, x='Season', y='AverageIronManCount', legend=True, color='blue', label='Average Iron Mans')
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2, loc=0)
+    ax.set_xlabel('Season')
+    ax.set_ylabel('Average Career Length')
+    ax2.set_ylabel('Average Iron Man Seasons')
+    plt.title("Average Seasons(by Entrance year) vs \nAverage Iron Mans Seasons(Players to play all games)")
+    fig.tight_layout()
+    plt.show()
+
+
+def plot_season_iron_mans(conn, range_size, from_season, until_season):
+    sql = """with
+     IronManStats as (
+         select SSC.SEASON, MaxGames as SeasonGames,
+                round(avg(GAMES_PLAYED), 2) as AveragePlayerGames,
+                sum(iif(GAMES_PLAYED = MaxGames, 1, 0)) as IronMansCount,
+                avg(GAMES_PLAYED) * 1.0 / MaxGames as PlayRatio
+         from PlayerSeasonFullStats
+            inner join SeasonStatsCriteria SSC on PlayerSeasonFullStats.SEASON = SSC.SEASON
+         group by PlayerSeasonFullStats.SEASON
+     ),
+     WithIronManStats as (
+         select SEASON / :range_size * :range_size as Range,
+                count(*) as SeasonsCount,
+                round(avg(SeasonGames), 2) as SeasonAverageGameCount,
+                sum(IronMansCount) as TotalIronMans,
+                round(avg(IronMansCount), 2) as AverageIronManCount
+         from IronManStats RAVG
+         where SEASON >= :from_season and SEASON <= :until_season
+         group by SEASON / :range_size * :range_size
+     )
+select Range as Season,
+       AverageIronManCount
+from WithIronManStats
+order by Season
+    """
+    df = pd.read_sql_query(sql, conn, params={'range_size': range_size, 'from_season': from_season, 'until_season': until_season})
+    fig, ax = plt.subplots()
+    df.plot(kind="line", ax=ax, x='Season', y='AverageIronManCount', legend=True, color='blue', label='Average Iron Mans')
+    ax.tick_params(axis='x', labelsize=8)
+    ax.set_xlabel('Season')
+    plt.title("Average Iron Mans(Players to play all games)")
+    fig.tight_layout()
+    plt.show()
+
+
+def plot_seasons_average_career_misc(conn):
+    sql = """with
+             PlayersCareers as (
+                 select Player.*,
+                        min(SEASON) as FirstSeason,
+                        max(SEASON) as LastSeason,
+                        count(distinct SEASON) as SeasonsCount,
+                        min(GAME_DATE) as FirstGameDate,
+                        max(GAME_DATE) as LastGameDate,
+                        AC.APPEAREANCES
+                 from Player
+                    inner join BoxScoreP on PlayerId = BoxScoreP.PLAYER_ID
+                    left join AllstarCareer AC on BoxScoreP.PLAYER_ID = AC.PLAYER_ID
+                 group by Player.PlayerId
+             ),
+             RangeAverages as (
+                 select FirstSeason/5 * 5 as Decade,
+                        round(avg(SeasonsCount), 2) as AverageSeasonsCount,
+                        count(*) as CareersCount,
+                        round(avg(iif(SeasonsCount < 6, null, SeasonsCount)), 2) as AverageVeteransSeasonsCount,
+                        sum(iif(SeasonsCount < 6, 0, 1)) as VeteransCount,
+                        round(avg(iif(APPEAREANCES is null, null, SeasonsCount)), 2) as AverageAllstarsSeasonsCount,
+                        sum(iif(APPEAREANCES is null, 0, 1)) as AllstarsCount
+                 from PlayersCareers C
+                 group by FirstSeason / 5 * 5
+             )
+        select Decade as Season,
+               AverageSeasonsCount, CareersCount,
+               AverageVeteransSeasonsCount, VeteransCount,
+               AverageAllstarsSeasonsCount, AllstarsCount
+        from RangeAverages
+        where Decade < 2010
+        order by Season"""
+    df = pd.read_sql_query(sql, conn)
+    fig, ax = plt.subplots()
+    df.plot(kind="line", ax=ax, x='Season', y=['AverageSeasonsCount', 'AverageVeteransSeasonsCount', 'AverageAllstarsSeasonsCount'])
+    ax.legend(['All players', 'Veterans(6 seasons+)', 'Allstars'])
+    ax.tick_params(axis='x', labelsize=8)
+    ax.set_xlabel('Season')
+    plt.title("Average Career Length(splits)\nlabeled with qualified careers number")
+    for idx, row in df.iterrows():
+        ax.annotate(int(row['CareersCount']), (row['Season'] - 0.35, row['AverageSeasonsCount'] + 0.2), fontsize=6)
+        ax.annotate(int(row['VeteransCount']), (row['Season'] - 0.35, row['AverageVeteransSeasonsCount'] + 0.2), fontsize=6)
+        ax.annotate(int(row['AllstarsCount']), (row['Season'] - 0.35, row['AverageAllstarsSeasonsCount'] + 0.2), fontsize=6)
+    fig.tight_layout()
+    plt.show()
+
 def get_connection():
     return sqlite3.connect(DATABASE_PATH + DATABASE_NAME + '.sqlite')
 
 
 def main():
     conn = get_connection()
-    plot_average_win_percent_on_high_score(conn)
+    plot_seasons_average_career_misc(conn)
 
 
 if __name__ == '__main__':

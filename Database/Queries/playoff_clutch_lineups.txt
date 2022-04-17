@@ -1,0 +1,33 @@
+/*todo: this one counts seconds between made shots and next event even if after the shot the game situation wasnt clutch
+also, this one not counts seconds of events which started before the last five minutes but ended after that*/
+with
+     LINEUPS_CLUTCH as (
+        select SEASON, SEASON_TYPE, E.TeamAId as TeamId, E.TeamAName as TeamName, TeamALineupIds as Lineup,
+               lead(SecondsSincePreviousEvent) over (partition by GameId order by EventOrder) as SecondsUntilNext,
+               iif(EventType in (1, 3) and Description not like '%MISS%' and PlayerATeamId = E.TeamAId, ShotValue, 0) as ScoredPoints,
+               iif(EventType in (1, 3) and Description not like '%MISS%' and PlayerATeamId = E.TeamBId, ShotValue, 0) as ScoredAgainst
+        from Event E
+            inner join BoxScoreT G on E.GameId = G.GAME_ID and G.TEAM_ID = E.TeamAId
+        where SEASON_TYPE=4 and Period >= 4 and RemainingSeconds <= 300 and abs(ScoreMargin) <= 5
+        union all
+        select SEASON, SEASON_TYPE, E.TeamBId as TeamId, E.TeamBName as TeamName, TeamBLineupIds as Lineup,
+               lead(SecondsSincePreviousEvent) over (partition by GameId order by EventOrder) as SecondsUntilNext,
+               iif(EventType in (1, 3) and Description not like '%MISS%' and PlayerATeamId = E.TeamBId, ShotValue, 0) as ScoredPoints,
+               iif(EventType in (1, 3) and Description not like '%MISS%' and PlayerATeamId = E.TeamAId, ShotValue, 0) as ScoredAgainst
+        from Event E
+            inner join BoxScoreT G on E.GameId = G.GAME_ID and G.TEAM_ID = E.TeamBId
+        where SEASON_TYPE=4 and Period >= 4 and RemainingSeconds <= 300 and abs(ScoreMargin) <= 5
+     ),
+     GROUPED as (
+         select SEASON, SEASON_TYPE, TeamId, TeamName, Lineup,
+               sum(SecondsUntilNext) as TotalSeconds,
+               sum(ScoredPoints) as ScoredPoints,
+               sum(ScoredAgainst) as ScoredAgainst
+         from LINEUPS_CLUTCH
+         group by SEASON, TeamId, Lineup
+     )
+select GROUPED.*, group_concat(Player.FullName, ', '), ScoredPoints - ScoredAgainst as PLUS_MINUS
+from GROUPED, json_each(Lineup) ActivePlayerId
+    inner join Player on PlayerId = ActivePlayerId.value
+group by SEASON, TeamId, Lineup
+order by TotalSeconds desc

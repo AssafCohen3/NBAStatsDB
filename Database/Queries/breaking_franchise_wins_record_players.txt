@@ -1,0 +1,65 @@
+with
+     TeamsWithRecordUntilSeason as (
+         select SEASON,
+                TEAM_ID,
+                TeamNames,
+                Wins,
+                Loses,
+                WinPercent,
+                max(Wins) over W1 as WinsRecord
+         from TeamSeason
+         window W1 as (partition by TEAM_ID order by SEASON rows between unbounded preceding and 1 preceding)
+         ),
+     WithRecordData as (
+         select T1.*,
+                group_concat(T2.SEASON) as SeasonsRecorded,
+                group_concat(T2.TeamNames || '(' || T2.SEASON || ') - ' || T2.Wins || '+, ' || T2.Loses || '-, ' || T2.WinPercent, ', ') as WithExtraData,
+                T1.SEASON - min(T2.SEASON) as SinceFirstRecorded
+         from TeamsWithRecordUntilSeason T1
+            left join TeamSeason T2 on T1.TEAM_ID = T2.TEAM_ID and T2.Wins = WinsRecord and T2.SEASON < T1.SEASON
+         group by T1.TEAM_ID, T1.SEASON
+     ),
+     BreakingRecordSeasons as (
+         select *
+         from WithRecordData
+         where Wins > WinsRecord
+     ),
+     PlayersBreakingRecordsSeasons as (
+         select P.SEASON,
+                P.TEAM_ID,
+                TeamNames,
+                T.Wins + T.Loses as TeamGamesNumber,
+                T.Wins as TeamWins,
+                T.Loses as TeamLoses,
+                WinsRecord,
+                SeasonsRecorded,
+                SinceFirstRecorded,
+                PLAYER_ID,
+                PLAYER_NAME,
+                WinPercent as TeamWinPercent,
+                GamesNumber as PlayerGamesNumber,
+                P.Wins as PlayerWins,
+                P.Loses as PlayerLoses,
+                TOTAL_MIN, AVG_MIN,
+                TOTAL_PTS, AVG_PTS,
+                WithExtraData,
+                row_number() over (partition by PLAYER_ID, P.TEAM_ID order by T.Wins desc) as WinsOrder,
+                count(*) over (partition by PLAYER_ID, P.TEAM_ID rows between unbounded preceding and current row) as BrokenUntil
+         from PlayerSeasonAtTeam P
+            inner join BreakingRecordSeasons T on P.SEASON = T.SEASON and P.TEAM_ID = T.TEAM_ID
+     ),
+     Grouped as (
+         select PLAYER_ID,
+                PLAYER_NAME,
+                count(distinct TEAM_ID) as TeamsBrokeWinsRecordWith,
+                group_concat(TeamNames || '(' || SEASON || ') - ' || PlayerGamesNumber, ', ') as TeamsToBreak,
+                group_concat(WithExtraData) as SeasonsExtraData,
+                sum(TOTAL_MIN) * 1.0 / sum(PlayerGamesNumber) as AVG_MIN,
+                sum(TOTAL_PTS) * 1.0 / sum(PlayerGamesNumber) as AVG_PTS
+         from PlayersBreakingRecordsSeasons P
+         where PlayerGamesNumber >= 0.7 * TeamGamesNumber and AVG_MIN >= 20 and WinsOrder = 1
+         group by PLAYER_ID
+     )
+select *
+from Grouped
+order by TeamsBrokeWinsRecordWith desc

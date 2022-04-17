@@ -1,0 +1,29 @@
+with
+     Standings as (
+         select *,
+                rank() over (partition by SEASON order by WinPercent desc) as Standing
+         from TeamSeason
+     ),
+     MvpsWithStandings as (
+         select P.PlayerId, P.FullName, Awards.Season, Description, TeamId, TeamName,
+                Standing,
+                Awards.Season / 5 * 5 as Range
+         from Awards
+             inner join Player P on Awards.PlayerId = P.PlayerId
+             inner join Standings S on S.SEASON=Awards.Season and S.TEAM_ID=TeamId
+         where Description = 'NBA Most Valuable Player'
+         order by Awards.Season
+     )
+select Range,
+       count(*) as MvpsNumber,
+       group_concat(FullName || '(' || Season || ') - ' || Standing, char(10)) as Players,
+       avg(Standing) as AverageStandings
+from MvpsWithStandings
+group by Range
+union all
+select 'All Time',
+       count(*),
+       group_concat(FullName || '(' || Season || ') - ' || Standing, char(10)),
+       avg(Standing) as AverageStandings
+from MvpsWithStandings
+order by AverageStandings

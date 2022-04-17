@@ -14,6 +14,8 @@ from requests import HTTPError
 
 import EventMaker
 from Handlers import OddsCacheHandler
+from Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
+from Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
 from Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
 from Handlers.OddsCacheHandler import OddsCacheHandler
 from Handlers.PBPCacheHandler import PBPCacheHandler
@@ -36,6 +38,8 @@ class DatabaseHandler:
         self.to_cache_missing_files = to_cache_missing_files
         self.create_folders()
         self.current_teams = None
+        self.bref_seasons = None
+        self.bref_drafts = None
         if self.to_cache_missing_files:
             self.missing_files = self.get_missing_files()
 
@@ -118,18 +122,26 @@ class DatabaseHandler:
         self.conn.commit()
 
     def insert_series_summary(self, summeries):
-        self.conn.executemany(f"""insert into PlayoffSerieSummary (Season, TeamAId, TeamAName, TeamBId, TeamBName, TeamAWins, TeamBWins, WinnerId, WinnerName, LoserId, LoserName, SerieOrder, LevelTitle)
+        self.conn.executemany(f"""insert or ignore into PlayoffSerieSummary (Season, TeamAId, TeamAName, TeamBId, TeamBName, TeamAWins, TeamBWins, WinnerId, WinnerName, LoserId, LoserName, SerieOrder, LevelTitle)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", summeries)
         self.conn.commit()
 
     def insert_players(self, players):
-        self.conn.executemany(f"""insert into Player (PlayerId, FirstName, LastName, PlayerSlug, Active, Position, Height, Weight, College, Country, DraftYear, DraftRound, DraftNumber, BirthDate, UpdatedAtSeason) 
+        self.conn.executemany(f"""insert or ignore into Player (PlayerId, FirstName, LastName, PlayerSlug, Active, Position, Height, Weight, College, Country, DraftYear, DraftRound, DraftNumber, BirthDate, UpdatedAtSeason) 
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", players)
         self.conn.commit()
 
     def insert_awards(self, awards):
         self.conn.executemany(f"""insert or ignore into Awards (PlayerId, FullName, Jersey, Position, TeamId, TeamName, Description, AllNBATeamNumber, Season, DateAwarded, Confrence, AwardType, SubTypeA, SubTypeB, SubTypeC)
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", awards)
+        self.conn.commit()
+
+    def insert_bref_season_stats(self, players_stats):
+        self.conn.executemany("""insert or ignore into BREFPlayerSeason (PlayerId, PlayerName, Season, LeagueName) VALUES (?, ?, ?, ?)""", players_stats)
+        self.conn.commit()
+
+    def insert_bref_draft_picks(self, draft_picks):
+        self.conn.executemany("""insert or ignore into BREFDraftPick (PlayerId, PlayerName, Season, LeagueName, RoundNumber, PickNumber) VALUES (?, ?, ?, ?, ?, ?)""", draft_picks)
         self.conn.commit()
 
     def update_players_table(self, players):
@@ -381,6 +393,35 @@ class DatabaseHandler:
         """)
         self.conn.commit()
 
+    def create_bref_season_player_stats_table(self):
+        self.conn.execute("""
+            create table if not exists BREFPlayerSeason
+            (
+                PlayerId text,
+                PlayerName text,
+                Season integer,
+                LeagueName text,
+                primary key (PlayerId, Season)
+            )
+        """)
+        self.conn.commit()
+
+    def create_bref_draft_table(self):
+        self.conn.execute("""
+            create table if not exists BREFDraftPick
+            (
+                PlayerId text,
+                PlayerName text,
+                Season integer,
+                LeagueName text,
+                RoundNumber integer,
+                PickNumber integer,
+                primary key (Season, RoundNumber, PickNumber),
+                unique (PlayerId)
+            )
+        """)
+        self.conn.commit()
+
     # returns the last saved date of some box score type plus 1 day(empty string if none found)
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
@@ -425,12 +466,9 @@ class DatabaseHandler:
             return res
         return []
 
-    def get_br_seasons_links(self):
-        sql = """
-            select Season from PlayoffSerieSummary group by Season
-        """
-        fetched_seasons = self.conn.execute(sql).fetchall()
-        fetched_seasons = [s[0] for s in fetched_seasons]
+    def fetch_br_seasons_links(self):
+        if self.bref_seasons is not None:
+            return self.bref_seasons
         url = 'https://www.basketball-reference.com/leagues/'
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -442,8 +480,26 @@ class DatabaseHandler:
             season_number = int(re.findall(r'^(.+?)-', season.getText())[0])
             season_link = season['href']
             league_id = s.select('[data-stat=\"lg_id\"] a')[0].getText()
-            if season_number not in fetched_seasons and (league_id == 'BAA' or league_id == 'NBA'):
-                to_ret.append([season_number, season_link])
+            to_ret.append([season_number, season_link, league_id])
+        self.bref_seasons = to_ret
+        return to_ret
+
+    def fetch_br_drafts_links(self):
+        if self.bref_drafts is not None:
+            return self.bref_drafts
+        url = 'https://www.basketball-reference.com/draft/'
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        seasons_rows = soup.select('#first_overall tr')
+        seasons_rows = [s for s in seasons_rows if not s.has_attr('class')]
+        to_ret = []
+        for s in seasons_rows:
+            season = s.select('[data-stat=\"draft\"] a')[0]
+            season_number = int(season.getText())
+            season_link = season['href']
+            league_id = s.select('[data-stat=\"lg_id\"] a')[0].getText()
+            to_ret.append([season_number, season_link, league_id])
+        self.bref_drafts = to_ret
         return to_ret
 
     # download the resource represented by the handler
@@ -585,9 +641,15 @@ class DatabaseHandler:
 
     def update_playoffs_summeries(self):
         current_teams = self.collect_teams()
-        seasons = self.get_br_seasons_links()
-        for season, season_link in seasons:
-            self.update_playoff_summary(season, season_link, current_teams)
+        sql = """
+            select Season from PlayoffSerieSummary group by Season
+        """
+        fetched_seasons = self.conn.execute(sql).fetchall()
+        fetched_seasons = [s[0] for s in fetched_seasons]
+        seasons = self.fetch_br_seasons_links()
+        for season, season_link, league_id in seasons:
+            if (league_id == 'BAA' or league_id == 'NBA') and season not in fetched_seasons:
+                self.update_playoff_summary(season, season_link, current_teams)
 
     def update_players(self):
         is_updated = self.is_players_updated()
@@ -690,7 +752,7 @@ class DatabaseHandler:
                     team_id,
                     award_row[3],
                     award_row[4] if award_row[4] else '',
-                    int(award_row[5]) if award_row[5] else None,
+                    int(award_row[5]) if award_row[5] and award_row[5] != '(null)' else None,
                     season,
                     date_awarded,
                     award_row[9], award_row[10], award_row[11], award_row[12], award_row[13]]
@@ -701,6 +763,36 @@ class DatabaseHandler:
             data = data['resultSets'][0]['rowSet']
             awards = [transform_award(p) for p in data]
             self.insert_awards(awards)
+
+    def collect_bref_players_single_season_stats(self, season, league_id):
+        data = self.handle_cache(BREFSeasonStatsHandler(season, league_id))
+        self.insert_bref_season_stats(data)
+
+    def collect_bref_players_season_stats(self):
+        self.fetch_br_seasons_links()
+        sql = """
+            select distinct Season, LeagueName from BREFPlayerSeason
+        """
+        fetched_seasons = self.conn.execute(sql).fetchall()
+        seasons = self.fetch_br_seasons_links()
+        for season, season_link, league_id in seasons:
+            if (season, league_id) not in fetched_seasons:
+                self.collect_bref_players_single_season_stats(season, league_id)
+
+    def collect_bref_single_draft(self, season, league_id):
+        data = self.handle_cache(BREFSeasonDraftHandler(season, league_id))
+        self.insert_bref_draft_picks(data)
+
+    def collect_bref_drafts(self):
+        self.fetch_br_drafts_links()
+        sql = """
+            select distinct Season, LeagueName from BREFDraftPick
+        """
+        fetched_seasons = self.conn.execute(sql).fetchall()
+        seasons = self.fetch_br_drafts_links()
+        for season, season_link, league_id in seasons:
+            if (season, league_id) not in fetched_seasons:
+                self.collect_bref_single_draft(season, league_id)
 
     # updates(start form last saved year) odds
     def update_odds(self):
@@ -767,6 +859,13 @@ class DatabaseHandler:
         elif option == 'playin':
             self.update_missing_events(SEASON_TYPES[3])
 
+    def update_bref_players_database(self):
+        print('setting bref players tables...')
+        self.create_bref_draft_table()
+        self.create_bref_season_player_stats_table()
+        self.collect_bref_players_season_stats()
+        self.collect_bref_drafts()
+
 
 def main():
     pbp.Patcher.foo()  # just for making sure formatter wont optimize out the Patcher import
@@ -774,10 +873,11 @@ def main():
     parser.add_argument('-c', '--cache', help='Cache downloaded files', default=False, action='store_true')
     parser.add_argument('-m', '--missing', help='Cache and ignore missing files', default=False, action='store_true')
     parser.add_argument('-o', '--odds', help='Update Odds table', default=False, action='store_true')
-    parser.add_argument('-e', '--events', help='Update Events table', nargs='?', default='none', action='store', const='all')
+    parser.add_argument('-e', '--events', help='Update Events table', nargs='?', default=None, action='store', const='all')
     parser.add_argument('-b', '--birthdates', help='Update Players birthdates', default=False, action='store_true')
     parser.add_argument('-hof', '--hof', help='Update Hall of fame inductees and retired jersys players', default=False, action='store_true')
     parser.add_argument('-aw', '--awards', help='Update Players awards', default=False, action='store_true')
+    parser.add_argument('-brefp', '--bref_players', help='Update BREF Players data', default=False, action='store_true')
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
     parser.add_argument('-wv', '--views_out', type=str, help='Write views to file(override other options)')
     args = parser.parse_args()
@@ -798,6 +898,8 @@ def main():
             handler.update_hof_database()
         if args.awards:
             handler.update_awards_database()
+        if args.bref_players:
+            handler.update_bref_players_database()
 
     # handler.fix_abbrs()
 

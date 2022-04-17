@@ -6,6 +6,8 @@ TEAM_ROSTER_ENDPOINT = 'https://stats.nba.com/stats/commonteamroster?LeagueID=00
 PLAYER_PROFILE_ENDPOINT = 'http://stats.nba.com/stats/commonplayerinfo/?playerId=%s'
 PLAYER_AWARDS_ENDPOINT = 'https://stats.nba.com/stats/playerawards?PlayerID=%s'
 TEAM_DETAILS_ENDPOINT = 'http://stats.nba.com/stats/teamdetails/?teamId=%s'
+BREF_SEASON_STATS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_per_game.html'
+BREF_DRAFT_ENDPOINT = 'https://www.basketball-reference.com/draft/%s_%s.html'
 STATS_HEADERS = {
         'Host': 'stats.nba.com',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
@@ -57,6 +59,8 @@ TEAM_ROSTER_FILE_TEMPLATE = 'team_roster_%s_%s.json'
 PLAYER_PROFILE_FILE_TEMPLATE = 'player_profile_%s.json'
 PLAYER_AWARDS_FILE_TEMPLATE = 'player_awards_%s.json'
 TEAM_DETAILS_FILE_TEMPLATE = 'team_details_%s.json'
+BREF_SEASON_STATS_FILE_TEMPLATE = 'bref_stats_%s_%s.html'
+BREF_DRAFT_FILE_TEMPLATE = 'bref_draft_%s_%s.html'
 MISSING_FILES_FILE = "missing_files.txt"
 PBP_FIRST_SEASON = 1996
 
