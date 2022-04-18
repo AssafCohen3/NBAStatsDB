@@ -12,6 +12,7 @@ class BRPlayoffsSummaryHandler:
         self.season = season
         self.season_link = season_link
         self.current_teams = current_teams
+        self.max_level = -1
         self.resp = None
 
     def get_filename(self):
@@ -31,11 +32,8 @@ class BRPlayoffsSummaryHandler:
         soup = BeautifulSoup(html_resp, 'html.parser')
         playoff_series = soup.select('table#all_playoffs tbody > tr')
         to_ret = []
-        level = 0
         for serie in playoff_series:
             if serie.has_attr('class'):
-                if 'thead' in serie['class']:
-                    level += 1
                 continue
             level_description = serie.select('span strong')
             if not level_description:
@@ -51,8 +49,6 @@ class BRPlayoffsSummaryHandler:
             loser_abbr = BR_ABBR_TO_NBA_ABBR[re.findall(r'/teams/(.+?)/', teams_tags[1]['href'])[0]]
             winner_row = [t for t in self.current_teams if (t[2] == winner_name or t[1] == winner_abbr) and t[3] <= self.season <= t[4]]
             loser_row = [t for t in self.current_teams if (t[2] == loser_name or t[1] == loser_abbr) and t[3] <= self.season <= t[4]]
-            if len(winner_row) != 1 or len(loser_row) != 1:
-                aaaaa = 4
             winner_row = winner_row[0]
             loser_row = loser_row[0]
             winner_id = winner_row[0]
@@ -62,12 +58,18 @@ class BRPlayoffsSummaryHandler:
             results = summary_col.contents[-1].getText().strip().replace('(', '').replace(')', '').split('-')
             winner_wins = int(results[0])
             loser_wins = int(results[1])
+            serie_order = self.get_level_order(level_description)
+            if self.max_level == -1 or self.max_level > serie_order:
+                self.max_level = serie_order
             team_a_id, team_a_name, team_a_wins, team_b_id, team_b_name, team_b_wins = (winner_id, winner_name, winner_wins, loser_id, loser_name, loser_wins) if winner_id < loser_id else (loser_id, loser_name, loser_wins, winner_id, winner_name, winner_wins)
-            to_ret.append([self.season, team_a_id, team_a_name, team_b_id, team_b_name, team_a_wins, team_b_wins, winner_id, winner_name, loser_id, loser_name, level + 1, level_description])
+            to_ret.append([self.season, team_a_id, team_a_name, team_b_id, team_b_name, team_a_wins, team_b_wins, winner_id, winner_name, loser_id, loser_name, serie_order, level_description])
         return to_ret
 
     def to_cache(self, data):
-        return True
+        return self.max_level == 1
 
     def cache(self, data, f):
         f.write(self.resp)
+
+    def get_level_order(self, level_description):
+        return [order for first_season, last_season, order in BREF_LEVEL_TITLE_TO_ORDER[level_description] if first_season <= self.season <= last_season][0]

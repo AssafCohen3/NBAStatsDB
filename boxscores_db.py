@@ -460,9 +460,9 @@ class DatabaseHandler:
                    last_value(TEAM_NAME) over W1 as TeamBName
             from BoxScoreT
             left join Event on Event.GameId = BoxScoreT.GAME_ID
-            where Event.GameId is null and BoxScoreT.SEASON_TYPE=? and SEASON >= ? and WL is not null
+            where Event.GameId is null and BoxScoreT.SEASON_TYPE=? and ((SEASON_TYPE in (2, 4, 5) and SEASON >= 1996) or (SEASON_TYPE=3 and (SEASON=1997 or SEASON>=2003))) and WL is not null
             window W1 as (partition by GAME_ID order by TEAM_ID rows between unbounded preceding and unbounded following)""",
-                                    [season_type_code, PBP_FIRST_SEASON]).fetchall()
+                                    [season_type_code]).fetchall()
             return res
         return []
 
@@ -642,10 +642,15 @@ class DatabaseHandler:
     def update_playoffs_summeries(self):
         current_teams = self.collect_teams()
         sql = """
-            select Season from PlayoffSerieSummary group by Season
+            select Season, min(SerieOrder) as MaxLevel from PlayoffSerieSummary 
+            group by Season
         """
         fetched_seasons = self.conn.execute(sql).fetchall()
-        fetched_seasons = [s[0] for s in fetched_seasons]
+        for s, order in fetched_seasons:
+            if order > 1:
+                self.conn.execute("""delete from PlayoffSerieSummary where Season=?""", [s])
+                self.conn.commit()
+        fetched_seasons = [s[0] for s in fetched_seasons if s[1] == 1]
         seasons = self.fetch_br_seasons_links()
         for season, season_link, league_id in seasons:
             if (league_id == 'BAA' or league_id == 'NBA') and season not in fetched_seasons:

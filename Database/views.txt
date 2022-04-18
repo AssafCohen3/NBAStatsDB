@@ -312,16 +312,6 @@ select
        ceil(0.7 * max(GamesPlayed)) as StatsCriteria
 from TeamSeason
 group by SEASON;
-CREATE VIEW IF NOT EXISTS BoxScorePWithAge as
-select BoxScoreP.*,
-       julianday(GAME_DATE) - julianday(BirthDate) as DaysDiff,
-       cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', BirthDate) as int) as AgeYears,
-       -- AgeDays = days between current date and last birthday = days between Cy/Cm/Cd and (By + (C-B)y)/Bm/Bd
-       cast((julianday(GAME_DATE) -
-       julianday(datetime(BirthDate, '+' || cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', BirthDate) as int) || ' years'))) as integer)
-           as AgeDays
-from BoxScoreP
-inner join Player on PlayerId = PLAYER_ID;
 CREATE VIEW IF NOT EXISTS AndOnes as
 select distinct E1.*, iif(E1.Description like '%MISS%', 0, 1) as MadeShot
 from Event E1
@@ -695,3 +685,70 @@ select *
 from PLAYOFF_GAME_STATUS
 where lostGames = max(seriesWins, seriesLoses) - 1
 order by GAME_DATE desc;
+CREATE VIEW IF NOT EXISTS SeasonPossessions as
+with GamesAndPossessions as (
+    select GameId, TeamAId as TeamId,
+       max(RealPossesionNumber) - 1 as Possessions
+    from Event
+    group by GameId
+)
+select SEASON,
+       (sum(Possessions) * 24.0) / sum(MIN / 5.0) as Ratio
+from GamesAndPossessions GAP
+    inner join BoxScoreT BST on BST.GAME_ID = GameId and BST.TEAM_ID = TeamId
+where SEASON_TYPE=2
+group by SEASON;
+CREATE VIEW IF NOT EXISTS TeamsCurrentName as
+with
+    TeamLastGame as(
+        select
+            TEAM_ID, TEAM_NAME,
+            max(GAME_DATE) as LastGame
+        from BoxScoreT
+        group by TEAM_ID
+    )
+select TEAM_ID, TEAM_NAME
+from TeamLastGame;
+CREATE VIEW IF NOT EXISTS SeasonSummary as
+with
+    SeasonAwards as (
+    select Season,
+           max(iif(Description='NBA Most Valuable Player', P.PlayerId, null)) as MVPId,
+           max(iif(Description='NBA Most Valuable Player', P.FullName, null)) as MVPName,
+           max(iif(Description='NBA Finals Most Valuable Player', P.PlayerId, null)) as FMVPId,
+           max(iif(Description='NBA Finals Most Valuable Player', P.FullName, null)) as FMVPName,
+           max(iif(Description='NBA Rookie of the Year', P.PlayerId, null)) as ROTYId,
+           max(iif(Description='NBA Rookie of the Year', P.FullName, null)) as ROTYName,
+           max(iif(Description='NBA Defensive Player of the Year', P.PlayerId, null)) as DPOYId,
+           max(iif(Description='NBA Defensive Player of the Year', P.FullName, null)) as DPOYName,
+           max(iif(Description='NBA Most Improved Player', P.PlayerId, null)) as MIPId,
+           max(iif(Description='NBA Most Improved Player', P.FullName, null)) as MIPName,
+           max(iif(Description='NBA Sixth Man of the Year', P.PlayerId, null)) as SMOTYId,
+           max(iif(Description='NBA Sixth Man of the Year', P.FullName, null)) as SMOTYName
+    from Awards
+        inner join Player P on Awards.PlayerId = P.PlayerId
+    where Season != 0
+    group by Season
+)
+select SA.*,
+       PSS.WinnerId,
+       PSS.WinnerName,
+       TCNW.TEAM_NAME as WinnerCurrentName,
+       PSS.LoserId,
+       PSS.LoserName,
+       TCNL.TEAM_NAME as LoserCurrentName
+from SeasonAwards SA
+    left join PlayoffSerieSummary PSS on PSS.Season = SA.Season and PSS.SerieOrder=1
+    left join TeamsCurrentName TCNW on TCNW.TEAM_ID = PSS.WinnerId
+    left join TeamsCurrentName TCNL on TCNL.TEAM_ID = PSS.LoserId;
+CREATE VIEW IF NOT EXISTS BoxScorePWithAge as
+select BoxScoreP.*,
+       julianday(GAME_DATE) - julianday(coalesce(RealBirthDate, BirthDate)) as DaysDiff,
+       cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', coalesce(RealBirthDate, BirthDate)) as int) as AgeYears,
+       -- AgeDays = days between current date and last birthday = days between Cy/Cm/Cd and (By + (C-B)y)/Bm/Bd
+       cast((julianday(GAME_DATE) -
+       julianday(datetime(coalesce(RealBirthDate, BirthDate), '+' || cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', coalesce(RealBirthDate, BirthDate)) as int) || ' years'))) as integer)
+           as AgeDays
+from BoxScoreP
+    inner join Player on Player.PlayerId = PLAYER_ID
+    left join AgeCorrection AC on BoxScoreP.PLAYER_ID = AC.PlayerId;

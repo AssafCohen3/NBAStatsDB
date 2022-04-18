@@ -9,17 +9,17 @@ TEAM_DETAILS_ENDPOINT = 'http://stats.nba.com/stats/teamdetails/?teamId=%s'
 BREF_SEASON_STATS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_per_game.html'
 BREF_DRAFT_ENDPOINT = 'https://www.basketball-reference.com/draft/%s_%s.html'
 STATS_HEADERS = {
-        'Host': 'stats.nba.com',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'x-nba-stats-origin': 'stats',
-        'x-nba-stats-token': 'true',
-        'Connection': 'keep-alive',
-        'Referer': 'https://stats.nba.com/',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache'}
+    'Host': 'stats.nba.com',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'x-nba-stats-origin': 'stats',
+    'x-nba-stats-token': 'true',
+    'Connection': 'keep-alive',
+    'Referer': 'https://stats.nba.com/',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache'}
 SEASON_TYPES = [
     {
         'name': "Regular+Season",
@@ -63,7 +63,6 @@ BREF_SEASON_STATS_FILE_TEMPLATE = 'bref_stats_%s_%s.html'
 BREF_DRAFT_FILE_TEMPLATE = 'bref_draft_%s_%s.html'
 MISSING_FILES_FILE = "missing_files.txt"
 PBP_FIRST_SEASON = 1996
-
 
 BR_ABBR_TO_NBA_ABBR = {
     'AND': 'AND',
@@ -129,4 +128,22 @@ BR_ABBR_TO_NBA_ABBR = {
 
 ODDS_TEAM_NAMES = {
     'Los Angeles Clippers': 'LA Clippers'
+}
+
+BREF_LEVEL_TITLE_TO_ORDER = {
+    "Central Division Finals": [[1949, 2999, 3]],
+    "Central Division Semifinals": [[1949, 2999, 4]],
+    "Eastern Conference Finals": [[1970, 2999, 2]],
+    "Eastern Conference First Round": [[1974, 2999, 4]],
+    "Eastern Conference Semifinals": [[1970, 2999, 3]],
+    "Eastern Division Finals": [[1948, 1948, 2], [1949, 1949, 3], [1950, 2999, 2]],
+    "Eastern Division Semifinals": [[1948, 1948, 3], [1949, 1949, 4], [1950, 2999, 3]],
+    "Finals": [[1946, 2999, 1]],
+    "Quarterfinals": [[1946, 2999, 3]],
+    "Semifinals": [[1946, 2999, 2]],
+    "Western Conference Finals": [[1970, 2999, 2]],
+    "Western Conference First Round": [[1974, 2999, 4]],
+    "Western Conference Semifinals": [[1970, 2999, 3]],
+    "Western Division Finals": [[1948, 1948, 2], [1949, 1949, 3], [1950, 2999, 2]],
+    "Western Division Semifinals": [[1948, 1948, 3], [1949, 1949, 4], [1950, 2999, 3]]
 }
