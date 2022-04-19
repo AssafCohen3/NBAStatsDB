@@ -1,9 +1,13 @@
 with
+    UniqueLevels as (
+        select distinct Season, SerieOrder, LevelTitle
+        from PlayoffSerieSummary
+    ),
     WithCons as (
         select Season, SerieOrder,
                LevelTitle,
                lag(SerieOrder) over (partition by LevelTitle order by Season) as LastOrder
-        from PlayoffSerieSummary
+        from UniqueLevels
     ),
     WithRanges as (
         select *,

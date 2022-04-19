@@ -426,7 +426,7 @@ class DatabaseHandler:
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
         if len(tables):
-            res = self.conn.execute(f"""select strftime('%Y-%m-%d', datetime({"GAME_DATE"}, '+1 day')) from {'BoxScore' + table_type} where {"SEASON_TYPE"}=? order by {"GAME_DATE"} desc limit 1""", [seaseon_type_code]).fetchall()
+            res = self.conn.execute(f"""select {"GAME_DATE"} from {'BoxScore' + table_type} where {"SEASON_TYPE"}=? order by {"GAME_DATE"} desc limit 1""", [seaseon_type_code]).fetchall()
             return res[0][0] if res else ''
         return ''
 
@@ -545,8 +545,9 @@ class DatabaseHandler:
             headers = data["headers"]
             results = data["rowSet"]
             print(f"found {len(results)} games in {SEASON_TYPES[season_type_index]['name'].replace('+', ' ')} of type {box_score_type} from date {date_from}")
+            game_date_index = headers.index("GAME_DATE")
+            wl_index = headers.index('WL')
             if len(results) >= API_COUNT_THRESHOLD:
-                game_date_index = headers.index("GAME_DATE")
                 count = 0
                 last_date = results[-1][game_date_index]
                 while results[-1][game_date_index] == last_date:
@@ -556,6 +557,9 @@ class DatabaseHandler:
                 date_from = last_date
             else:
                 continue_loop = False
+            # take only boxscores that occured in the past(5 days should be enough i guess) or finished(WL is not null)
+            results = [r for r in results if r[wl_index] is not None or (datetime.now() - datetime.strptime(r[game_date_index], '%Y-%m-%d')).days >= 5]
+
             self.save_boxscores(results, headers, box_score_type)
 
     # download and saves all events of a game
