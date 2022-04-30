@@ -1,0 +1,51 @@
+with
+    MissingMapping as (
+        select Player.PlayerId,
+               replace(replace(replace(replace(FirstName,
+                        '''', ''),
+                        ' ', ''),
+                        '.', ''),
+                        '-', '') as StrippedFirstName,
+               replace(replace(replace(replace(LastName,
+                        '''', ''),
+                        ' ', ''),
+                        '.', ''),
+                        '-', '') as StrippedLastName,
+               Player.FullName,
+               DraftYear,
+               DraftRound,
+               DraftNumber,
+               (strftime('%m', BirthDate) + 0) || '/' || (strftime('%d', BirthDate) + 0) || '/' || strftime('%Y', BirthDate)  as BirthDate
+        from Player
+            left join PlayerMapping MP on MP.PlayerNbaId=Player.PlayerId
+        where MP.PlayerNbaId is null
+    ),
+    WithMinGames as (
+        select MissingMapping.*,
+               lower(substring(StrippedLastName, 1, 5) || substring(StrippedFirstName, 1, 2)) as PlayerCode,
+               min(GAME_DATE) as FirstGameDate,
+               SEASON as MinSeason
+        from MissingMapping
+            left join BoxScoreP on PlayerId=PLAYER_ID
+        group by PlayerId
+    ),
+    BrefTransformed as (
+        select PlayerId,
+               PlayerName,
+               substring(PlayerId, 1, length(PlayerId) - 2) as StrippedCode,
+               min(Season) as FirstSeason
+        from BREFPlayerSeason
+        where LeagueName!='ABA'
+        group by PlayerId
+    )
+select FullName,
+       'https://www.basketball-reference.com/players/' || substring(PlayerCode, 1, 1) || '/' || PlayerCode || '01.html ',
+       PlayerCode || '01',
+       'NA',
+       FullName,
+       'NA',
+       WithMinGames.PlayerId,
+       BirthDate,
+       'NA', 'NA', 'NA', 'NA',
+       'NA', 'NA', 'NA'
+from WithMinGames

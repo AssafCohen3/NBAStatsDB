@@ -18,7 +18,7 @@ class PlayersHandler:
         return requests.get(to_send, headers=STATS_HEADERS).json()
 
     def to_cache(self, data):
-        return True
+        return False
 
     def cache(self, data, f):
         json.dump(data, f)

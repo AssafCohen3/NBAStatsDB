@@ -1,3 +1,4 @@
+import csv
 import re
 import sqlite3
 import os
@@ -142,6 +143,10 @@ class DatabaseHandler:
 
     def insert_bref_draft_picks(self, draft_picks):
         self.conn.executemany("""insert or ignore into BREFDraftPick (PlayerId, PlayerName, Season, LeagueName, RoundNumber, PickNumber) VALUES (?, ?, ?, ?, ?, ?)""", draft_picks)
+        self.conn.commit()
+
+    def insert_players_mapping(self, players_mapping):
+        self.conn.executemany("""insert or ignore into PlayerMapping (PlayerNbaId, PlayerNbaName, PlayerNbaBirthDate, PlayerBrefId, PlayerBrefName, PlayerBrefBirthDate) VALUES (?, ?, ?, ?, ?, ?)""", players_mapping)
         self.conn.commit()
 
     def update_players_table(self, players):
@@ -422,6 +427,20 @@ class DatabaseHandler:
         """)
         self.conn.commit()
 
+    def create_players_ids_mapping(self):
+        self.conn.execute("""
+            create table if not exists PlayerMapping
+            (
+                PlayerNbaId integer primary key,
+                PlayerNbaName text,
+                PlayerNbaBirthDate date,
+                PlayerBrefId text,
+                PlayerBrefName text,
+                PlayerBrefBirthDate
+            )
+        """)
+        self.conn.commit()
+
     # returns the last saved date of some box score type plus 1 day(empty string if none found)
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
@@ -661,14 +680,9 @@ class DatabaseHandler:
                 self.update_playoff_summary(season, season_link, current_teams)
 
     def update_players(self):
-        is_updated = self.is_players_updated()
-        if is_updated <= 2:
-            data = self.handle_cache(PlayersHandler(LAST_SEASON))
-            data = data['resultSets'][0]['rowSet']
-            if is_updated > 0:
-                self.update_players_table([[p[2], p[1], p[3], 1 if p[19] else 0, p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], LAST_SEASON, p[0]] for p in data])
-            else:
-                self.insert_players([[p[0], p[2], p[1], p[3], 1 if p[19] else 0, p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], None, LAST_SEASON] for p in data])
+        data = self.handle_cache(PlayersHandler(LAST_SEASON))
+        data = data['resultSets'][0]['rowSet']
+        self.insert_players([[p[0], p[2], p[1], p[3], 1 if p[19] else 0, p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], None, LAST_SEASON] for p in data])
 
     def update_players_birthdates(self):
         # this for some reason exist only in the player profile endpoint and the team roster endpoint.
@@ -811,6 +825,30 @@ class DatabaseHandler:
             print(f'downloading odds of season {i}...')
             self.collect_season_odds(i)
 
+    def load_players_ids_mapping(self):
+        sql = """select * from PlayerMapping limit 1"""
+        res = self.conn.execute(sql).fetchall()
+        if not res:
+            with open('players_ids/players.csv', encoding='ISO-8859-1') as f:
+                csvreader = csv.reader(f,)
+                headers = next(csvreader)
+                bref_id_idx = headers.index('BBRefID')
+                bref_name_idx = headers.index('BBRefName')
+                bref_birthdate_idx = headers.index('BBRefBirthDate')
+                nba_id_idx = headers.index('NBAID')
+                nba_name_idx = headers.index('NBAName')
+                nba_birthdate_idx = headers.index('NBABirthDate')
+                to_insert = []
+                for p in csvreader:
+                    if p[bref_id_idx] != 'NA' and p[nba_id_idx] != 'NA':
+                        to_insert.append([int(p[nba_id_idx]),
+                                          p[nba_name_idx] if p[nba_name_idx] != 'NA' else None,
+                                          p[nba_birthdate_idx] if p[nba_birthdate_idx] != 'NA' else None,
+                                          p[bref_id_idx],
+                                          p[bref_name_idx] if p[bref_name_idx] != 'NA' else None,
+                                          p[bref_birthdate_idx] if p[bref_birthdate_idx] != 'NA' else None])
+                self.insert_players_mapping(to_insert)
+
     def load_views(self, views_file):
         with open(views_file, 'r') as f:
             cmd = f.read()
@@ -838,6 +876,9 @@ class DatabaseHandler:
         print('setting playoff series table...')
         self.create_series_levels_table()
         self.update_playoffs_summeries()
+        print('setting players mapping table...')
+        self.create_players_ids_mapping()
+        self.load_players_ids_mapping()
 
     def update_odds_database(self):
         print('setting odds table...')

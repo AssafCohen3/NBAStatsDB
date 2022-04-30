@@ -1,0 +1,45 @@
+with
+    LastPlayoffGames as (
+        select TEAM_ID, TEAM_NAME, SEASON,
+               max(GAME_DATE) as LastGameDate, GAME_ID as LastGameId,
+               WL
+        from BoxScoreT
+        where SEASON_TYPE=4
+        group by TEAM_ID, SEASON
+    ),
+    LostEliminationGames as (
+        select BSP.PLAYER_ID, BSP.PLAYER_NAME, BSP.TEAM_ID, BSP.TEAM_NAME, BSP.SEASON, SEASON_TYPE,
+               BSP.GAME_ID, BSP.GAME_DATE, BSP.TeamAName, BSP.TeamBName,
+               LPG.WL,
+               lead(GAME_DATE) over (partition by PLAYER_ID order by GAME_DATE) as NextEliminationDate,
+               lead(GAME_ID) over (partition by PLAYER_ID order by GAME_DATE) as NextEliminationId
+        from BoxScoreP BSP
+            inner join LastPlayoffGames LPG on LPG.LastGameId = BSP.GAME_ID and LPG.TEAM_ID=BSP.TEAM_ID and LPG.WL = 'L'
+    )
+--     EliminationGamesRanked as (
+--         select BSP.PLAYER_ID, BSP.PLAYER_NAME, BSP.TEAM_ID, BSP.TEAM_NAME, BSP.SEASON, SEASON_TYPE,
+--                BSP.GAME_ID, BSP.GAME_DATE, BSP.TeamAName, BSP.TeamBName,
+--                LPG.WL,
+--                row_number() over W1 - row_number() over W2 as diff
+--         from PlayersSet BSP
+--             left join LastPlayoffGames LPG on LPG.LastGameId = BSP.GAME_ID and LPG.TEAM_ID=BSP.TEAM_ID
+--         where SEASON_TYPE in (2, 4, 5)
+--         window W1 as (partition by BSP.PLAYER_ID order by BSP.GAME_DATE),
+--             W2 as (partition by BSP.PLAYER_ID, iif(LPG.WL='L', 1, 0) order by BSP.GAME_DATE)
+--     )
+-- select PLAYER_ID, PLAYER_NAME, group_concat(distinct TEAM_NAME) as Teams,
+--        count(*) as EliminationNumber,
+--        count(distinct TEAM_ID) as TeamsEliminatedWith,
+--        min(GAME_DATE) as FirstElimination, max(GAME_DATE) as LastElimination,
+--        min(SEASON) as FirstEliminationSeason, max(SEASON) as LastEliminationSeason
+-- from EliminationGamesRanked
+-- where WL='L'
+-- group by PLAYER_ID, diff
+-- order by EliminationNumber desc
+select EG.PLAYER_ID, EG.PLAYER_NAME, EG.GAME_DATE, NextEliminationDate,
+       count(BSP.GAME_ID) as GamesBetween
+from LostEliminationGames EG
+    left join BoxScoreP BSP on BSP.PLAYER_ID=EG.PLAYER_ID and EG.GAME_DATE < BSP.GAME_DATE and EG.NextEliminationDate > BSP.GAME_DATE
+where NextEliminationDate is not null
+group by EG.PLAYER_ID, EG.GAME_ID
+order by GamesBetween
