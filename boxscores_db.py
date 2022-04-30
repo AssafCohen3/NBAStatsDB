@@ -1,4 +1,5 @@
 import csv
+import json
 import re
 import sqlite3
 import os
@@ -17,6 +18,7 @@ import EventMaker
 from Handlers import OddsCacheHandler
 from Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
 from Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
+from Handlers.BREFStartersHandler import BREFStartersHandler
 from Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
 from Handlers.OddsCacheHandler import OddsCacheHandler
 from Handlers.PBPCacheHandler import PBPCacheHandler
@@ -41,6 +43,7 @@ class DatabaseHandler:
         self.current_teams = None
         self.bref_seasons = None
         self.bref_drafts = None
+        self.players_mapper = None
         if self.to_cache_missing_files:
             self.missing_files = self.get_missing_files()
 
@@ -102,6 +105,13 @@ class DatabaseHandler:
             return res
         return []
 
+    def map_players(self):
+        if self.players_mapper is not None:
+            return self.players_mapper
+        res = self.conn.execute("""select json_group_object(PlayerBrefId, PlayerNbaId) from PlayerMapping""").fetchall()[0][0]
+        self.players_mapper = json.loads(res)
+        return self.players_mapper
+
     # creating cache and database folders
     def create_folders(self):
         if self.use_cache or self.to_cache_missing_files:
@@ -157,6 +167,11 @@ class DatabaseHandler:
     def update_players_birthdate(self, players_birthdates):
         self.conn.executemany(f"""update Player set BirthDate=? 
         where PlayerId=?""", players_birthdates)
+        self.conn.commit()
+
+    def update_boxscores_starters_all(self, games_ids, games_with_starters):
+        self.conn.executemany("""update BoxScoreP set Starter=1 where PLAYER_ID=? and GAME_ID=? and TEAM_ID=? and Starter is null""", games_with_starters)
+        self.conn.executemany("""update BoxScoreP set Starter=0 where GAME_ID=? and TEAM_ID=? and Starter is null""", games_ids)
         self.conn.commit()
 
     def save_odds_dataframe(self, df):
@@ -222,6 +237,7 @@ class DatabaseHandler:
                 PLUS_MINUS        integer,
                 FANTASY_PTS       REAL,
                 VIDEO_AVAILABLE   INTEGER,
+                Starter           integer,
                 primary key (GAME_ID, PLAYER_ID, TEAM_ID)
             );""")
         self.conn.commit()
@@ -484,6 +500,17 @@ class DatabaseHandler:
                                     [season_type_code]).fetchall()
             return res
         return []
+
+    def get_teams_seasons_without_starters(self):
+        # TODO: for now basketball reference starting lineups not contains play in lineups.
+        res = self.conn.execute(
+            """select SEASON, TEAM_ID,
+            json_group_object(GAME_DATE, GAME_ID)
+            from BoxScoreP 
+            where SEASON>=1983 and SEASON_TYPE in (2, 4) and Starter is null
+            group by SEASON, TEAM_ID
+            order by SEASON, TEAM_ID""").fetchall()
+        return res
 
     def fetch_br_seasons_links(self):
         if self.bref_seasons is not None:
@@ -817,6 +844,23 @@ class DatabaseHandler:
             if (season, league_id) not in fetched_seasons:
                 self.collect_bref_single_draft(season, league_id)
 
+    def collect_bref_starters(self):
+        missing_seasons = self.get_teams_seasons_without_starters()
+        print(f'collecting starters from {len(missing_seasons)} seasons of teams...')
+        for season, team_id, games_dates_to_ids in missing_seasons:
+            print(f'collecting {season} of team {team_id}...')
+            games_dates_to_ids = json.loads(games_dates_to_ids)
+            games_with_starters = self.handle_cache(BREFStartersHandler(season, team_id, self.map_players()))
+            to_update = [[starter_id, games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters for starter_id in starters_ids]
+            to_update_game_ids = [[games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters]
+            self.update_boxscores_starters_all(to_update_game_ids, to_update)
+            # for game_date, starters_ids in games_with_starters:
+            #     # relevant_rows = self.conn.execute("""select PLAYER_ID from BoxScoreP where PLAYER_ID in (?, ?, ?, ?, ?) and GAME_DATE=? and TEAM_ID=?""",
+            #     #                                   [*starters_ids, game_date, team_id]).fetchall()
+            #     # if len(relevant_rows) != 5:
+            #     #     raise Exception('wtf')
+            #     self.update_boxscores_starters(game_date, team_id, starters_ids)
+
     # updates(start form last saved year) odds
     def update_odds(self):
         last_saved_season = self.get_last_odds_year()
@@ -928,6 +972,7 @@ def main():
     parser.add_argument('-hof', '--hof', help='Update Hall of fame inductees and retired jersys players', default=False, action='store_true')
     parser.add_argument('-aw', '--awards', help='Update Players awards', default=False, action='store_true')
     parser.add_argument('-brefp', '--bref_players', help='Update BREF Players data', default=False, action='store_true')
+    parser.add_argument('-starters', '--starters', help='Update Starters data from BREF', default=False, action='store_true')
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
     parser.add_argument('-wv', '--views_out', type=str, help='Write views to file(override other options)')
     args = parser.parse_args()
@@ -950,6 +995,8 @@ def main():
             handler.update_awards_database()
         if args.bref_players:
             handler.update_bref_players_database()
+        if args.starters:
+            handler.collect_bref_starters()
 
     # handler.fix_abbrs()
 

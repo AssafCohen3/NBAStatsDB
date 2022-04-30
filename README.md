@@ -3,6 +3,7 @@ A collection of my scripts to download and analyze nba boxscores, awards, and pl
 # Examples
 * Players stats at elimination games
 * Players stats when underdog/favorite in a playoff serie
+* most assists from the bench in a playoff serie under 22 years old
 * players stats at triple double games
 * most games in a row 
 * shot finder with play by play data(beta)
@@ -42,6 +43,7 @@ python3 boxscores_db.py -e all #updates the boxscore tables and the play by play
 python3 boxscores_db.py -b #updates the boxscore tables and the players birthdate(may take some time)
 python3 boxscores_db.py -hof #updates the boxscore tables and the hall of fame inductees(not complete without awards option but almost complete)
 python3 boxscores_db.py -aw #updates the boxscore tables and the awards table(will take some time)
+python3 boxscores_db.py -starters #updates the boxscore tables and updating starters data(require a request per team per season so will take some time)
 ```
 
 after that step you can start query all the boxscores that had been collected. <br/>
@@ -52,6 +54,10 @@ the database path is Database/boxscores_full_database.sqlite
 * -m, Cache and ignore missing files
 * -o, Update Odds table
 * -e (all|regular|allstar|playoff), default: all, download play by play data
+* -b, downloads birthdates
+* -hof, downloads hof and retired jersies data
+* -aw, downloads awards data
+* -starters, downloads starters data
 
 # Views
 you can find the views i created in Database/views.txt.

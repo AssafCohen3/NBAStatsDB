@@ -1,0 +1,25 @@
+with
+    Ranked as (
+        select Season,
+               League,
+               BBRef_Team_Name,
+               BBRef_Team_Abbreviation,
+               NBA_Current_Link_ID,
+               lag(BBRef_Team_Abbreviation) over (partition by NBA_Current_Link_ID order by Season) as PreviousAbbrevation
+        from TeamBREFTMP
+        where League != 'ABA'
+    ),
+    WithNextSeason as (
+        select *,
+               coalesce(lead(Season) over (partition by NBA_Current_Link_ID order by Season), 3000) as NextSeason
+        from Ranked
+        where PreviousAbbrevation is null or PreviousAbbrevation != BBRef_Team_Abbreviation
+        order by Season
+    ),
+    JsonGrouped as (
+        select NBA_Current_Link_ID, json_group_array(json_array(Season, NextSeason-1, BBRef_Team_Abbreviation)) as JsonPart
+        from WithNextSeason
+        group by NBA_Current_Link_ID
+    )
+select json_group_object(NBA_Current_Link_ID, JsonPart)
+from JsonGrouped
