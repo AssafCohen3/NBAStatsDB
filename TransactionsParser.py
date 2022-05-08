@@ -8,15 +8,23 @@ from bs4 import BeautifulSoup
 from pyparsing import *
 
 
+def scan_for_roles(result, to_ret=None):
+    if to_ret is None:
+        to_ret = []
+    for key, value in result.items():
+        if key == 'role':
+            to_ret.append(value)
+        if hasattr(value, 'items'):
+            to_ret.extend(scan_for_roles(value, to_ret))
+    return to_ret
+
+
 def take_until(until, label=''):
     to_ret = Regex(fr'.+?(?={re.escape(until)})')
     if label != '':
         return to_ret(label)
     return to_ret
 
-
-# 'waived': CaselessLiteral('The') + team_nt('team') + 'waived' + person_nt('player') + '.' + Opt(waive_reason),
-# 'waived_unknown': CaselessLiteral('The') + team_nt('team') + 'waived' + Regex(r'.+(?=\.$)')('player_no_id') + '.' + Opt(waive_reason),
 
 def person_or_unknown(label, next_part=None, unknown_part=None):
     if next_part:
@@ -30,15 +38,18 @@ person_nt = Word(string.ascii_lowercase + string.digits)
 later_selected_part = Suppress('(') + person_or_unknown('player', next_part=' was later selected)') + Suppress('was later selected)')
 
 sign_extension = '(Signing is extension' + MatchFirst([Literal('on'), Literal('of')]) + 'deal signed in ' + number + Opt('.') + ')'
-waive_reason = MatchFirst([Suppress('(Ended two-way contract.)')])
+waive_reason = MatchFirst(['(' + Literal('Ended two-way contract.')('reason') + ')',
+                           Literal('Ended two-way contract.')('reason'),
+                           Literal('Move made for salary cap purposes post-retirement')('reason'),
+                           '(' + Literal('reached contract buyout agreement')('reason') + ')'])
 matched_contract = '(' + team_nt('matching_team') + 'matched offer sheet signed with' + team_nt('matched_team') + ')'
 rounds_phrasing = MatchFirst([Literal('round'), Literal('-rd')])
 rounds = MatchFirst([Literal('1st'), Literal('2nd'), Literal('3rd'), Literal('4th'), Literal('5th'), Literal('6th'), Literal('7th'), Literal('8th')])
 second_round_pick = Group(Suppress('a') + MatchFirst([number, Literal('future')])('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('draft pick') + Opt(later_selected_part))
 
-cash_part = Combine('$' + number + Opt('MM'))
-cash_considerations = Group('cash considerations' + Opt('(reportedly' + cash_part('cash_sum') + ')'))
-cash_tradee = Group('cash' + Opt('(reportedly' + cash_part('cash_sum') + ')'))
+cash_part = Combine('$' + number + Opt('MM') + Opt('M'))
+cash_considerations = Group(CaselessLiteral('cash considerations') + Opt('(reportedly' + cash_part('cash_sum') + ')'))
+cash_tradee = Group(CaselessLiteral('cash') + Opt('(reportedly' + cash_part('cash_sum') + ')'))
 team_tradees = MatchFirst([cash_considerations.set_results_name('cash_consideration', True),
                            cash_tradee.set_results_name('cash', True),
                            Literal('future considerations').set_results_name('future_consideration', True),
@@ -64,14 +75,37 @@ after_trade_part = ZeroOrMore(MatchFirst([cash_part('cash_sum'),
                                           unknown_brackets.set_results_name('unknown_brackets', True),
                                           trade_agreement,
                                           Regex('.+').set_results_name('unknown_all', True)]))
+sign_and_trade = '(Sign and trade with' + take_until(')', 'sign_and_traded_from_team') + ')'
+renegotiaion_sign = 'Signing is a renegotiation & extension of deal signed in' + number
+extension = '(Signing is extension on deal signed in' + number + Opt('and extended in' + number + '.') + ')'
+sign_to_keep = '(Signing is an extension to keep him under contract thru' + number + '-' + number + ')'
+sign_details = 'Signed ' + number('contract_length') + '-yr/' + cash_part('salary') + 'contract ' + restOfLine('sign_date')
+possible_roles = MatchFirst([Literal('Team President'),
+                             Literal('Executive Director of Basketball Operations'),
+                             Literal('President of Business and Basketball Operations'),
+                             Literal('Interim Executive Vice-President of Basketball Ope'),
+                             Literal('Executive VP of Basketball Operations'),
+                             Literal('President of Basketball Operations'),
+                             Literal('Player/Head Coach'),
+                             Literal('Interim Head Coach'),
+                             Literal('Interim GM'),
+                             Literal('General Manager'),
+                             Literal('Head Coach'),
+                             Literal('President'),
+                             Literal('GM'),
+                             Literal('coach')])
 
 templates = {
     'sign and compensate': 'The' + team_nt('new_team') + 'signed' +
-                           MatchFirst([person_nt('player'), take_until(' (', 'person_no_id') + '(' + take_until(')', 'role') + ')']) +
+                           MatchFirst([person_nt('player'), take_until(' (', 'person_no_id') + '(' + possible_roles('role') + ')']) +
                            'as a' + Opt('veteran') + 'free agent and sent' + Group(team_trade_part)('TeamATradees') + 'to the' + team_nt('old_team') + 'as compensation.' + MatchFirst([Suppress(LineEnd()), restOfLine])('description'),
     'sign with length': 'The' + team_nt('team') + 'signed' + person_nt('player') + 'to a' + number('contract_length') + '-year contract.',
-    'free agent sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' as a') + MatchFirst([Literal('as an unrestricted'), Literal('as a')]) + Opt('veteran') + 'free agent.' + Opt(unknown_brackets),
-    'multi year contract sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' to a multi-year contract') + 'to a multi-year contract.' + Opt(sign_extension) + Opt(matched_contract),
+    'ceremonial contract': 'The' + team_nt('team') + 'signed' + person_or_unknown('player', unknown_part=Regex(r'.+?(?=\. (?:\(Ceremonial Contract|ceremonial contract))')) + '.' + MatchFirst([Literal('(Ceremonial Contract)'),
+                                                                                                                                                                                                Literal('ceremonial contract')]),
+    'free agent sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' as a') + MatchFirst([Literal('as an unrestricted'), Literal('as a')]) + Opt('veteran') + 'free agent.' +
+                       Opt(sign_details) + Opt(unknown_brackets),
+    'multi year contract sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' to a multi-year contract') + 'to a multi-year contract.' + Opt(sign_extension) + Opt(matched_contract) + Opt(sign_and_trade) +
+                                Opt(renegotiaion_sign) + Opt(sign_to_keep) + Opt(extension) + Opt(sign_details),
     'two way contract sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' to a two-way contract') + 'to a two-way contract.',
     'exhibit 10': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' to an Exhibit 10 contract') + 'to an Exhibit 10 contract.',
     '10 day contract': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', ' to ') + 'to' + MatchFirst([Literal('a') + Opt(Literal('2nd')), Literal('the first of two')]) + '10-day contract' + Opt('s') + '.',
@@ -81,35 +115,33 @@ templates = {
     'rest of season sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_nt('player') + Opt('to' + MatchFirst([Literal('a 10-day contract'), Literal('two 10-day contracts')]) + ', then signed') + 'to a contract for the rest of the season.',
     're-signing': 'The' + team_nt('team') + 're-signed' + person_or_unknown('player', unknown_part=Regex(r'.+?(?=\.$)')) + '.',
     'waived': CaselessLiteral('The') + team_nt('team') + 'waived' + person_or_unknown('player', unknown_part=Regex(r'.+?(?=\.$)')) + '.' + Opt(waive_reason),
-#    'waived_unknown': CaselessLiteral('The') + team_nt('team') + 'waived' + Regex(r'.+(?=\.$)')('player_no_id') + '.' + Opt(waive_reason),
     'claimed from waivers': CaselessLiteral('The') + team_nt('newTeam') + 'claimed' + person_or_unknown('player', ' on waivers from the ') + 'on waivers from the' + team_nt('oldTeam') + '.',
-#    'unknown claimed from waivers': CaselessLiteral('The') + team_nt('newTeam') + 'claimed' + person_nt('player') + 'on waivers from the' + team_nt('oldTeam') + '.',
-    'sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', unknown_part=Regex(r'.+?(?=\.$)')) + '.',
+    'subtitution contract': 'The' + team_nt('team') + 'signed' + person_or_unknown('player', ' to a substitution contract') + 'to a substitution contract (' + Opt('substituting for' + person_or_unknown('substituted_player', ')')) + Opt('filled open two-way slot') + ')',
+    'sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', unknown_part=Regex(r'.+?(?=\.$)')) + '.' + Opt(extension),
     'simple_trade': trade_part + '.' + after_trade_part,
     'multiple_teams_trade': 'In a' + number + '-team trade,' + ZeroOrMore(MatchFirst([Group(one_side_trade_part) + MatchFirst([Suppress('; and '), Suppress(';')]), Group(one_side_trade_part)]))('trades') + '.' + after_trade_part,
     'penalty trade': one_side_trade_part + '.' + take_until(' was penalized ', 'penalized_team') + 'was penalized for ' + restOfLine('reason'),
     'one side trade': one_side_trade_part + '.' + after_trade_part,
-    'retirement': person_or_unknown('player', ' announced retirement') + 'announced retirement.' + Opt('Officially announced retiredment.') + Opt('(Announced he would retire at the end of the' + restOfLine),
-    'firing': CaselessLiteral('The') + team_nt('team') + 'fired' + person_or_unknown('person', ' as ') + 'as ' + CharsNotIn('.')('role') + '.' + restOfLine,
-    'appintment': CaselessLiteral('The') + team_nt('team') + 'appointed' + person_or_unknown('person', ' as ') + 'as ' + CharsNotIn('.')('role') + '.' + Opt('(Appointed on an interim basis)'),
-#    'unknown appointment': CaselessLiteral('The') + team_nt('team') + 'appointed' + take_until(' as ', 'person_no_id') + 'as ' + CharsNotIn('.')('role') + '.',
+    'retirement': person_or_unknown('player', ' announced retirement') + 'announced retirement.' + Opt('Officially announced retiredment.') + Opt('(Announced he would retire at the end of the' + restOfLine) +
+                  Opt('(Signed with' + team_nt('retirement_team') + 'to to retire with team)'),
+    'firing': CaselessLiteral('The') + team_nt('team') + 'fired' + person_or_unknown('person', ' as ') + 'as ' + possible_roles('role') + '.' + restOfLine,
+    'appintment': CaselessLiteral('The') + team_nt('team') + 'appointed' + person_or_unknown('person', ' as ') + 'as ' + possible_roles('role') + Opt('(' + Literal('w/ day-to-day control')('role_more') + ')') + '.' + Opt('(Appointed on an interim basis)') + Opt('Named interim head coach'),
     'convert contract': 'The' + team_nt('team') + 'converted' + person_or_unknown('player', ' from a two-way contract') + 'from a two-way contract to a regular contract.',
-    'suspension_by_league': person_or_unknown('player', ' was suspended by the league') + 'was suspended by the league (' + number('suspension_length') + '-game suspension)',
-#    'unknown_suspension_by_league': take_until(' was ', 'player_no_id') + 'was suspended by the league (' + number('suspension_length') + '-game suspension)',
+    'suspension_by_league': person_or_unknown('player', ' was suspended by the league') + 'was suspended by the league (' +
+                            Opt(number('suspension_length_games') + '-game suspension') +
+                            Opt(number('suspension_length_weeks') + '-week suspension') +
+                            Opt('Indefinite') + ')',
     'suspension_by_team': person_or_unknown('player', ' was suspended from the') + 'was suspended from the' + team_nt('team') + Opt('(' + number('suspension_length') + '-game suspension)'),
     'assigned to': 'The' + team_nt('team') + 'assigned' + person_or_unknown('player', ' to the ') + 'to the ' + restOfLine('to'),
     'recalling': 'The' + team_nt('team') + 'recalled' + person_or_unknown('player', ' from the ') + 'from the ' + restOfLine('from'),
-    'resignation': person_or_unknown('person', 'resigns as ') + 'resigns as' + take_until(' for ', 'role') + 'for' + team_nt('team') + '.',
-    'hiring': CaselessLiteral('The') + team_nt('team') + 'hired' + person_or_unknown('person', ' as ') + 'as ' + CharsNotIn('.')('role') + '.' + Opt('(' + take_until(')', 'role_more') + ')'),
-#    'unknown_hiring': CaselessLiteral('The') + team_nt('team') + 'hired' + take_until(' as ', 'person_no_id') + 'as ' + CharsNotIn('.')('role') + '.',
+    'resignation': person_or_unknown('person', 'resigns as ') + 'resigns as' + possible_roles('role') + 'for' + team_nt('team') + '.',
+    'hiring': CaselessLiteral('The') + team_nt('team') + 'hired' + person_or_unknown('person', ' as ') + 'as ' + possible_roles('role') + '.' + Opt('(' + take_until(')', 'role_more') + ')'),
     'sold rights': CaselessLiteral('The') + team_nt('old_team') + 'sold the player rights to' + person_or_unknown('player', ' to the ') + 'to the' + team_nt('new_team') + '.' + Opt(unknown_brackets.set_results_name('explanation')),
-#    'sold rights to unknown': CaselessLiteral('The') + team_nt('team') + 'sold the player rights to' + take_until(' to the ', 'player_no_id') + 'to the' + team_nt('team') + '.' + Opt(unknown_brackets.set_results_name('explanation')),
     'dispersal draft': 'The' + team_nt('new_team') + 'selected' + person_or_unknown('player', ' from the ') + 'from the' + team_nt('old_team') + 'in the dispersal draft.' + MatchFirst([Suppress(LineEnd()), restOfLine])('next'),
     'released': 'The' + team_nt('team') + 'released' + person_or_unknown('player', unknown_part=Regex(r'.+?(?=\.$)')) + '.',
-    'reassignment': 'The' + team_nt('team') + 'reassigned' + Regex(r'.+?(?= [a-z0-9]+\.)')('role') + person_or_unknown('person', unknown_part=Regex(r'.+?(?=\.$)')) + '.',
+    'reassignment': 'The' + team_nt('team') + 'reassigned' + possible_roles('role') + person_or_unknown('person', unknown_part=Regex(r'.+?(?=\.$)')) + '.',
     'expansion draft': 'The' + team_nt('new_team') + 'drafted' + person_or_unknown('player', ' from the ') + 'from the' + team_nt('old_team') + 'in the NBA expansion draft.',
-#    'unknown expansion draft': 'The' + team_nt('new_team') + 'drafted' + take_until(' from the ',  'player_no_id') + 'from the' + team_nt('old_team') + 'in the NBA expansion draft.',
-    'role retire from team': MatchFirst([Literal('Player/Head Coach'), Literal('Head Coach')])('role') + person_or_unknown('person', ' retired from the ') + 'retired from the' + team_nt('team'),
+    'role retire from team': possible_roles('role') + person_or_unknown('person', ' retired from the ') + 'retired from the' + team_nt('team'),
     'retire from team': person_or_unknown('player', ' retired from the ') + 'retired from the' + team_nt('team'),
 }
 
@@ -160,7 +192,7 @@ def scrape_test(season):
         json.dump(to_save, f)
 
 
-def parse_test(season):
+def parse_test(season, found_roles):
     with open(f'transactions_{season}.txt', 'r') as f:
         transactions = json.load(f)
     parsed = defaultdict(list)
@@ -176,12 +208,14 @@ def parse_test(season):
                 found = True
                 print(f'parsed {transaction} as\n\t{res} with type {desc}')
                 parsed[day].append([transaction, desc, res])
+                found_roles.update(set(scan_for_roles(res)))
                 break
             if not found:
                 if 'traded  to the' in transaction:
                     print(f'passing transaction {transaction}. ilegal input')
                     continue
                 print(f'finished {i} from {len(transactions.items())}')
+                print(found_roles)
                 raise Exception(f'not found for {transaction} in {day}')
     for day, day_transactions in parsed.items():
         for initial, transaction_desc, transaction_dict in day_transactions:
@@ -194,18 +228,19 @@ def parse_test(season):
 
 
 def scrape_all():
-    for season in range(1950, 2021):
+    for season in range(1950, 2022):
         print(f'scraping {season}...')
         scrape_test(season)
 
 
 def parse_all():
-    for season in range(1950, 2021):
+    found_roles = set()
+    for season in range(1950, 2022):
         print(f'parsing {season}...')
-        parse_test(season)
+        parse_test(season, found_roles)
 
 
 if __name__ == '__main__':
-    #tests()
-    #scrape_all()
+    # tests()
+    # scrape_all()
     parse_all()
