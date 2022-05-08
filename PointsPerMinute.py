@@ -2,7 +2,6 @@ import sqlite3
 
 import heapdict
 from heapdict import heapdict
-from pandas._libs.internals import defaultdict
 
 from constants import *
 
