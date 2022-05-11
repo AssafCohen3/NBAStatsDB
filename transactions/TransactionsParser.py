@@ -15,6 +15,15 @@ def take_until(until, label=''):
     return to_ret
 
 
+def take_until_new(until_nt, label='', consume=True, excluded_chars=None):
+    to_ret = Combine(OneOrMore(Word(printables, exclude_chars=excluded_chars), stopOn=until_nt), join_string=' ', adjacent=False)
+    if label != '':
+        to_ret = to_ret(label)
+    if consume:
+        to_ret = to_ret + Suppress(until_nt)
+    return to_ret
+
+
 def person_or_unknown(label, next_part=None, unknown_part=None):
     if next_part:
         return MatchFirst([person_nt(label), take_until(next_part, label + '_no_id')])
@@ -34,6 +43,7 @@ possible_roles = MatchFirst([Literal('Team President'),
                              Literal('Head Coach'),
                              Literal('President'),
                              Literal('GM'),
+                             Literal('vice president'),
                              Literal('coach')])
 number = Combine(Opt('-') + ZeroOrMore(Word(string.digits) + Suppress(',') + FollowedBy(Word(string.digits))) + Word(string.digits) + Opt('.' + Word(string.digits)))
 date_nt = Group(Word(alphas)('month') + number('day') + ',' + number('year'))
@@ -69,6 +79,12 @@ trade_part = 'The' + team_nt('TeamA') + 'traded' + Group(team_trade_part)('TeamA
              team_nt('TeamB') + 'for' + Group(team_trade_part)('TeamBTradees')
 one_side_trade_part = CaselessLiteral('The') + team_nt('TradingTeam') + 'traded' + Group(team_trade_part)('Tradees') + 'to the' + team_nt('RecievingTeam')
 agreed_to_terms = Group(take_until(' agreed to terms with ', 'player') + 'agreed to terms with' + take_until(' in ', 'team') + 'in' + date_no_day_nt('date_no_day') + 'to complete the trade.')
+agreed_to_not_select = Group(take_until_new(Opt('also') + 'agreed' + Opt('not')('not') + 'to select', 'team') +
+                             take_until(' in the ', 'player') + 'in the' +
+                             MatchFirst([number('year'), 'expansion']) + 'draft.')
+agreeing_to_take = Group('(In exchange for the' + take_until_new('agreeing to take', 'team') +
+                         take_until_new('in the', 'player') +
+                         MatchFirst([number('year'), 'expansion']) + 'draft)')
 sources_explain = Group('Some sources have' + take_until(' to ', 'player') + 'to' + take_until(' in this deal but ', 'team') + 'in this deal but he was already sold to them on' +
                         date_nt('date') + '.')
 player_to_be_named_later = Group(take_until(' was sent as ', 'player') + 'was sent as' + Opt('the') + 'player to be named later on' + date_nt('date') + '.')
@@ -77,9 +93,61 @@ played_in_between = Group(Opt('(') + take_until(' played in the ', 'player') + '
 refused_to_report = Group(take_until(' got ', 'team_got') + 'got' + take_until(' in ', 'got') + 'in' + number('year') + 'when' + take_until(' refused to report;', 'player1') +
                           'refused to report;' + take_until(' was later sold to ', 'player2') + 'was later sold to' + take_until('.', 'team_sold_to') + '.')
 original_trade_cancelled = Group(take_until(' was originally traded for ', 'traded_player') + 'was originally traded for' + take_until(' on ', 'original_tradee') + 'on' + date_nt('date') + 'but the trade was cancelled.')
-'This exchange was arranged as compensation for Utah signing veteran free agent Gail Goodrich on July 19, 1976.'
 compensation_for_sign = Group('This exchange was arranged as compensation for' + take_until(' signing veteran free agent ', 'compensating_team') + 'signing veteran free agent' +
                               take_until(' on ', 'player') + 'on' + date_nt('date') + '.')
+for_pick_in_dispersal = Group('This trade was for the' + take_until(' pick in the ', 'pick') + 'pick in the ABA dispersal draft.')
+option_to_swap = Group(take_until(' had the option to swap ', 'team1') + 'had the option to swap' +
+                       MatchFirst([
+                           take_until(' with ', 'could_swap') + 'with' + take_until(' in ', 'team2') + 'in',
+                           take_until_new('in', 'could_swap')
+                       ]) +
+                       MatchFirst([number('year') + Opt('(a draft pick owned by' + take_until_new('that was originally owned by', 'owned_team') + take_until_new(')', 'originally_owned_team', excluded_chars=')')),
+                                   'either' + number('year1') + 'or' + number('year2')]) +
+                       Opt(MatchFirst(['but opted for' + take_until(' instead.', 'opted_for') + 'instead',
+                                       'but did not do so' + Opt(';' + take_until_new('received a', 'team3') +
+                                                                 take_until_new('in', 'received') + number('year') + 'instead')])) +
+                       '.'
+                       )
+relinquished_option_to_swap = Group(take_until(' also relinquished the ', 'team1') + 'also relinquished the option to swap' + take_until(' with ', 'can_swap') + take_until(' in ', 'team2') + 'in' + number('year') + '.')
+earlier_of_two = Group(take_until(' received the ', 'team1') + 'received the' + MatchFirst([Literal('earlier'), Literal('best')]) + 'of' + take_until(' in ', 'earlier_of') +
+                       'in' + number('year') + '(' + MatchFirst([Literal('both'), Literal('all')]) + 'owned by' + take_until(').', 'team2') + ').')
+originally_received = Group(take_until(' originally received ', 'team') + 'originally received' + take_until(' but he was ', 'player') + 'but he was' + take_until('.', 'reason') + '.')
+received_consulation = Group(take_until(' also received the consultation services ', 'team1') + 'also received the consultation services of' +
+                             Combine(OneOrMore(Word(printables), stopOn=possible_roles))('team2') + possible_roles('consule_role') + take_until('.', 'person') + '.')
+contigent_on_being_on_roster_and_waved = Group('The' + take_until(' was contingent upon ', 'contigent_part') + 'was contingent upon' +
+                                               take_until_new(MatchFirst([Literal('making'), Literal('being on')]), 'player') +
+                                               take_until_new(Literal('roster'), 'team') +
+                                               MatchFirst([
+                                                   'on' + date_nt('contignet_date') + 'but he was waived on' + date_nt('waved_on') + '.',
+                                                   'but he did not do so.'
+                                               ]))
+conditioned_and_not_exercised = Group('The' + take_until(' traded to ', 'conditioned_part') + 'traded to' + take_until_new(MatchFirst([Literal('was'), Literal('were')]) + 'conditional' + Opt('was') + 'and' + MatchFirst([Literal('was'), Literal('were')]) + 'not exercised.', 'team'))
+# TODO check this
+pick_did_not_convey = Group('Pick did not convey because' + restOfLine('reason'))
+same_draft_pick = Group('This was the same' + take_until_new('that', 'same_part') + take_until_new('had previously traded to', 'team1') + take_until_new('on', 'team2') + date_nt('date') + '.')
+too_complicated_to_stracture = Group(MatchFirst([
+    Literal('Minnesota removed the 2nd overall draft pick through 6th overall draft pick protection on the 1st round draft pick obtained for Sean Rooks on November 1, 1994; the draft pick was changed to either 1997 (unless it was the 1st draft pick overall) or 1998.'),
+    Literal('(Pick was PHI\'s choice of 2003-2005 2nd round picks. Ultimately PHI sent PHO\'s 2005 2nd round pick, acquired on 6/7/05 from UTA.)'),
+    Literal('Trade originally included a first round pick from Sacramento before 2008 and was later swapped for the 2003 pick after Sacramento acquired it from Atlanta'),
+    Literal('This trade was restructured in September 2009. In the original version, New Jersey received either a protected 1st round draft pick (2011, 2012, or 2013) or two 2nd round draft picks (2013 and 2015).'),
+    Literal('The 2nd round draft pick that Denver received was top 55 protected, but that protection was removed in a later deal.')
+]))
+protected_must_land = Group(take_until_new('was protected and required to', 'protected_part') + take_until_new(', conveying by', 'protection', excluded_chars=',') +
+                            number('year') + 'at the latest')
+# TODO check this
+originally_included = Group('Trade originally included' + take_until_new('that became', 'originally_included') + take_until_new('after', 'became_to') + restOfLine('reason'))
+accepted_in_lieu = Group(take_until_new('accepted', 'team1') + take_until_new('from', 'tradee1') + take_until_new('on', 'team2') + date_nt('date') + 'in lieu of' + take_until_new('.', 'in_lieu_of', excluded_chars='.'))
+originally_sented = Group('The' + take_until_new('was originally sent from', 'tradee') + take_until_new('to', 'team1') + take_until_new('in a trade on', 'team2') + date_nt('date') + '.')
+trade_exception = Group(take_until_new('also received a trade exception from', 'team1') + take_until_new('.', 'team2', excluded_chars='.'))
+did_not_receive_beacuse_protection = Group(take_until_new('did not receive the', 'team1') +
+                                           MatchFirst([take_until_new('from', 'tradee1') + take_until_new('because', 'team2'),
+                                                       take_until_new(MatchFirst([Literal('because'), Literal('beacuse')]), 'tradee1')]) +
+                                           MatchFirst([
+                                               take_until_new('; they received', 'reason', excluded_chars=';') + take_until_new('instead.', 'tradee2'),
+                                               take_until_new('.', 'reason', excluded_chars='.')
+                                           ]))
+protected_and_not_convey = Group('(' + take_until_new(Opt('and') + 'did not convey)', 'reason'))
+acquired_rights_to_swap = Group('(' + take_until_new('acquired right to swap', 'team1') + take_until_new('with', 'rights_to') + take_until_new(')', 'team2', excluded_chars=')'))
 after_trade_part = ZeroOrMore(MatchFirst([cash_part('cash_sum'),
                                           pick_source.set_results_name('picks_sources', True),
                                           favorable_pick.set_results_name('favorable_picks', True),
@@ -93,6 +161,27 @@ after_trade_part = ZeroOrMore(MatchFirst([cash_part('cash_sum'),
                                           sent_to_complete_the_trade.set_results_name('sent_to_complete_trade', True),
                                           original_trade_cancelled.set_results_name('original_trade_cancelled', True),
                                           compensation_for_sign.set_results_name('compensation_for_sign', True),
+                                          for_pick_in_dispersal.set_results_name('for_pick_in_dispersal', True),
+                                          option_to_swap.set_results_name('option_to_swap', True),
+                                          relinquished_option_to_swap.set_results_name('relinquished_option_to_swap', True),
+                                          earlier_of_two.set_results_name('earlier_of_two', True),
+                                          originally_received.set_results_name('originally_received', True),
+                                          received_consulation.set_results_name('received_consulation', True),
+                                          contigent_on_being_on_roster_and_waved.set_results_name('contigent_on_being_on_roster_and_waved', True),
+                                          conditioned_and_not_exercised.set_results_name('conditioned_and_not_exercised', True),
+                                          agreed_to_not_select.set_results_name('agreed_to_not_select', True),
+                                          agreeing_to_take.set_results_name('agreeing_to_take', True),
+                                          pick_did_not_convey.set_results_name('pick_did_not_convey', True),
+                                          too_complicated_to_stracture.set_results_name('too_complicated_to_stracture', True),
+                                          same_draft_pick.set_results_name('same_draft_pick', True),
+                                          protected_must_land.set_results_name('protected_must_land', True),
+                                          originally_included.set_results_name('originally_included', True),
+                                          accepted_in_lieu.set_results_name('accepted_in_lieu', True),
+                                          originally_sented.set_results_name('originally_sented', True),
+                                          trade_exception.set_results_name('trade_exception', True),
+                                          did_not_receive_beacuse_protection.set_results_name('did_not_receive_beacuse_protection', True),
+                                          protected_and_not_convey.set_results_name('protected_and_not_convey', True),
+                                          acquired_rights_to_swap.set_results_name('acquired_rights_to_swap', True),
                                           agreed_to_terms.set_results_name('agreeds_to_terms', True)]))
 # Regex('.+').set_results_name('unknown_all', True)]))
 
@@ -109,8 +198,7 @@ selected_but_not_signed = Group('(' + take_until(' was selected by ', 'player') 
                                 'in the expansion draft but did not sign.)')
 sued = Group('(The NBA sued' + take_until(' because ', 'team') + 'because' + take_until('; ', 'reason') + '; the Supreme Court ruled' + take_until(' on ', 'court_decision') + 'on' + date_nt('date') + '.)')
 for_future_services = Group('(' + take_until(' was playing in the ', 'player') + 'was playing in the' + take_until(' at the time ', 'played_in') + 'at the time and was signed for future services.)')
-'This trade was for the 2nd pick in the ABA dispersal draft'
-for_pick_in_dispersal =
+compansatory_picks_sented = Group('The compensatory draft picks were sent to' + take_until(' on ', 'sent_to_team') + 'on' + date_nt('date') + '.')
 waive_reason = MatchFirst(['(' + Literal('Ended two-way contract.')('reason') + ')',
                            Literal('Ended two-way contract.')('reason'),
                            Literal('Move made for salary cap purposes post-retirement')('reason'),
@@ -126,6 +214,9 @@ signing_additional = ZeroOrMore(MatchFirst([matched_contract.set_results_name('m
                                             selected_but_not_signed.set_results_name('selected_but_not_signed', True),
                                             sued.set_results_name('sued', True),
                                             for_future_services.set_results_name('for_future_services', True),
+                                            compansatory_picks_sented.set_results_name('compansatory_picks_sented', True),
+                                            option_to_swap.set_results_name('option_to_swap', True),
+                                            contigent_on_being_on_roster_and_waved.set_results_name('contigent_on_being_on_roster_and_waved', True),
                                             sign_with_salary_and_length.set_results_name('sign_with_salary_length', True)]))
 
 agrees_to_play_games = Group(take_until(' agreed to', 'agreeing_team') + 'agreed to play' + number('games_number') + 'home games in' + take_until('.', 'games_location') + '.')
@@ -142,10 +233,13 @@ report_correction = Group('(Report says' + take_until(' also gave up ', 'solding
                           date_nt('date') + '.)')
 complete_trade = Group('(This completes the trade where' + take_until(' obtained ', 'obtaining_team') + 'obtained' + take_until(' from ', 'player') + 'from' +
                        take_until(' on ', 'obtained_from_team') + 'on' + date_nt('date') + '.)')
+returned_and_kept = Group('(' + take_until(' returned to ', 'player') + 'returned to' + take_until(' but ', 'team1') + 'but' +
+                          take_until(' kept the draft picks from trade on ', 'team2') + 'kept the draft picks from trade on' + date_nt('date') + '.)')
 sold_rights_additional = MatchFirst([
     traded_and_returned.set_results_name('traded_and_returned', True),
     report_correction.set_results_name('reports_correction', True),
     played_in_between.set_results_name('played_in_between', True),
+    returned_and_kept.set_results_name('returned_and_kept', True),
     complete_trade.set_results_name('compete_trade', True)
 ])
 
@@ -200,8 +294,8 @@ templates = {
                                 number('suspension_length_weeks') + '-week suspension',
                                 Literal('Indefinite')])) + ')',
     'suspension_by_team': person_or_unknown('player', ' was suspended from the') + 'was suspended from the' + team_nt('team') + Opt('(' + number('suspension_length') + '-game suspension)'),
-    'assigned to': 'The' + team_nt('team') + 'assigned' + person_or_unknown('player', ' to the ') + 'to the ',
-    'recalling': 'The' + team_nt('team') + 'recalled' + person_or_unknown('player', ' from the ') + 'from the ',
+    'assigned to': 'The' + team_nt('team') + 'assigned' + person_or_unknown('player', ' to the ') + 'to the' + take_until_new('of the', 'assigned_to_team') + take_until_new('.', 'where', excluded_chars='.'),
+    'recalling': 'The' + team_nt('team') + 'recalled' + person_or_unknown('player', ' from the ') + 'from the' + take_until_new('of the', 'assigned_to_team') + take_until_new('.', 'where', excluded_chars='.'),
     'resignation': person_or_unknown('person', 'resigns as ') + 'resigns as' + possible_roles('role') + 'for' + team_nt('team') + '.',
     'hiring': CaselessLiteral('The') + team_nt('team') + 'hired' + person_or_unknown('person', ' as ') + 'as ' + possible_roles('role') + '.',  # + Opt('(' + take_until(')', 'role_more') + ')'),
     'sold rights': CaselessLiteral('The') + team_nt('old_team') + 'sold the player rights to' + person_or_unknown('player', ' to the ') + 'to the' + team_nt('new_team') + '.' + Opt(Group(sold_rights_additional)('additional')),  # + Opt(unknown_brackets.set_results_name('explanation')),
@@ -212,8 +306,6 @@ templates = {
     'role retire from team': possible_roles('role') + person_or_unknown('person', ' retired from the ') + 'retired from the' + team_nt('team'),
     'retire from team': person_or_unknown('player', ' retired from the ') + 'retired from the' + team_nt('team'),
 }
-
-
 
 
 def scrape_test(season):
@@ -256,6 +348,7 @@ def parse_test(season):
     with open(f'transactions/transactions_{season}.txt', 'r') as f:
         transactions = json.load(f)
     parsed = defaultdict(list)
+    count = 0
     for i, (day, day_transactions) in enumerate(transactions.items()):
         print(f'parsing {day} transactions...')
         for transaction in day_transactions:
@@ -266,23 +359,25 @@ def parse_test(season):
                 except ParseException:
                     continue
                 found = True
-                print(f'parsed {transaction} as\n\t{res} with type {desc}')
+                # print(f'parsed {transaction} as\n\t{res} with type {desc}')
                 parsed[day].append([transaction, desc, res])
                 break
             if not found:
                 if 'traded  to the' in transaction:
                     print(f'passing transaction {transaction}. ilegal input')
                     continue
-                print(f'finished {i} from {len(transactions.items())}')
-                raise Exception(f'not found for {transaction} in {day}')
-    for day, day_transactions in parsed.items():
-        for initial, transaction_desc, transaction_dict in day_transactions:
-            if transaction_desc in ['multiple_teams_trade', 'simple_trade'] and ('unknown_draft_bracketsss' in transaction_dict or 'unknown_brackets' in transaction_dict):
-                print(day)
-                print(initial)
-                print(transaction_desc)
-                print(transaction_dict)
-                print('*******************************')
+                # raise Exception(f'not found for {transaction} in {day}')
+                print(f'not found for {transaction} in {day}')
+                count += 1
+    # for day, day_transactions in parsed.items():
+    #     for initial, transaction_desc, transaction_dict in day_transactions:
+    #         if transaction_desc in ['multiple_teams_trade', 'simple_trade'] and ('unknown_draft_bracketsss' in transaction_dict or 'unknown_brackets' in transaction_dict):
+    #             print(day)
+    #             print(initial)
+    #             print(transaction_desc)
+    #             print(transaction_dict)
+    #             print('*******************************')
+    return count
 
 
 def scrape_all():
@@ -292,19 +387,26 @@ def scrape_all():
 
 
 def parse_all():
+    count = 0
     for season in range(1950, 2022):
         print(f'parsing {season}...')
-        parse_test(season)
+        count += parse_test(season)
+    print(count)
 
 
 def tests():
     test_str = 'The BOS sold the player rights to kudelfr01 to the BLB. (Report says Boston also gave up a 1st round draft pick for Bob Brannum in this transaction, but Brannum was already sold to them on September 23, 1950.)'
-    aaa = 'The CIN traded a future draft pick to the STL for buckhjo01.'
-    parser = Regex(r'.+?(?=(?: to the |,| and |\.(?!.*to the)))').set_results_name('player_no_id', True)
+    aaa = 'The 2nd round draft pick was contingent upon Campbell making Washington\'s roster but he did not do so.'
     temp = templates['simple_trade']
-    draft_pickkkk = Group('a' + MatchFirst([number, Literal('future')])('pick_year') + Opt(
-        rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('draft pick') + Opt(later_selected_part))
-    res = temp.parseString(aaa)
+    contigent_on_being_on_roster_and_wavedddddd = Group(
+        'The' + take_until(' was contingent upon ', 'contigent_part') + 'was contingent upon' +
+        take_until_new(MatchFirst([Literal('making'), Literal('being on')]), 'player') +
+        take_until_new(Literal('roster'), 'team') +
+        MatchFirst([
+            'on' + date_nt('contignet_date') + 'but he was waived on' + date_nt('waved_on') + '.',
+            'but he did not do so.'
+        ]))
+    res = contigent_on_being_on_roster_and_wavedddddd('aaa').parseString(aaa)
     print(res.asDict())
 
 
