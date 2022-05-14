@@ -1,0 +1,35 @@
+with Categories as (
+    select 'PTS' as Cat, 20 as Start, 40 as End, 5 as Jump
+    union
+    select 'REB' as Cat, 5 as Start, 15 as End, 5 as Jump
+    union
+    select 'AST' as Cat, 5 as Start, 15 as End, 5 as Jump
+    union
+    select 'STL' as Cat, 5 as Start, 10 as End, 1 as Jump
+    union
+    select 'BLK' as Cat, 5 as Start, 10 as End, 1 as Jump
+),
+    GamesInCategories as (
+select PLAYER_ID, PLAYER_NAME, C1.Cat as Cat1, M1.value as Min1, C2.Cat as Cat2, M2.value as Min2,
+       C1.Cat || ' >= ' || M1.value || ' and ' || C2.Cat || ' >= ' || M2.value as Description,
+       count(*) as GamesNumber
+from BoxScoreP,
+     Categories C1, generate_series(C1.Start, C1.End, C1.Jump) M1,
+     Categories C2, generate_series(C2.Start, C2.End, C2.Jump) M2
+where SEASON = 2021 and SEASON_TYPE=2 and
+      C1.Cat != C2.Cat and (M1.value > M2.value or
+                            (M1.value - M2.value=0 and C1.Cat < C2.Cat)) and
+      (case C1.Cat when 'PTS' then PTS when 'REB' then REB when 'AST' then AST when 'STL' then STL when 'BLK' then BLK end) >= M1.value and
+      (case C2.Cat when 'PTS' then PTS when 'REB' then REB when 'AST' then AST when 'STL' then STL when 'BLK' then BLK end) >= M2.value
+group by PLAYER_ID, C1.Cat, M1.value, C2.Cat, M2.value
+order by GamesNumber desc
+    ),
+    Ranked as (Games
+        select *,
+               rank() over (partition by Cat1, Min1, Cat2, Min2 order by GamesNumber desc) as Rank
+        from GamesInCategories
+    )
+select *
+from Ranked
+where Rank=1
+order by Min1 + Min2 desc

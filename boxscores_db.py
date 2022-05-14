@@ -3,6 +3,7 @@ import json
 import re
 import sqlite3
 import os
+import string
 from pathlib import Path
 import pandas as pd
 import requests
@@ -15,7 +16,8 @@ import pbp.Patcher
 from requests import HTTPError
 
 import EventMaker
-from Handlers import OddsCacheHandler
+from Handlers import OddsCacheHandler, BREFPlayers
+from Handlers.BREFPlayers import BREFPlayerHandler
 from Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
 from Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
 from Handlers.BREFStartersHandler import BREFStartersHandler
@@ -157,6 +159,10 @@ class DatabaseHandler:
 
     def insert_players_mapping(self, players_mapping):
         self.conn.executemany("""insert or ignore into PlayerMapping (PlayerNbaId, PlayerNbaName, PlayerNbaBirthDate, PlayerBrefId, PlayerBrefName, PlayerBrefBirthDate) VALUES (?, ?, ?, ?, ?, ?)""", players_mapping)
+        self.conn.commit()
+
+    def insert_bref_players(self, bref_players):
+        self.conn.executemany("""replace into BREFPlayer (PlayerId, PlayerName, FromYear, ToYear, Position, Height, Weight, Birthdate, Active, HOF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", bref_players)
         self.conn.commit()
 
     def update_players_table(self, players):
@@ -457,6 +463,23 @@ class DatabaseHandler:
         """)
         self.conn.commit()
 
+    def create_bref_players_table(self):
+        self.conn.execute("""
+            create table if not exists BREFPlayer(
+                PlayerId text primary key,
+                PlayerName text,
+                FromYear integer,
+                ToYear integer,
+                Position text,
+                Height real,
+                Weight integer,
+                Birthdate datetime,
+                Active integer,
+                HOF integer
+            )
+        """)
+        self.conn.commit()
+
     # returns the last saved date of some box score type plus 1 day(empty string if none found)
     def get_last_game_date(self, seaseon_type_code, table_type):
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=?""", [f'BoxScore{table_type}']).fetchall()
@@ -568,8 +591,9 @@ class DatabaseHandler:
                     with open(CACHE_PATH + file_name, "w") as f2:
                         cache_handler.cache(to_ret, f2)
                     print(f"Cached {file_name}.")
-            except ValueError:
+            except ValueError as e:
                 print(f'failed downloading {file_name}')
+                print(e)
                 self.cache_missing_file(file_name)
                 return None
         return to_ret
@@ -854,12 +878,11 @@ class DatabaseHandler:
             to_update = [[starter_id, games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters for starter_id in starters_ids]
             to_update_game_ids = [[games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters]
             self.update_boxscores_starters_all(to_update_game_ids, to_update)
-            # for game_date, starters_ids in games_with_starters:
-            #     # relevant_rows = self.conn.execute("""select PLAYER_ID from BoxScoreP where PLAYER_ID in (?, ?, ?, ?, ?) and GAME_DATE=? and TEAM_ID=?""",
-            #     #                                   [*starters_ids, game_date, team_id]).fetchall()
-            #     # if len(relevant_rows) != 5:
-            #     #     raise Exception('wtf')
-            #     self.update_boxscores_starters(game_date, team_id, starters_ids)
+
+    def collect_bref_players(self):
+        for letter in string.ascii_lowercase:
+            bref_players = self.handle_cache(BREFPlayerHandler(letter))
+            self.insert_bref_players(bref_players)
 
     # updates(start form last saved year) odds
     def update_odds(self):
@@ -955,10 +978,12 @@ class DatabaseHandler:
 
     def update_bref_players_database(self):
         print('setting bref players tables...')
-        self.create_bref_draft_table()
-        self.create_bref_season_player_stats_table()
-        self.collect_bref_players_season_stats()
-        self.collect_bref_drafts()
+        # self.create_bref_draft_table()
+        # self.create_bref_season_player_stats_table()
+        # self.collect_bref_players_season_stats()
+        # self.collect_bref_drafts()
+        self.create_bref_players_table()
+        self.collect_bref_players()
 
 
 def main():
