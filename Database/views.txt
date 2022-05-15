@@ -622,15 +622,6 @@ select GameId,
 from Event
 where RemainingSeconds <= 300 and abs(ScoreMargin) <= 5 and Period >= 4
 group by GameId;
-CREATE VIEW IF NOT EXISTS PlayoffShots as
-select
-    PlayerAId, PLAYER_NAME, TEAM_ID as PlayerTeamId, TEAM_NAME as PlayerTeamName,
-       PSWS.TeamAId, PSWS.TeamAName, PSWS.TeamBId, PSWS.TeamBName, GWOTI.GAME_DATE, GameId, SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot, ScoreMargin, S.TeamAScore, S.TeamBScore, Description, EventOrder
-from Shots S
-    inner join Games GWOTI on S.GameId = GWOTI.GAME_ID
-    inner join PlayoffSerieSummary PSWS on GWOTI.SEASON = PSWS.Season and PSWS.TeamAId = GWOTI.TeamAId and PSWS.TeamBId = GWOTI.TeamBId
-    inner join BoxScoreP BSP on GWOTI.GAME_ID = BSP.GAME_ID and PlayerAId = BSP.PLAYER_ID
-where GWOTI.SEASON_TYPE = 4;
 CREATE VIEW IF NOT EXISTS PlayersEliminationGames as
 with
      PLAYOFF_GAME_STATUS as (
@@ -752,3 +743,46 @@ select BoxScoreP.*,
 from BoxScoreP
     inner join Player on Player.PlayerId = PLAYER_ID
     left join AgeCorrection AC on BoxScoreP.PLAYER_ID = AC.PlayerId;
+CREATE VIEW IF NOT EXISTS FullTeamPlayoffs as
+with
+    PlayoffTeams as (
+        select distinct SEASON, TEAM_ID, TEAM_NAME
+        from BoxScoreT
+        where SEASON_TYPE=4
+    ),
+    OrderedSeries as (
+        select *
+        from PlayoffSerieSummaryWithSeasonData
+        order by Season, SerieOrder
+    ),
+    TeamPlayoffs as (
+        select T.SEASON, T.TEAM_ID, TEAM_NAME,
+               count(*) filter ( where WinnerId=TEAM_ID ) as SeriesWins,
+               count(*) filter ( where LoserId=TEAM_ID ) as SeriesLoses,
+               avg(iif(TEAM_ID = TeamAId, TeamBSeasonWins, TeamASeasonWins)) as OponentsAverageWins,
+               avg(iif(WinnerId = TeamAId, TeamBSeasonWinPercent, TeamASeasonWinPercent)) as OponentsAveragePercent,
+               min(iif(WinnerId = TeamAId, TeamBSeasonWins, TeamASeasonWins)) as MinimumOponentSeasonWins,
+               min(SerieOrder) as LastSerie,
+               sum(iif(TEAM_ID = TeamAId, TeamAWins, TeamBWins)) as Wins,
+               sum(iif(TEAM_ID = TeamAId, TeamBWins, TeamAWins)) as Loses,
+               iif(TEAM_ID = WinnerId, 'Won ', 'Lost ') || LevelTitle as CampaignTitle,
+               group_concat(LevelTitle || ' - ' ||
+                            iif(TEAM_ID = WinnerId,
+                                'Won (' || iif(TEAM_ID = TeamAId, TeamAWins || '-' || TeamBWins, TeamBWins || '-' || TeamAWins) || ') Against ' || LoserName,
+                                'Lost (' || iif(TEAM_ID = TeamAId, TeamAWins || '-' || TeamBWins, TeamBWins || '-' || TeamAWins) || ') Against ' || WinnerName),
+                   char(10)) as FullDescription
+        from PlayoffTeams T
+            inner join OrderedSeries PSSWSD on PSSWSD.Season=T.SEASON and (TeamAId = T.TEAM_ID or TeamBId=T.TEAM_ID)
+        group by T.TEAM_ID, T.SEASON
+    )
+select *
+from TeamPlayoffs;
+CREATE VIEW IF NOT EXISTS PlayoffShots as
+select
+    PlayerAId, PLAYER_NAME, TEAM_ID as PlayerTeamId, TEAM_NAME as PlayerTeamName, GWOTI.SEASON,
+       PSWS.TeamAId, PSWS.TeamAName, PSWS.TeamBId, PSWS.TeamBName, GWOTI.GAME_DATE, GameId, SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot, ScoreMargin, S.TeamAScore, S.TeamBScore, Description, EventOrder
+from Shots S
+    inner join Games GWOTI on S.GameId = GWOTI.GAME_ID
+    inner join PlayoffSerieSummary PSWS on GWOTI.SEASON = PSWS.Season and PSWS.TeamAId = GWOTI.TeamAId and PSWS.TeamBId = GWOTI.TeamBId
+    inner join BoxScoreP BSP on GWOTI.GAME_ID = BSP.GAME_ID and PlayerAId = BSP.PLAYER_ID
+where GWOTI.SEASON_TYPE = 4;

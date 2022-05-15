@@ -1,0 +1,15 @@
+with
+    AllStarsTransactions as (
+        select distinct Transactions.*,
+                        Transactions.Season/10 * 10 as Decade
+        from Transactions
+            inner join Awards A on A.Description='All-NBA' and AllNBATeamNumber <= 2 and PlayerId=PlayerNBAId and A.Season between Transactions.Season - 2 and Transactions.Season
+        where TradeeType='player'
+        order by Year, Month, Day
+    )
+select Decade,
+       group_concat(PlayerNBAName || ' from ' || AllStarsTransactions.TeamBNBAName || ' to ' || AllStarsTransactions.TeamANBAName || ' in ' || Year || '-' || Month || '-' || Day, char(10)) as Descriptions,
+       count(*) as TransactionsNumber
+from AllStarsTransactions
+group by Decade
+order by TransactionsNumber desc
