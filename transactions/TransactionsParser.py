@@ -1,18 +1,5 @@
-import json
-import re
 import string
-from collections import defaultdict
-
-import requests
-from bs4 import BeautifulSoup
 from pyparsing import *
-
-
-# def take_until(until, label=''):
-#     to_ret = Regex(fr'.+?(?={re.escape(until)})')
-#     if label != '':
-#         return to_ret(label)
-#     return to_ret
 from transactions.transaction_constants import ROLES
 
 
@@ -71,8 +58,6 @@ team_trade_part = ZeroOrMore(team_tradees + Suppress(',')) + team_tradees + Opt(
 pick_source = Group(Suppress('(') + number('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('pick is') + team_nt('team') + Literal('\'s pick') + Opt(', top-' + number('protection') + 'protected') + '.)')
 favorable_pick = Group(Suppress('(') + number('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('pick is least favorable pick.)'))
 swap_pick = Group(Suppress('(') + number('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('pick is a swap.)'))
-# unknown_pick_explanation = Group(Suppress('(') + number('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Combine('pick is' + CharsNotIn(')'))('explanation') + ')')
-# unknown_brackets = Group(Suppress('(') + CharsNotIn(')')('content') + Suppress(')'))
 
 trade_part = 'The' + team_nt('team_a') + 'traded' + Group(team_trade_part)('team_a_tradees') + 'to the' + \
              team_nt('team_b') + 'for' + Group(team_trade_part)('team_b_tradees')
@@ -161,15 +146,6 @@ pick_protection_generic = Group(
         '(' + Group(protections)('protection') + 'protected, so never conveyed)',
         '(' + Opt(Opt(protection_pick + 'pick is') + Group(protections)('protection')) + 'protected' + (Literal(',') | 'and') + 'did not convey)',
         '(Pick is' + Group(protections + Opt('and' + number('range1') + '-' + number('range2')))('protection') + 'protected and was not conveyed)'
-        #
-        # '(' + take_until_new('protected, so never conveyed)', 'protection'),
-        # '(Pick is' + take_until_new('protected', 'protection') + ('.' | Literal('and was not conveyed')) + ')',
-        # '(' + take_until_new('pick was protected and not conveyed)', 'protected_part'),
-        # '(Pick is conditional and did not convey.)',
-        # take_until_new('was protected and not conveyed', 'protected_part'),
-        # '(' + Opt('The') + take_until_new('acquired', 'team') + take_until_new((Literal('was') | 'is' | 'are'), 'protected_part') +
-        # Opt(take_until_new('protected', 'protection')),
-        # '(' + Opt('The') + take_until_new('acquired', 'team') + take_until_new((Literal('was') | 'is') + 'protected' + Opt('and' + Opt('did') + 'not convey' + Opt('ed')) + '.)', 'pick'),
     ])
 )
 unknown_brackets = Group('(' + take_until_new(')', 'unknown_part', excluded_chars='()'))
@@ -209,11 +185,8 @@ after_trade_part = MatchFirst([OneOrMore(MatchFirst([cash_part('cash_sum'),
                                                      agreed_to_terms.set_results_name('agreeds_to_terms', True),
                                                      unknown_brackets.set_results_name('unknown_brackets', True)])) + line_end,
                                Regex(r".+")('unknown_all')])
-# Regex('.+').set_results_name('unknown_all', True)]))
-# too_complicated_to_stracture.set_results_name('too_complicated_to_stracture', True),
 
 matched_contract = Group('(' + team_nt('matching_team') + 'matched offer sheet signed with' + team_nt('matched_team') + ')')
-# sign_extension = '(Signing is extension' + MatchFirst([Literal('on'), Literal('of')]) + 'deal signed in ' + number + Opt('.') + ')'
 sign_and_trade = Group('(Sign and trade with' + take_until_new(')', 'sign_and_traded_from_team', excluded_chars=')'))
 renegotiaion_sign = Group('Signing is a renegotiation & extension of deal signed in' + number)
 extension = Group('(Signing is extension' + MatchFirst([Literal('on'), Literal('of')]) + 'deal signed in' + number + Opt('and extended in' + number) + Opt('.') + ')')
@@ -226,12 +199,15 @@ sued = Group('(The NBA sued' + take_until_new('because', 'team') + take_until_ne
              take_until_new('on', 'court_decision') + date_nt('date') + '.)')
 for_future_services = Group('(' + take_until_new('was playing in the', 'player') + take_until_new('at the time and was signed for future services.)', 'played_in'))
 compansatory_picks_sented = Group('The compensatory draft picks were sent to' + take_until_new('on', 'sent_to_team') + date_nt('date') + '.')
+contract_voided = Group(Literal('contract voided')('contract_voided'))
 waive_reason = MatchFirst(['(' + Literal('Ended two-way contract.')('reason') + ')',
                            Literal('Ended two-way contract.')('reason'),
                            Literal('Move made for salary cap purposes post-retirement')('reason'),
-                           '(' + Literal('reached contract buyout agreement')('reason') + ')'])
+                           '(' + Literal('reached contract buyout agreement')('reason') + ')',
+                           Literal('contract voided due to positive COVID-19 test')('reason'),
+                           Regex(r'.+')('reason')])
 
-signing_additional = OneOrMore(MatchFirst([matched_contract.set_results_name('matched_contract', True),
+signing_additional = MatchFirst([OneOrMore(MatchFirst([matched_contract.set_results_name('matched_contract', True),
                                            sign_and_trade.set_results_name('sign_and_trade', True),
                                            renegotiaion_sign.set_results_name('renegotiation', True),
                                            extension.set_results_name('extension', True),
@@ -244,7 +220,9 @@ signing_additional = OneOrMore(MatchFirst([matched_contract.set_results_name('ma
                                            compansatory_picks_sented.set_results_name('compansatory_picks_sented', True),
                                            option_to_swap.set_results_name('option_to_swap', True),
                                            contigent_on_being_on_roster_and_waved.set_results_name('contigent_on_being_on_roster_and_waved', True),
-                                           sign_with_salary_and_length.set_results_name('sign_with_salary_length', True)]))
+                                           contract_voided.set_results_name('contract_voided', True),
+                                           sign_with_salary_and_length.set_results_name('sign_with_salary_length', True)])) + line_end,
+                                 Regex(r".+")('unknown_all')])
 
 agrees_to_play_games = Group(take_until_new('agreed to play', 'agreeing_team') + number('games_number') + 'home games in' + take_until_new('.', 'games_location', excluded_chars='.'))
 turn_player_to_nba_after_fold = Group('(' + take_until_new('was turned over to NBA after', 'player') +
@@ -344,89 +322,18 @@ templates = {
 }
 
 
-def parse_transaction(transaction):
-    for desc, template in templates.items():
-        try:
-            res = template.parseString(transaction, True).asDict()
-        except ParseException:
-            continue
-        return [transaction, desc, res]
-    return None
+class TransactionsParser:
 
-
-def generate_season_transactions(season):
-    with open(f'../transactions/cache/transactions_{season}.txt', 'r') as f:
-        transactions = json.load(f)
-    for season, transaction_year, transaction_month, transaction_day, transaction_number, transaction_text, transaction_to_find in transactions:
-        parsed = parse_transaction(transaction_text)
-        if not parsed:
-            if 'traded  to the' in transaction_text:
+    @staticmethod
+    def parse_transaction(transaction):
+        if 'traded  to the' in transaction:
+            return None, None
+        for transaction_type, template in templates.items():
+            try:
+                res = template.parseString(transaction, True).asDict()
+            except ParseException:
                 continue
-            raise Exception(f'not found for {transaction_text} in {transaction_year}-{transaction_month}-{transaction_day}')
-        yield [transaction_year, transaction_month, transaction_day, transaction_number, *parsed, transaction_to_find]
-
-
-def parse_test(season):
-    with open(f'../transactions/transactions_{season}.txt', 'r') as f:
-        transactions = json.load(f)
-    parsed = defaultdict(list)
-    count = 0
-    for i, (day, day_transactions) in enumerate(transactions.items()):
-        # print(f'parsing {day} transactions...')
-        for transaction, transaction_to_find in day_transactions:
-            found = False
-            for desc, template in templates.items():
-                try:
-                    res = template.parseString(transaction, True).asDict()
-                except ParseException:
-                    continue
-                found = True
-                print(f'parsed {transaction} as\n\t{res} with type {desc}')
-                parsed[day].append([transaction, desc, res])
-                break
-            if not found:
-                if 'traded  to the' in transaction:
-                    print(f'passing transaction {transaction}. ilegal input')
-                    continue
-                raise Exception(f'not found for {transaction} in {day}')
-                # print(f'not found for {transaction} in {day}')
-    # for day, day_transactions in parsed.items():
-    #     for initial, transaction_desc, transaction_dict in day_transactions:
-    #         if transaction_desc in ['multiple_teams_trade', 'simple_trade'] and ('unknown_draft_bracketsss' in transaction_dict or 'unknown_brackets' in transaction_dict):
-    #             print(day)
-    #             print(initial)
-    #             print(transaction_desc)
-    #             print(transaction_dict)
-    #             print('*******************************')
-    return count
-
-
-def parse_all():
-    count = 0
-    for season in range(1950, 2022):
-        # print(f'parsing {season}...')
-        count += parse_test(season)
-    print(count)
-
-
-def generate_transactions(from_season=1950):
-    for season in range(from_season, 2022):
-        for t in generate_season_transactions(season):
-            yield season - 1, *t
-
-
-
-def tests():
-    test_str = 'The BOS sold the player rights to kudelfr01 to the BLB. (Report says Boston also gave up a 1st round draft pick for Bob Brannum in this transaction, but Brannum was already sold to them on September 23, 1950.)'
-    aaa = 'The 2nd round draft pick was contingent upon Campbell making Washington\'s roster but he did not do so.'
-    temp = templates['simple_trade']
-    res = temp('aaa').parseString(aaa)
-    print(res.asDict())
-
-
-if __name__ == '__main__':
-    # tests()
-    # scrape_all()
-    parse_all()
+            return transaction_type, res
+        raise Exception(f'couldnt parse transaction {transaction}')
 
 

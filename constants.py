@@ -10,6 +10,8 @@ BREF_SEASON_STATS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s
 BREF_PLAYERS_ENDPOINT = 'https://www.basketball-reference.com/players/%s'
 BREF_DRAFT_ENDPOINT = 'https://www.basketball-reference.com/draft/%s_%s.html'
 BREF_STARTERS_ENDPOINT = 'https://www.basketball-reference.com/teams/%s/%s_start.html'
+BREF_TRANSACTIONS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_transactions.html'
+
 STATS_HEADERS = {
     'Host': 'stats.nba.com',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
@@ -65,6 +67,7 @@ BREF_SEASON_STATS_FILE_TEMPLATE = 'bref_stats_%s_%s.html'
 BREF_PLAYERS_FILE_TEMPLATE = 'bref_players_%s.html'
 BREF_DRAFT_FILE_TEMPLATE = 'bref_draft_%s_%s.html'
 BREF_STARTERS_FILE_TEMPLATE = "bref_starters_%s_%s.html"
+BREF_TRANSACTIONS_FILE_TEMPLATE = 'bref_transactions_%s_%s.html'
 MISSING_FILES_FILE = "missing_files.txt"
 PBP_FIRST_SEASON = 1996
 

@@ -1,4 +1,4 @@
-A collection of my scripts to download and analyze nba boxscores, awards, and play by play data.
+A collection of my scripts to download and analyze nba boxscores, awards, trsnsactions, and play by play data.
 
 # Examples
 * Players stats at elimination games
@@ -7,6 +7,7 @@ A collection of my scripts to download and analyze nba boxscores, awards, and pl
 * players stats at triple double games
 * most games in a row 
 * shot finder with play by play data(beta)
+* Decade with most trades of all stars or hof to teams who made the finals the year before
 * etc...
 
 # Play by play
@@ -21,6 +22,12 @@ A collection of my scripts to download and analyze nba boxscores, awards, and pl
 * the hof and retired jerseys is quick since it can be retrieved through the teams endpoint so only 50 requests is required
 * other awards require a request per player which means arround 5000 requests(this will take some hours)
 * like the play by play, the cache can grow up to gigabytes so consider running without caching
+
+# Transactions
+* i added support in downloaing transactions from BREF
+* the transactions is processed by a parser so the output 
+may be incorrect or crush(important to update the parser with new transactions)
+* this require only a request per season so downloading and parsing all transactions should take arround 2 minutes
 
 # Setting up
 * requires Python >=3.6  
@@ -44,6 +51,7 @@ python3 boxscores_db.py -b #updates the boxscore tables and the players birthdat
 python3 boxscores_db.py -hof #updates the boxscore tables and the hall of fame inductees(not complete without awards option but almost complete)
 python3 boxscores_db.py -aw #updates the boxscore tables and the awards table(will take some time)
 python3 boxscores_db.py -starters #updates the boxscore tables and updating starters data(require a request per team per season so will take some time)
+python3 boxscores_db.py -t all #updates the boxscore tables and updating all transactions data
 ```
 
 after that step you can start query all the boxscores that had been collected. <br/>
@@ -58,7 +66,7 @@ the database path is Database/boxscores_full_database.sqlite
 * -hof, downloads hof and retired jersies data
 * -aw, downloads awards data
 * -starters, downloads starters data
-
+* -t (all|{year}), downloads all transactions or only transactions of {year}
 # Views
 you can find the views i created in Database/views.txt.
 to load them execute:

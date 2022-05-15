@@ -21,6 +21,7 @@ from Handlers.BREFPlayers import BREFPlayerHandler
 from Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
 from Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
 from Handlers.BREFStartersHandler import BREFStartersHandler
+from Handlers.BREFTransactionsHandler import BREFTransactionsHandler
 from Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
 from Handlers.OddsCacheHandler import OddsCacheHandler
 from Handlers.PBPCacheHandler import PBPCacheHandler
@@ -46,6 +47,7 @@ class DatabaseHandler:
         self.bref_seasons = None
         self.bref_drafts = None
         self.players_mapper = None
+        self.bref_players = None
         if self.to_cache_missing_files:
             self.missing_files = self.get_missing_files()
 
@@ -114,6 +116,15 @@ class DatabaseHandler:
         self.players_mapper = json.loads(res)
         return self.players_mapper
 
+    def load_bref_players(self):
+        if self.bref_players is not None:
+            return self.bref_players
+        res = self.conn.execute("""
+            select PlayerId, PlayerName, FromYear, ToYear, coalesce(PM.PlayerNbaId, 0), PM.PlayerNbaName from BREFPlayer
+                left join PlayerMapping PM on PM.PlayerBrefId=BREFPlayer.PlayerId""").fetchall()
+        self.bref_players = res
+        return res
+
     # creating cache and database folders
     def create_folders(self):
         if self.use_cache or self.to_cache_missing_files:
@@ -163,6 +174,14 @@ class DatabaseHandler:
 
     def insert_bref_players(self, bref_players):
         self.conn.executemany("""replace into BREFPlayer (PlayerId, PlayerName, FromYear, ToYear, Position, Height, Weight, Birthdate, Active, HOF) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", bref_players)
+        self.conn.commit()
+
+    def insert_transactions(self, transactions):
+        self.conn.executemany("""
+            insert into Transactions (Season, Year, Month, Day, TransactionNumber, TeamANBAId, TeamANBAName, TeamABREFAbbr, TeamABREFName, 
+                TeamBNBAId, TeamBNBAName, TeamBBREFAbbr, TeamBBREFName, PlayerNBAId, PlayerNBAName, PlayerBREFId, PlayerBREFName, 
+                PersonBREFId, PersonBREFName, PersonRole, TransactionType, ActionType, SubTypeA, SubTypeB, SubTypeC, 
+                OnTeamAAfter, OnTeamBAfter, PickYear, PickRound, PicksNumber, TradeeType, Additional) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", transactions)
         self.conn.commit()
 
     def update_players_table(self, players):
@@ -476,6 +495,46 @@ class DatabaseHandler:
                 Birthdate datetime,
                 Active integer,
                 HOF integer
+            )
+        """)
+        self.conn.commit()
+
+    def create_bref_transactions_table(self):
+        self.conn.execute("""
+            create table if not exists Transactions(
+                Season integer not null,
+                Year integer not null,
+                Month integer not null,
+                Day integer not null,
+                TransactionNumber integer not null,
+                TeamANBAId integer not null,
+                TeamANBAName text,
+                TeamABREFAbbr text not null,
+                TeamABREFName text not null,
+                TeamBNBAId integer not null,
+                TeamBNBAName text,
+                TeamBBREFAbbr text not null,
+                TeamBBREFName text not null,
+                PlayerNBAId integer not null,
+                PlayerNBAName text,
+                PlayerBREFId text not null,
+                PlayerBREFName text not null,
+                PersonBREFId text not null,
+                PersonBREFName text not null,
+                PersonRole text,
+                TransactionType text not null,
+                ActionType text not null,
+                SubTypeA text not null,
+                SubTypeB text,
+                SubTypeC text,
+                OnTeamAAfter integer not null,
+                OnTeamBAfter integer not null,
+                PickYear integer not null,
+                PickRound integer not null,
+                PicksNumber integer not null,
+                TradeeType text not null,
+                Additional text not null,
+                unique (Season, Year, Month, Day, TransactionNumber, TeamABREFAbbr, TeamBBREFAbbr, PlayerBREFId, PlayerBREFName, PersonBREFId, PersonBREFName, TransactionType, PickYear, PickRound, TradeeType, Additional)
             )
         """)
         self.conn.commit()
@@ -875,14 +934,25 @@ class DatabaseHandler:
             print(f'collecting {season} of team {team_id}...')
             games_dates_to_ids = json.loads(games_dates_to_ids)
             games_with_starters = self.handle_cache(BREFStartersHandler(season, team_id, self.map_players()))
-            to_update = [[starter_id, games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters for starter_id in starters_ids]
-            to_update_game_ids = [[games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters]
+            to_update = [[starter_id, games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters for starter_id in starters_ids if game_date in games_dates_to_ids]
+            to_update_game_ids = [[games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters if game_date in games_dates_to_ids]
             self.update_boxscores_starters_all(to_update_game_ids, to_update)
 
     def collect_bref_players(self):
         for letter in string.ascii_lowercase:
             bref_players = self.handle_cache(BREFPlayerHandler(letter))
             self.insert_bref_players(bref_players)
+
+    def collect_bref_season_transactions(self, league_id, season):
+        self.conn.execute("""delete from Transactions where Season=?""", [season])
+        transactions = self.handle_cache(BREFTransactionsHandler(league_id, season, self.load_bref_players()))
+        self.insert_transactions(transactions)
+
+    def collect_all_bref_transactions(self, seasons_to_collect=None):
+        seasons = self.fetch_br_seasons_links()
+        for season, season_link, league_id in seasons:
+            if (league_id == 'BAA' or league_id == 'NBA') and (not seasons_to_collect or season in seasons_to_collect):
+                self.collect_bref_season_transactions(league_id, season)
 
     # updates(start form last saved year) odds
     def update_odds(self):
@@ -978,12 +1048,17 @@ class DatabaseHandler:
 
     def update_bref_players_database(self):
         print('setting bref players tables...')
-        # self.create_bref_draft_table()
-        # self.create_bref_season_player_stats_table()
-        # self.collect_bref_players_season_stats()
-        # self.collect_bref_drafts()
         self.create_bref_players_table()
         self.collect_bref_players()
+
+    def update_bref_transactions_database(self, season):
+        print('setting bref transactions tables...')
+        self.create_bref_transactions_table()
+        if season == 'all':
+            self.collect_all_bref_transactions()
+        else:
+            season = int(season)
+            self.collect_all_bref_transactions([season])
 
 
 def main():
@@ -998,6 +1073,7 @@ def main():
     parser.add_argument('-aw', '--awards', help='Update Players awards', default=False, action='store_true')
     parser.add_argument('-brefp', '--bref_players', help='Update BREF Players data', default=False, action='store_true')
     parser.add_argument('-starters', '--starters', help='Update Starters data from BREF', default=False, action='store_true')
+    parser.add_argument('-t', '--transactions', help='Update BREF Transactions table', nargs='?', default=None, action='store', const='all')
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
     parser.add_argument('-wv', '--views_out', type=str, help='Write views to file(override other options)')
     args = parser.parse_args()
@@ -1022,6 +1098,8 @@ def main():
             handler.update_bref_players_database()
         if args.starters:
             handler.collect_bref_starters()
+        if args.transactions:
+            handler.update_bref_transactions_database(args.transactions)
 
     # handler.fix_abbrs()
 

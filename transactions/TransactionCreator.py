@@ -1,14 +1,9 @@
 import json
-import pprint
-
 from transactions.MarkingDict import MarkingDict, create_deep_mraking_dict
-from transactions.TransactionsAnalayzer import TransactionAnalyzer
-from transactions.TransactionsParser import generate_transactions
 
 
-class TransactionCreator:
+class TransactionsCreator:
     def __init__(self):
-        self.analyzer = TransactionAnalyzer()
         self.transformations_chain = {
             'free_agent_sign': [self.create_sign_transaction(), self.optional_property('additional', self.get_single_and_assert)],
             'two_way_contract_sign': [self.create_sign_transaction(), self.optional_property('additional', self.get_single_and_assert)],
@@ -56,9 +51,6 @@ class TransactionCreator:
                            self.add_properties('retire', False, 'retire'),
                            self.collect_to_unknown(['retirement_season', 'retirement_date', 'retirement_team'])]
         }
-        self.tradees_transformations_chain = {
-
-        }
 
     @staticmethod
     def add_properties(action_type, on_roster_after, sub_type_a):
@@ -81,11 +73,11 @@ class TransactionCreator:
             'team_a_nba_id': 0,
             'team_a_nba_name': None,
             'team_a_bref_abbr': '',
-            'team_a_bref_name': None,
+            'team_a_bref_name': '',
             'team_b_nba_id': 0,
             'team_b_nba_name': None,
             'team_b_bref_abbr': '',
-            'team_b_bref_name': None,
+            'team_b_bref_name': '',
             'player_bref_id': '',
             'player_bref_name': '',
             'player_nba_id': 0,
@@ -94,15 +86,16 @@ class TransactionCreator:
             'person_bref_name': '',
             'person_role': None,
             'transaction_type': transaction_type,
-            'action_type': None,
-            'sub_type_a': None,
+            'action_type': '',
+            'sub_type_a': '',
             'sub_type_b': None,
             'sub_type_c': None,
             'on_team_a_after': False,
             'on_team_b_after': False,
             'pick_year': -1,
             'pick_round': -1,
-            'tradee_type': None,
+            'picks_number': -1,
+            'tradee_type': '',
             'additional': '{}'
         }
 
@@ -210,13 +203,37 @@ class TransactionCreator:
                 'tradee_type': 'cash considerations'
             }]
         elif tradee_type == 'draft_pick':
-            return [{
+            picks = [{
                 **self.optional_property('pick_round', self.get_single_and_assert)(p),
                 'pick_year': self.get_single_and_assert(p['pick_year']),
                 'tradee_type': 'draft pick',
+                'picks_number': 1,
                 **self.optional_property_destruct('player', self.get_single_and_assert)(p),
                 **self.optional_property_destruct('player_no_id', self.get_single_and_assert)(p)
             } for p in objects]
+            dups = {}
+            for d in picks:
+                pick_round_key = d['pick_round'] if 'pick_round' in d else -1
+                pick_player_key = d['player_bref_name'] if 'player_bref_name' in d else -1
+                pick_key = (d['pick_year'], pick_round_key, pick_player_key)
+                if pick_key not in dups:
+                    dups[pick_key] = 0
+                dups[pick_key] = dups[pick_key] + 1
+            to_ret = []
+            for d in picks:
+                pick_round_key = d['pick_round'] if 'pick_round' in d else -1
+                pick_player_key = d['player_bref_name'] if 'player_bref_name' in d else -1
+                pick_key = (d['pick_year'], pick_round_key, pick_player_key)
+                if pick_key in dups:
+                    if dups[pick_key] > 1:
+                        to_ret.append({
+                            **d,
+                            'picks_number': dups[pick_key]
+                        })
+                        dups.pop(pick_key)
+                    else:
+                        to_ret.append(d)
+            return to_ret
         elif tradee_type == 'future_considerations':
             cons = self.get_single_and_assert(objects)
             if cons != 'future considerations':
@@ -408,23 +425,9 @@ class TransactionCreator:
             if not marking_transaction.validate():
                 raise Exception(f'not all keys used in {marking_transaction}.\nnot used keys: {marking_transaction.not_used_keys()}')
             for t in transactions_to_ret:
-                if len(t.keys()) != 31:
+                if len(t.keys()) != 32:
                     raise Exception(f'{t}\nhas incorrect key number: {len(t.keys())}')
-            print(f'created {len(transactions_to_ret)} transactions: ')
-            # if transaction_type == 'subtitution_contract':
-            #     for t in transactions_to_ret:
-            #         pprint.pp(t)
         except Exception as e:
             print(f'while creating {analyzed_transaction}\n{transaction}')
             raise e
         return transactions_to_ret
-
-    def create_transactions(self):
-        for season, transaction_year, transaction_month, transaction_day, transaction_number, transaction, transaction_type, parsed_transaction, transaction_to_find in generate_transactions():
-            analyzed_transaction = self.analyzer.analyze_transaction(season, transaction, parsed_transaction, transaction_type, transaction_to_find)
-            self.create_transaction(analyzed_transaction, transaction, transaction_type, season, transaction_year, transaction_month, transaction_day, transaction_number)
-
-
-if __name__ == '__main__':
-    creator = TransactionCreator()
-    creator.create_transactions()

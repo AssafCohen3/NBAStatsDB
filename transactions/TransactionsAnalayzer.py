@@ -1,16 +1,13 @@
 import datetime
 import json
-import pprint
-import sqlite3
 import string
 from collections import defaultdict
 from collections.abc import Mapping
-from constants import BREF_ABBREVATION_TO_NBA_TEAM_ID, DATABASE_PATH, DATABASE_NAME, TEAM_NBA_ID_TO_NBA_NAME
-from transactions.TransactionsParser import generate_transactions
+from constants import BREF_ABBREVATION_TO_NBA_TEAM_ID, TEAM_NBA_ID_TO_NBA_NAME
 from transactions.transaction_constants import ROLES, ABA_ABBR, TEAMS_MAPPING, TEAMS_IN_SEASONS_MAPPING
 
 
-class TransactionAnalyzer:
+class TransactionsAnalyzer:
     def __init__(self, all_players_with_mapping):
         self.tradees_analyzer = {
             'player': self.get_player_by_id,
@@ -35,7 +32,7 @@ class TransactionAnalyzer:
                 'cash_num': self.analyze_cash
             },
             'draft_pick': {
-                'pick_year': lambda s, v: v if v == 'future' else int(v),
+                'pick_year': lambda s, v: 3000 if v == 'future' else int(v),
                 'pick_round': lambda s, v: int(v[:1]),
                 'player': self.get_player_by_id,
                 'player_no_id': self.get_player_by_name
@@ -159,18 +156,23 @@ class TransactionAnalyzer:
             },
             '10_day_contract': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             'exhibit_10': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             '10_day_contract_expired': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             'release_from_10_day_contract': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             'contract_extension': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             'ceremonial_contract': {
                 **self.player_team_default,
@@ -182,15 +184,19 @@ class TransactionAnalyzer:
             },
             'two_way_contract_sign': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             're_signing': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             'rest_of_season_sign': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional
             },
             'sign_with_length': {
                 **self.player_team_default,
+                'additional': self.analyze_sign_additional,
                 'contract_length': lambda s, v: int(v)
             },
             'suspension_by_team': {
@@ -401,17 +407,12 @@ class TransactionAnalyzer:
                     val = handler(season, v)
                     if val is None:
                         raise Exception('what')
-                    # print(f'{"--"*depth} {path + [key]} analyzed {v} as {val}')
                     to_ret[key].append(val)
         return dict(to_ret)
 
-    def analyze_transaction(self, season, transaction, parsed_transaction, transaction_type, transaction_to_find):
-        # print(f'analyzing {transaction} in season {season}')
-        # print(f'parsed as {parsed_transaction} of type {transaction_type}')
+    def analyze_transaction(self, season, parsed_transaction, transaction_type, transaction_to_find):
         res = self.analyze_transaction_rec(season, parsed_transaction, parsed_transaction, self.analyzer[transaction_type], [], 1)
         self.validate_analyzed(res, transaction_to_find)
-        # print('analyzed as: ')
-        # pprint.pprint(res)
         return res
 
     @staticmethod
@@ -466,24 +467,8 @@ class TransactionAnalyzer:
             if (id_to_found, id_type) not in found_elements:
                 raise Exception(f'couldnt validate {id_to_found}, {id_text} of type {id_type} in {analyzed}. found {found_elements}')
 
-    def analyze_transactions(self):
-        for season, transaction_year, transaction_month, transaction_day, transaction_number, transaction, transaction_type, parsed_transaction, transaction_to_find in generate_transactions():
-            try:
-                self.analyze_transaction(season, transaction, parsed_transaction, transaction_type, transaction_to_find)
-            except Exception as e:
-                self.print_warnings()
-                print(f'analyzing {transaction} in season {season}')
-                print(f'parsed as {parsed_transaction} of type {transaction_type}')
-                raise e
-        self.print_warnings()
-
     def print_warnings(self):
         for key, items in self.warnings.items():
             print(f'{key}: ')
             for item in items:
                 print(f'    {item}')
-
-
-if __name__ == '__main__':
-    analyzer = TransactionAnalyzer()
-    analyzer.analyze_transactions()
