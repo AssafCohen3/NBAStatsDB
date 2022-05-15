@@ -236,3 +236,22 @@ BREF_ABBREVATION_TO_NBA_TEAM_ID = {
     'CHA': [[2004, 2013, 1610612766]], 'NOK': [[2005, 2006, 1610612740]], 'OKC': [[2008, 2999, 1610612760]],
     'BRK': [[2012, 2999, 1610612751]], 'NOP': [[2013, 2999, 1610612740]], 'CHO': [[2014, 2999, 1610612766]]
 }
+
+TEAM_NBA_ID_TO_NBA_NAME = {
+    1610610023: "Anderson Packers", 1610610024: "Baltimore Bullets", 1610610025: "Chicago Stags",
+    1610610026: "Cleveland Rebels", 1610610027: "Denver Nuggets", 1610610028: "Detroit Falcons",
+    1610610029: "Indianapolis Jets", 1610610030: "Indianapolis Olympians", 1610610031: "Pittsburgh Ironmen",
+    1610610032: "Providence Steamrollers", 1610610033: "Sheboygan Redskins", 1610610034: "St. Louis Bombers",
+    1610610035: "Toronto Huskies", 1610610036: "Washington Capitols", 1610610037: "Waterloo Hawks",
+    1610612737: "Atlanta Hawks", 1610612738: "Boston Celtics", 1610612739: "Cleveland Cavaliers",
+    1610612740: "New Orleans Pelicans", 1610612741: "Chicago Bulls", 1610612742: "Dallas Mavericks",
+    1610612743: "Denver Nuggets", 1610612744: "Golden State Warriors", 1610612745: "Houston Rockets",
+    1610612746: "LA Clippers", 1610612747: "Los Angeles Lakers", 1610612748: "Miami Heat",
+    1610612749: "Milwaukee Bucks", 1610612750: "Minnesota Timberwolves", 1610612751: "Brooklyn Nets",
+    1610612752: "New York Knicks", 1610612753: "Orlando Magic", 1610612754: "Indiana Pacers",
+    1610612755: "Philadelphia 76ers", 1610612756: "Phoenix Suns", 1610612757: "Portland Trail Blazers",
+    1610612758: "Sacramento Kings", 1610612759: "San Antonio Spurs", 1610612760: "Oklahoma City Thunder",
+    1610612761: "Toronto Raptors", 1610612762: "Utah Jazz", 1610612763: "Memphis Grizzlies",
+    1610612764: "Washington Wizards", 1610612765: "Detroit Pistons", 1610612766: "Charlotte Hornets",
+    1610616833: "Team Durant", 1610616834: "Team LeBron"
+}

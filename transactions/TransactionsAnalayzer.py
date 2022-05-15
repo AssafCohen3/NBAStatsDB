@@ -1,22 +1,27 @@
 import datetime
+import json
 import pprint
 import sqlite3
 import string
 from collections import defaultdict
 from collections.abc import Mapping
-from constants import BREF_ABBREVATION_TO_NBA_TEAM_ID, DATABASE_PATH, DATABASE_NAME
+from constants import BREF_ABBREVATION_TO_NBA_TEAM_ID, DATABASE_PATH, DATABASE_NAME, TEAM_NBA_ID_TO_NBA_NAME
 from transactions.TransactionsParser import generate_transactions
 from transactions.transaction_constants import ROLES, ABA_ABBR, TEAMS_MAPPING, TEAMS_IN_SEASONS_MAPPING
 
 
 class TransactionAnalyzer:
-    def __init__(self):
+    def __init__(self, all_players_with_mapping):
         self.tradees_analyzer = {
             'player': self.get_player_by_id,
             'player_no_id': self.get_player_by_name,
+            'person_no_id_with_role': {
+                'person_no_id': self.get_person_by_name,
+                'role': self.analyze_role
+            },
+            'person': self.get_person_by_id,
             'person_with_role': {
                 'person': self.get_person_by_id,
-                'person_no_id': self.get_person_by_name,
                 'role': self.analyze_role
             },
             'cash': {
@@ -114,7 +119,7 @@ class TransactionAnalyzer:
             },
             'waived': {
                 **self.player_team_default,
-                'reason': lambda s, v: v
+                'reason': self.analyze_waive_reason
             },
             'released': {
                 **self.player_team_default,
@@ -126,8 +131,7 @@ class TransactionAnalyzer:
                 **self.executive_default
             },
             'appointment': {
-                **self.executive_default,
-                'role_more': lambda s, v: v
+                **self.executive_default
             },
             'reassignment': {
                 **self.executive_default
@@ -173,6 +177,7 @@ class TransactionAnalyzer:
             },
             'subtitution_contract': {
                 **self.player_team_default,
+                'substituted_player': self.get_player_by_id,
                 'substituted_player_no_id': self.get_player_by_name
             },
             'two_way_contract_sign': {
@@ -205,27 +210,26 @@ class TransactionAnalyzer:
             },
             'recalling': {
                 **self.player_team_default,
-                'assigned_to_team': lambda s, v: v,
+                'recalling_from_team': lambda s, v: v,
                 'where': lambda s, v: v if v == 'G-League' else None
             },
             'retirement': {
                 'player': self.get_player_by_id,
+                'person': self.get_person_by_id,
                 'retirement_season': lambda s, v: int(v.split('-')[0]),
                 'retirement_date': lambda s, v: datetime.date(int('20' + v['year']), int(v['month']), int(v['day'])).isoformat(),
                 'retirement_team': self.get_team_id_from_abbrevation
             }
         }
         self.bref_players = None
-        self.bref_players_list = None
-        self.conn = sqlite3.connect(DATABASE_PATH + DATABASE_NAME + '.sqlite')
+        self.bref_players_list = all_players_with_mapping
+        self.load_players()
         self.warnings = defaultdict(list)
 
     def load_players(self):
-        all_players = self.conn.execute("""select PlayerId, PlayerName, FromYear, ToYear from BREFPlayer""").fetchall()
         self.bref_players = {}
-        self.bref_players_list = all_players
-        for p_id, p_name, p_from, p_to in all_players:
-            self.bref_players[p_id] = [p_name, p_from, p_to]
+        for p_id, p_name, p_from, p_to, p_nba_id, p_nba_name in self.bref_players_list:
+            self.bref_players[p_id] = [p_name, p_from, p_to, p_nba_id, p_nba_name]
 
     def get_bref_player_id(self, player_id):
         if self.bref_players is None:
@@ -233,13 +237,13 @@ class TransactionAnalyzer:
         if player_id not in self.bref_players:
             self.warnings['not_found_id'].append(f'not found player id of {player_id}.')
             return {
-                'player_id_not_found': player_id
+                'player_bref_id_not_found': player_id
             }
         return {
-            'player_id': player_id,
-            'player_name': self.bref_players[player_id][0],
-            'from': self.bref_players[player_id][1],
-            'to': self.bref_players[player_id][2],
+            'player_bref_id': player_id,
+            'player_bref_name': self.bref_players[player_id][0],
+            'player_nba_id': self.bref_players[player_id][3],
+            'player_nba_name': self.bref_players[player_id][4]
         }
 
     def get_bref_player_name(self, season, player_name):
@@ -254,14 +258,14 @@ class TransactionAnalyzer:
             else:
                 self.warnings['not_found_name'].append(f'not found player {player_name} in {season}.')
             return {
-                'player_name_not_found': player_name
+                'player_bref_name_not_found': player_name
             }
         self.warnings['success'].append(f'found {player_name} as {relevants[0]}')
         return {
-            'player_id': relevants[0][0],
-            'player_name': relevants[0][1],
-            'from': relevants[0][2],
-            'to': relevants[0][3],
+            'player_bref_id': relevants[0][0],
+            'player_bref_name': relevants[0][1],
+            'player_nba_id': relevants[0][4],
+            'player_nba_name': relevants[0][5],
         }
 
     @staticmethod
@@ -269,13 +273,15 @@ class TransactionAnalyzer:
         if abbr not in BREF_ABBREVATION_TO_NBA_TEAM_ID:
             if abbr in ABA_ABBR:
                 return {
-                    'team_name_aba': abbr + '(ABA)',
-                    'abbr': abbr
+                    'team_nba_id': 0,
+                    'team_nba_name': None,
+                    'team_bref_abbr': abbr
                 }
             if abbr in TEAMS_MAPPING:
                 return {
-                    'team_id': TEAMS_MAPPING[abbr],
-                    'abbr': abbr
+                    'team_nba_id': TEAMS_MAPPING[abbr],
+                    'team_nba_name': TEAM_NBA_ID_TO_NBA_NAME[TEAMS_MAPPING[abbr]],
+                    'team_bref_abbr': abbr
                 }
             print(f'not found team {abbr}')
             return None
@@ -285,12 +291,14 @@ class TransactionAnalyzer:
         if len(relevant) == 0:
             if (season, abbr) in TEAMS_IN_SEASONS_MAPPING:
                 return {
-                    'team_id': TEAMS_IN_SEASONS_MAPPING[(season, abbr)],
-                    'abbr': abbr
+                    'team_nba_id': TEAMS_IN_SEASONS_MAPPING[(season, abbr)],
+                    'team_nba_name': TEAM_NBA_ID_TO_NBA_NAME[TEAMS_IN_SEASONS_MAPPING[(season, abbr)]],
+                    'team_bref_abbr': abbr
                 }
         return {
-            'team_id': list(relevant)[0],
-            'abbr': abbr
+            'team_nba_id': list(relevant)[0],
+            'team_nba_name': TEAM_NBA_ID_TO_NBA_NAME[list(relevant)[0]],
+            'team_bref_abbr': abbr
         }
 
     def analyze_tradees(self, season, tradees):
@@ -309,29 +317,35 @@ class TransactionAnalyzer:
 
     @staticmethod
     def analyze_trade_additional(_, additional):
-        return additional
+        return json.dumps(additional)
 
     @staticmethod
     def analyze_sign_additional(_, additional):
-        return additional
+        return json.dumps(additional)
 
     @staticmethod
     def analyze_sold_rights_additional(_, additional):
-        return additional
+        return json.dumps(additional)
 
     @staticmethod
     def analyze_penalty_reason(_, reason):
-        return reason
+        return json.dumps(reason)
+
+    @staticmethod
+    def analyze_waive_reason(_, reason):
+        return json.dumps(reason)
 
     @staticmethod
     def get_person_by_id(_, person_id):
         return {
-            'person_not_analyzed': person_id
+            'person_bref_id_not_analyzed': person_id
         }
 
     @staticmethod
     def get_person_by_name(_, person_name):
-        return person_name
+        return {
+            'person_bref_name_not_analyzed': person_name
+        }
 
     @staticmethod
     def analyze_cash(_, cash):
@@ -364,7 +378,7 @@ class TransactionAnalyzer:
         print(f'analyzed {value} in path {path} in {season} as {returned_val}')
         return returned_val
 
-    def analyze_transaction(self, season, full, transaction, cur_analyzer, path, depth):
+    def analyze_transaction_rec(self, season, full, transaction, cur_analyzer, path, depth):
         to_ret = defaultdict(list)
         for key, value in transaction.items():
             handler = cur_analyzer[key]
@@ -375,7 +389,7 @@ class TransactionAnalyzer:
                 else:
                     to_iterate.append(value)
                 for v in to_iterate:
-                    new_val = self.analyze_transaction(season, full, v, cur_analyzer[key], path + [key], depth + 1)
+                    new_val = self.analyze_transaction_rec(season, full, v, cur_analyzer[key], path + [key], depth + 1)
                     to_ret[key].append(new_val)
             else:
                 to_iterate = []
@@ -391,48 +405,71 @@ class TransactionAnalyzer:
                     to_ret[key].append(val)
         return dict(to_ret)
 
+    def analyze_transaction(self, season, transaction, parsed_transaction, transaction_type, transaction_to_find):
+        # print(f'analyzing {transaction} in season {season}')
+        # print(f'parsed as {parsed_transaction} of type {transaction_type}')
+        res = self.analyze_transaction_rec(season, parsed_transaction, parsed_transaction, self.analyzer[transaction_type], [], 1)
+        self.validate_analyzed(res, transaction_to_find)
+        # print('analyzed as: ')
+        # pprint.pprint(res)
+        return res
+
     @staticmethod
     def validate_analyzed(analyzed, transaction_to_find):
         found_elements = set()
 
-        def check_element(key, value):
-            if key in ('player_id_not_found', 'player_id'):
+        def check_element(parent, key, value):
+            if key == 'player_bref_id_not_found':
                 found_elements.add((value, 'player'))
-            elif key in ('abbr',):
+                parent['player_bref_name'] = transaction_to_find[value][1]
+                parent['player_bref_id'] = value
+                parent['player_nba_id'] = 0
+                parent['player_nba_name'] = None
+                parent.pop(key)
+            elif key == 'player_bref_name_not_found':
+                parent['player_bref_name'] = value
+                parent['player_bref_id'] = ''
+                parent['player_nba_id'] = 0
+                parent['player_nba_name'] = None
+                parent.pop(key)
+            elif key in ('player_bref_id', ):
+                found_elements.add((value, 'player'))
+            elif key in ('team_bref_abbr',):
                 found_elements.add((value, 'team'))
-            elif key in ('person_not_analyzed',):
+                parent['team_bref_name'] = transaction_to_find[value][1] if value in transaction_to_find else value
+            elif key in ('person_bref_id_not_analyzed',):
                 found_elements.add((value, 'executive'))
+                parent['person_bref_id'] = value
+                parent['person_bref_name'] = transaction_to_find[value][1]
+                parent.pop(key)
+            elif key == 'person_bref_name_not_analyzed':
+                parent['person_bref_id'] = ''
+                parent['person_bref_name'] = value
+                parent.pop(key)
 
         def collect_elements(analyzed_transaction):
-            for key, value in analyzed_transaction.items():
+            to_iterate = list(analyzed_transaction.items())
+            for key, value in to_iterate:
                 if isinstance(value, list):
                     for v in value:
                         if isinstance(v, Mapping):
                             collect_elements(v)
                         else:
-                            check_element(key, v)
+                            check_element(analyzed_transaction, key, v)
                 else:
-                    check_element(key, value)
+                    check_element(analyzed_transaction, key, value)
 
         collect_elements(analyzed)
         for id_to_found, (id_type, id_text) in transaction_to_find.items():
             if id_type == 'coach':
                 id_type = 'executive'
             if (id_to_found, id_type) not in found_elements:
-                raise Exception(f'couldnt validate {id_to_found}, of type {id_type} in {analyzed}. found {found_elements}')
+                raise Exception(f'couldnt validate {id_to_found}, {id_text} of type {id_type} in {analyzed}. found {found_elements}')
 
     def analyze_transactions(self):
-        for season, transaction, transaction_type, parsed_transaction, transaction_to_find in generate_transactions():
+        for season, transaction_year, transaction_month, transaction_day, transaction_number, transaction, transaction_type, parsed_transaction, transaction_to_find in generate_transactions():
             try:
-                print(f'analyzing {transaction} in season {season}')
-                print(f'parsed as {parsed_transaction} of type {transaction_type}')
-                res = self.analyze_transaction(season, parsed_transaction, parsed_transaction, self.analyzer[transaction_type], [], 1)
-                print('analyzed as: ')
-                pprint.pprint(res)
-                print('validating...')
-                if 'The TRI hired pottero99c as Head Coach.' in transaction:
-                    a = 0
-                self.validate_analyzed(res, transaction_to_find)
+                self.analyze_transaction(season, transaction, parsed_transaction, transaction_type, transaction_to_find)
             except Exception as e:
                 self.print_warnings()
                 print(f'analyzing {transaction} in season {season}')

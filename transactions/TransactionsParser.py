@@ -62,9 +62,10 @@ team_tradees = MatchFirst([cash_considerations.set_results_name('cash_considerat
                            cash_tradee.set_results_name('cash', True),
                            Literal('future considerations').set_results_name('future_considerations', True),
                            draft_pick.set_results_name('draft_pick', True),
-                           person_nt.set_results_name('player', True),
                            Group(person_nt('person') + '(' + take_until_new(')', 'role', excluded_chars=')')).set_results_name('person_with_role', True),
-                           Group(Regex(r'.+?(?=(?: \(.+\))??(?: to the |,| and |\.(?!.*to the)))')('person_no_id') + '(' + possible_roles('role') + ')').set_results_name('person_with_role', True),
+                           Regex(r'[a-z]+[0-9]+c').set_results_name('person', True),
+                           person_nt.set_results_name('player', True),
+                           Group(Regex(r'.+?(?=(?: \(.+\))??(?: to the |,| and |\.(?!.*to the)))')('person_no_id') + '(' + possible_roles('role') + ')').set_results_name('person_no_id_with_role', True),
                            Regex(r'.+?(?=(?: to the |,| and |\.(?!.*to the)))').set_results_name('player_no_id', True)])
 team_trade_part = ZeroOrMore(team_tradees + Suppress(',')) + team_tradees + Opt(Suppress('and') + team_tradees)
 pick_source = Group(Suppress('(') + number('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('pick is') + team_nt('team') + Literal('\'s pick') + Opt(', top-' + number('protection') + 'protected') + '.)')
@@ -313,13 +314,13 @@ templates = {
     'simple_trade': trade_part + '.' + Opt(Group(after_trade_part)('additional')),
     'multiple_teams_trade': 'In a' + number + '-team trade,' + ZeroOrMore(MatchFirst([Group(one_side_trade_part) + MatchFirst([Suppress('; and '), Suppress(';')]), Group(one_side_trade_part)]))('trades') + '.' + Opt(Group(after_trade_part)('additional')),
     'one_side_trade': one_side_trade_part + '.' + Opt(Group(after_trade_part)('additional')),
-    'retirement': person_or_unknown('player', 'announced retirement.') +
+    'retirement': MatchFirst([Regex(r'[a-z]+[0-9]+x')('person') + 'announced retirement.', person_or_unknown('player', 'announced retirement.')]) +
                   Opt(MatchFirst([Literal('Officially announced retiredment.'),
                                   Literal('(Announced he would retire at the end of the season)'),
                                   '(Announced he would retire at the end of the' + Combine(number + '-' + number)('retirement_season') + 'season on' + date_slash_nt('retirement_date') + '.)',
                                   '(Signed with' + team_nt('retirement_team') + 'to to retire with team)'])),
     'firing': CaselessLiteral('The') + team_nt('team') + 'fired' + person_or_unknown('person', 'as') + possible_roles('role') + '.' + Opt('(Parties mutually agreed to part ways.)'),
-    'appointment': CaselessLiteral('The') + team_nt('team') + 'appointed' + person_or_unknown('person', 'as') + possible_roles('role') + Opt('(' + Literal('w/ day-to-day control')('role_more') + ')') + '.' +
+    'appointment': CaselessLiteral('The') + team_nt('team') + 'appointed' + person_or_unknown('person', 'as') + possible_roles('role') + Opt('(' + Suppress('w/ day-to-day control') + ')') + '.' +
                   Opt(MatchFirst([Literal('(Appointed on an interim basis)'),
                                   Literal('Named interim head coach')])),
     'convert_contract': 'The' + team_nt('team') + 'converted' + person_or_unknown('player', 'from a two-way contract to a regular contract.'),
@@ -330,7 +331,7 @@ templates = {
                                 Literal('Indefinite')])) + ')',
     'suspension_by_team': person_or_unknown('player', 'was suspended from the') + team_nt('team') + Opt('(' + number('suspension_length') + '-game suspension)'),
     'assigned_to': 'The' + team_nt('team') + 'assigned' + person_or_unknown('player', 'to the') + (take_until_new('of the', 'assigned_to_team') | 'of the') + take_until_new('.', 'where', excluded_chars='.'),
-    'recalling': 'The' + team_nt('team') + 'recalled' + person_or_unknown('player', 'from the') + (take_until_new('of the', 'assigned_to_team') | 'of the') + take_until_new('.', 'where', excluded_chars='.'),
+    'recalling': 'The' + team_nt('team') + 'recalled' + person_or_unknown('player', 'from the') + (take_until_new('of the', 'recalling_from_team') | 'of the') + take_until_new('.', 'where', excluded_chars='.'),
     'resignation': person_or_unknown('person', 'resigns as') + possible_roles('role') + 'for' + team_nt('team') + '.',
     'hiring': CaselessLiteral('The') + team_nt('team') + 'hired' + person_or_unknown('person', 'as') + possible_roles('role') + '.' + Opt('(Interim)'),
     'sold_rights': CaselessLiteral('The') + team_nt('old_team') + 'sold the player rights to' + person_or_unknown('player', 'to the') + team_nt('new_team') + '.' + Opt(Group(sold_rights_additional)('additional')),
@@ -354,21 +355,19 @@ def parse_transaction(transaction):
 
 
 def generate_season_transactions(season):
-    with open(f'transactions/cache/transactions_{season}.txt', 'r') as f:
+    with open(f'../transactions/cache/transactions_{season}.txt', 'r') as f:
         transactions = json.load(f)
-    for i, (day, day_transactions) in enumerate(transactions.items()):
-        # print(f'parsing {day} transactions...')
-        for transaction, transaction_to_find in day_transactions:
-            parsed = parse_transaction(transaction)
-            if not parsed:
-                if 'traded  to the' in transaction:
-                    continue
-                raise Exception(f'not found for {transaction} in {day}')
-            yield [*parsed, transaction_to_find]
+    for season, transaction_year, transaction_month, transaction_day, transaction_number, transaction_text, transaction_to_find in transactions:
+        parsed = parse_transaction(transaction_text)
+        if not parsed:
+            if 'traded  to the' in transaction_text:
+                continue
+            raise Exception(f'not found for {transaction_text} in {transaction_year}-{transaction_month}-{transaction_day}')
+        yield [transaction_year, transaction_month, transaction_day, transaction_number, *parsed, transaction_to_find]
 
 
 def parse_test(season):
-    with open(f'transactions/transactions_{season}.txt', 'r') as f:
+    with open(f'../transactions/transactions_{season}.txt', 'r') as f:
         transactions = json.load(f)
     parsed = defaultdict(list)
     count = 0
