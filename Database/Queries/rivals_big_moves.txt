@@ -1,0 +1,25 @@
+with
+    JordanPlayoffSeries as (
+    select distinct PlayoffSerieSummary.*,
+                    BSP.PLAYER_ID, BSP.PLAYER_NAME
+    from PlayoffSerieSummary
+        inner join BoxScoreP BSP on PlayoffSerieSummary.Season = BSP.SEASON and PLAYER_ID in (2544, 893) and WinnerId=BSP.TEAM_ID
+    ),
+    AllNBATransactions as (
+        select Transactions.Season, Year, Month, Day, TransactionNumber,
+               JPS.PLAYER_ID as AgainstPlayerId, JPS.PLAYER_NAME as AgainstPlayerName,
+               JPS.LoserId, JPS.LoserName, group_concat(distinct JPS.Season || ' - ' || JPS.LevelTitle) as Eliminations,
+               PlayerNBAId, PlayerNBAName,
+               group_concat(distinct A.Season || ': ' || A.Description || ' - ' || AllNBATeamNumber) as AllNBAs,
+               group_concat(distinct BoxScoreP.SEASON) as AllStars
+        from Transactions
+            inner join JordanPlayoffSeries JPS on JPS.Season between Transactions.Season - 2 and Transactions.Season-1 and TeamANBAId=LoserId
+            left join Awards A on A.Description='All-NBA' and PlayerId=PlayerNBAId and A.Season between Transactions.Season - 2 and Transactions.Season - 1
+            left join BoxScoreP on BoxScoreP.PLAYER_ID=PlayerNBAId and BoxScoreP.SEASON_TYPE=3 and BoxScoreP.SEASON between Transactions.Season - 2 and Transactions.Season - 1
+        where TradeeType='player' and coalesce(A.Season, BoxScoreP.SEASON, 0) != 0
+        group by Year, Month, Day, TransactionNumber, PlayerNBAId
+        order by Year, Month, Day
+    )
+select *
+from AllNBATransactions
+order by Year, Month, Day

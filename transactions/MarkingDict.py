@@ -55,7 +55,6 @@ class MarkingDict(MutableMapping):
         return paths
 
 
-
 def create_deep_mraking_dict(dict_to_mark):
     for key, item in dict_to_mark.items():
         if isinstance(item, Mapping):

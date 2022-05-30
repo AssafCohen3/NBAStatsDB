@@ -4,6 +4,7 @@ import numpy
 import numpy as np
 
 
+# for franchise in {Boston, Atlanta, ...}, year in {2021, 2020, ...} define team(franchise, year) as the roster of the franchise at the end of the year
 # create matrix of players. each row represent a player and each column represent a team. x[i][j] = 1 iff player i played in team j
 def create_matrix(teams_rosters):
     rows = {}

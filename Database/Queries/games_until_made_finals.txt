@@ -1,0 +1,36 @@
+with
+    Ranked as (
+        select PLAYER_ID, PLAYER_NAME, SEASON, GAME_DATE, GAME_ID,
+               TEAM_ID, TEAM_NAME, TeamAName, TeamBName,
+               rank() over (partition by PLAYER_ID order by GAME_DATE) as FinalsRank
+        from PlayoffBoxScoreP
+        where SerieOrder=1
+    ),
+    FirstPlayerGame as (
+        select PLAYER_ID, PLAYER_NAME, SEASON, GAME_DATE, GAME_ID,
+               TEAM_ID, TEAM_NAME, TeamAName, TeamBName
+        from Ranked
+        where FinalsRank=1
+    ),
+    PlayersWithout as (
+        select PB.PLAYER_ID, PB.PLAYER_NAME, FP.SEASON, FP.GAME_DATE, FP.GAME_ID,
+               FP.TEAM_ID, FP.TEAM_NAME, FP.TeamAName, FP.TeamBName,
+               count(*) as PlayoffGames
+        from PlayoffBoxScoreP PB
+            left join FirstPlayerGame FP on PB.PLAYER_ID = FP.PLAYER_ID
+        where FP.GAME_ID is null and PB.SEASON_TYPE=4
+        group by PB.PLAYER_ID
+    ),
+    GamesBefore as (
+        select FP.*,
+               count(*) as GamesBeforeCount
+        from FirstPlayerGame FP
+            inner join BoxScoreP BP on BP.GAME_DATE < FP.GAME_DATE and BP.SEASON_TYPE=4 and BP.PLAYER_ID=FP.PLAYER_ID
+        group by FP.PLAYER_ID
+    )
+select *
+from GamesBefore
+union
+select *
+from PlayersWithout
+order by GamesBeforeCount desc

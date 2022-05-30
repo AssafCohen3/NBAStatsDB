@@ -47,7 +47,7 @@ class BREFStartersHandler:
         return to_ret
 
     def to_cache(self, data):
-        return self.finished
+        return False
 
     def cache(self, data, f):
         f.write(self.resp)
