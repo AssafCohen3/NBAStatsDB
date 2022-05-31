@@ -688,17 +688,6 @@ from SeasonAwards SA
     left join PlayoffSerieSummary PSS on PSS.Season = SA.Season and PSS.SerieOrder=1
     left join TeamsCurrentName TCNW on TCNW.TEAM_ID = PSS.WinnerId
     left join TeamsCurrentName TCNL on TCNL.TEAM_ID = PSS.LoserId;
-CREATE VIEW IF NOT EXISTS BoxScorePWithAge as
-select BoxScoreP.*,
-       julianday(GAME_DATE) - julianday(coalesce(RealBirthDate, BirthDate)) as DaysDiff,
-       cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', coalesce(RealBirthDate, BirthDate)) as int) as AgeYears,
-       -- AgeDays = days between current date and last birthday = days between Cy/Cm/Cd and (By + (C-B)y)/Bm/Bd
-       cast((julianday(GAME_DATE) -
-       julianday(datetime(coalesce(RealBirthDate, BirthDate), '+' || cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', coalesce(RealBirthDate, BirthDate)) as int) || ' years'))) as integer)
-           as AgeDays
-from BoxScoreP
-    inner join Player on Player.PlayerId = PLAYER_ID
-    left join AgeCorrection AC on BoxScoreP.PLAYER_ID = AC.PlayerId;
 CREATE VIEW IF NOT EXISTS FullTeamPlayoffs as
 with
     PlayoffTeams as (
@@ -917,3 +906,31 @@ select P.*,
        PBST.SerieOrder, PBST.LevelTitle, PBST.GameNumber
 from BoxScoreP P
     inner join PlayoffBoxScoreT PBST on P.GAME_ID = PBST.GAME_ID and P.TEAM_ID = PBST.TEAM_ID;
+CREATE VIEW IF NOT EXISTS BoxScorePWithAge as
+select BoxScoreP.*,
+       julianday(GAME_DATE) - julianday(coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate)) as DaysDiff,
+       cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate)) as int) as AgeYears,
+       -- AgeDays = days between current date and last birthday = days between Cy/Cm/Cd and (By + (C-B)y)/Bm/Bd
+       cast((julianday(GAME_DATE) -
+       julianday(datetime(coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate), '+' || cast(strftime('%Y.%j', GAME_DATE) - strftime('%Y.%j', coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate)) as int) || ' years'))) as integer)
+           as AgeDays
+from BoxScoreP
+    inner join Player on Player.PlayerId = PLAYER_ID
+    left join PlayerMapping PM on PM.PlayerNbaId=Player.PlayerId
+    left join BREFPlayer BP on BP.PlayerId=PM.PlayerBrefId
+    left join AgeCorrection AC on BoxScoreP.PLAYER_ID = AC.PlayerId;
+CREATE VIEW IF NOT EXISTS PlayoffBoxScorePWithAge as
+select BoxScoreP.*,
+       PBST.SerieOrder, PBST.LevelTitle, PBST.GameNumber,
+       julianday(BoxScoreP.GAME_DATE) - julianday(coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate)) as DaysDiff,
+       cast(strftime('%Y.%j', BoxScoreP.GAME_DATE) - strftime('%Y.%j', coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate)) as int) as AgeYears,
+       -- AgeDays = days between current date and last birthday = days between Cy/Cm/Cd and (By + (C-B)y)/Bm/Bd
+       cast((julianday(BoxScoreP.GAME_DATE) -
+       julianday(datetime(coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate), '+' || cast(strftime('%Y.%j', BoxScoreP.GAME_DATE) - strftime('%Y.%j', coalesce(BP.Birthdate, RealBirthDate, Player.BirthDate)) as int) || ' years'))) as integer)
+           as AgeDays
+from BoxScoreP
+    inner join Player on Player.PlayerId = PLAYER_ID
+    inner join PlayoffBoxScoreT PBST on BoxScoreP.GAME_ID = PBST.GAME_ID and BoxScoreP.TEAM_ID = PBST.TEAM_ID
+    left join PlayerMapping PM on PM.PlayerNbaId=Player.PlayerId
+    left join BREFPlayer BP on BP.PlayerId=PM.PlayerBrefId
+    left join AgeCorrection AC on BoxScoreP.PLAYER_ID = AC.PlayerId;

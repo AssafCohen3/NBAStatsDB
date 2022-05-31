@@ -45,7 +45,10 @@ class BREFPlayerHandler:
             birth_date = row.select('[data-stat="birth_date"]')[0]
             if 'csk' in birth_date.attrs:
                 birth_date = birth_date['csk']
-                birth_date = birth_date[4:6] + '/' + birth_date[6:8] + '/' + birth_date[:4]
+                year = birth_date[:4]
+                month = birth_date[4:6]
+                day = birth_date[6:8]
+                birth_date = year + '-' + month + '-' + day
             else:
                 birth_date = None
             to_ret.append([player_id, player_name, from_year, to_year, position, height, weight, birth_date, is_active, hof])
