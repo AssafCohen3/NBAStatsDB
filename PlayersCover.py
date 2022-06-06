@@ -1,5 +1,7 @@
 import json
 import heapq
+from collections import defaultdict
+
 import numpy
 import numpy as np
 
@@ -34,7 +36,7 @@ def linear_programming(teams_rosters):
 
 
 def get_teams_cover(conn):
-    teams_rosters = conn.execute("""
+    players_last_team = conn.execute("""
         with DISTINCT_PLAYER_TEAMS as (
             select distinct SEASON,
                             first_value(TEAM_ID) over (partition by SEASON, PLAYER_ID order by GAME_DATE desc) as LastTeamId,
@@ -44,11 +46,12 @@ def get_teams_cover(conn):
             inner join Player on PLAYER_ID = Player.PlayerId
             where SEASON_TYPE=2 and Player.BirthDate is null
         )
-        select SEASON, LastTeamId, json_group_array(PLAYER_ID)
-        from DISTINCT_PLAYER_TEAMS
-        group by SEASON, LastTeamId""").fetchall()
-    teams_rosters = [(season, tid, json.loads(players)) for season, tid, players in teams_rosters]
-    subsets = [((t[0], t[1]), set(t[2])) for t in teams_rosters]
+        select SEASON, LastTeamId, PLAYER_ID
+        from DISTINCT_PLAYER_TEAMS""").fetchall()
+    teams_rosters = defaultdict(set)
+    for season, last_team_id, player_id in players_last_team:
+        teams_rosters[(season, last_team_id)].add(player_id)
+    subsets = teams_rosters.items()
     all_players = set([p for t in subsets for p in t[1]])
     res = greedy_set_cover(subsets, all_players)
     teams_to_ret = [(t[1], t[0]) for t in res]

@@ -16,7 +16,7 @@ import pbp.Patcher
 from requests import HTTPError
 
 import EventMaker
-from Handlers import OddsCacheHandler, BREFPlayers
+from Handlers import OddsCacheHandler
 from Handlers.BREFPlayers import BREFPlayerHandler
 from Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
 from Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
@@ -112,8 +112,9 @@ class DatabaseHandler:
     def map_players(self):
         if self.players_mapper is not None:
             return self.players_mapper
-        res = self.conn.execute("""select json_group_object(PlayerBrefId, PlayerNbaId) from PlayerMapping""").fetchall()[0][0]
-        self.players_mapper = json.loads(res)
+        res = self.conn.execute("""select PlayerBrefId, PlayerNbaId from PlayerMapping""").fetchall()
+        res = {bref_id: nba_id for bref_id, nba_id in res}
+        self.players_mapper = res
         return self.players_mapper
 
     def load_bref_players(self):
@@ -569,16 +570,15 @@ class DatabaseHandler:
         tables = self.conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name=? or name=?""", [f'Event', 'BoxScoreT']).fetchall()
         if len(tables) > 1:
             res = self.conn.execute(f"""
-            select distinct
+            select
                    BoxScoreT.GAME_ID,
-                   first_value(TEAM_ID) over W1 as TeamAId,
-                   first_value(TEAM_NAME) over W1 as TeamAName,
-                   last_value(TEAM_ID) over W1 as TeamBId,
-                   last_value(TEAM_NAME) over W1 as TeamBName
+                   BoxScoreT.TeamAId,
+                   BoxScoreT.TeamAName,
+                   BoxScoreT.TeamBId,
+                   BoxScoreT.TeamBName
             from BoxScoreT
             left join Event on Event.GameId = BoxScoreT.GAME_ID
-            where Event.GameId is null and BoxScoreT.SEASON_TYPE=? and ((SEASON_TYPE in (2, 4, 5) and SEASON >= 1996) or (SEASON_TYPE=3 and (SEASON=1997 or SEASON>=2003))) and WL is not null
-            window W1 as (partition by GAME_ID order by TEAM_ID rows between unbounded preceding and unbounded following)""",
+            where Event.GameId is null and BoxScoreT.SEASON_TYPE=? and ((SEASON_TYPE in (2, 4, 5) and SEASON >= 1996) or (SEASON_TYPE=3 and (SEASON=1997 or SEASON>=2003))) and WL is not null""",
                                     [season_type_code]).fetchall()
             return res
         return []
@@ -586,13 +586,17 @@ class DatabaseHandler:
     def get_teams_seasons_without_starters(self):
         # TODO: for now basketball reference starting lineups not contains play in lineups.
         res = self.conn.execute(
-            """select SEASON, TEAM_ID,
-            json_group_object(GAME_DATE, GAME_ID)
+            """select distinct SEASON, TEAM_ID, GAME_DATE, GAME_ID
             from BoxScoreP 
             where SEASON>=1983 and SEASON_TYPE in (2, 4) and Starter is null
-            group by SEASON, TEAM_ID
             order by SEASON, TEAM_ID""").fetchall()
-        return res
+        to_ret = {}
+        for season, team_id, game_date, game_id in res:
+            if (season, team_id) not in to_ret:
+                to_ret[(season, team_id)] = {}
+            to_ret[(season, team_id)][game_date] = game_id
+        to_ret = [[season, team_id, mapped_games] for (season, team_id), mapped_games in to_ret.items()]
+        return to_ret
 
     def fetch_br_seasons_links(self):
         if self.bref_seasons is not None:
@@ -833,7 +837,7 @@ class DatabaseHandler:
         self.save_odds_dataframe(to_ret)
 
     def collect_hofs_and_retires(self):
-        team_ids = self.conn.execute("""select distinct TEAM_ID from Teams""").fetchall()
+        team_ids = self.conn.execute("""select distinct TEAM_ID from BoxScoreT""").fetchall()
         for (tid, ) in team_ids:
             handler = TeamDetailsHandler(tid)
             data = self.handle_cache(handler)
@@ -932,7 +936,6 @@ class DatabaseHandler:
         print(f'collecting starters from {len(missing_seasons)} seasons of teams...')
         for season, team_id, games_dates_to_ids in missing_seasons:
             print(f'collecting {season} of team {team_id}...')
-            games_dates_to_ids = json.loads(games_dates_to_ids)
             games_with_starters = self.handle_cache(BREFStartersHandler(season, team_id, self.map_players()))
             to_update = [[starter_id, games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters for starter_id in starters_ids if game_date in games_dates_to_ids]
             to_update_game_ids = [[games_dates_to_ids[game_date], team_id] for game_date, starters_ids in games_with_starters if game_date in games_dates_to_ids]

@@ -1,0 +1,23 @@
+with
+    GoAheadShots as (
+        select PlayerAId, PLAYER_NAME, PlayerTeamName, SEASON, TeamAName, TeamBName, GAME_DATE, GameId,
+               SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot,
+               iif(PlayerTeamId = TeamAId, TeamAScore, TeamBScore) - ShotValue*MadeShot as PlayerTeamScoreBefore,
+               iif(PlayerTeamId = TeamAId, TeamBScore, TeamAScore) as OponentTeamScoreBefore,
+               ScoreMargin, EventOrder
+        from PlayoffShots
+            where
+                ShotValue >= 2 and
+                ((PlayerTeamId = TeamAId and TeamAScore - ShotValue * MadeShot <= TeamBScore and TeamAScore - ShotValue*MadeShot + ShotValue > TeamBScore) or
+                (PlayerTeamId = TeamBId and TeamBScore - ShotValue * MadeShot <= TeamAScore and TeamBScore - ShotValue*MadeShot + ShotValue > TeamAScore)) and
+                RemainingSeconds <= 20 and Period >= 4
+    )
+select PlayerAId, PLAYER_NAME, group_concat(distinct PlayerTeamName) as PlayerTeams,
+       count(*) as GoAheadShotsNumber,
+       sum(MadeShot) as MadeGoAheadShotsNumber,
+       sum(MadeShot)*1.0 / count(*) as Percentage,
+       sum(1 - MadeShot) as MissedGoAheadShotsNumber,
+       sum(MadeShot * ShotValue) as GoAheadPoints
+from GoAheadShots
+group by PlayerAId
+order by MissedGoAheadShotsNumber desc
