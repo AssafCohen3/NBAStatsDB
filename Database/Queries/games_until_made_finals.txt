@@ -1,32 +1,32 @@
 with
     Ranked as (
-        select PLAYER_ID, PLAYER_NAME, SEASON, GAME_DATE, GAME_ID,
-               TEAM_ID, TEAM_NAME, TeamAName, TeamBName,
-               rank() over (partition by PLAYER_ID order by GAME_DATE) as FinalsRank
+        select PlayerId, PlayerName, Season, GameDate, GameId,
+               TeamId, TeamName, TeamAName, TeamBName,
+               rank() over (partition by PlayerId order by GameDate) as FinalsRank
         from PlayoffBoxScoreP
         where SerieOrder=1
     ),
     FirstPlayerGame as (
-        select PLAYER_ID, PLAYER_NAME, SEASON, GAME_DATE, GAME_ID,
-               TEAM_ID, TEAM_NAME, TeamAName, TeamBName
+        select PlayerId, PlayerName, Season, GameDate, GameId,
+               TeamId, TeamName, TeamAName, TeamBName
         from Ranked
         where FinalsRank=1
     ),
     PlayersWithout as (
-        select PB.PLAYER_ID, PB.PLAYER_NAME, FP.SEASON, FP.GAME_DATE, FP.GAME_ID,
-               FP.TEAM_ID, FP.TEAM_NAME, FP.TeamAName, FP.TeamBName,
+        select PB.PlayerId, PB.PlayerName, FP.Season, FP.GameDate, FP.GameId,
+               FP.TeamId, FP.TeamName, FP.TeamAName, FP.TeamBName,
                count(*) as PlayoffGames
         from PlayoffBoxScoreP PB
-            left join FirstPlayerGame FP on PB.PLAYER_ID = FP.PLAYER_ID
-        where FP.GAME_ID is null and PB.SEASON_TYPE=4
-        group by PB.PLAYER_ID
+            left join FirstPlayerGame FP on PB.PlayerId = FP.PlayerId
+        where FP.GameId is null and PB.SeasonType=4
+        group by PB.PlayerId
     ),
     GamesBefore as (
         select FP.*,
                count(*) as GamesBeforeCount
         from FirstPlayerGame FP
-            inner join BoxScoreP BP on BP.GAME_DATE < FP.GAME_DATE and BP.SEASON_TYPE=4 and BP.PLAYER_ID=FP.PLAYER_ID
-        group by FP.PLAYER_ID
+            inner join BoxScoreP BP on BP.GameDate < FP.GameDate and BP.SeasonType=4 and BP.PlayerId=FP.PlayerId
+        group by FP.PlayerId
     )
 select *
 from GamesBefore

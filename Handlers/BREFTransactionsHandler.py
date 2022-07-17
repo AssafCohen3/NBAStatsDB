@@ -1,4 +1,5 @@
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from constants import *
 from transactions.TransactionCreator import TransactionsCreator
 from transactions.TransactionsAnalayzer import TransactionsAnalyzer
@@ -6,7 +7,7 @@ from transactions.TransactionsParser import TransactionsParser
 from transactions.TransactionsScrapper import TransactionsScrapper
 
 
-class BREFTransactionsHandler:
+class BREFTransactionsHandler(HandlerAbs):
     def __init__(self, league, season, all_players_with_mapping):
         self.league = league
         self.season = season
@@ -33,8 +34,6 @@ class BREFTransactionsHandler:
         scrapped_transactions = self.scrapper.scrap_transactions(html_resp)
         for transaction_year, transaction_month, transaction_day, transaction_number, transaction_text, transaction_to_find in scrapped_transactions:
             transaction_type, parsed_transaction = self.parser.parse_transaction(transaction_text)
-            if transaction_text == 'The CLE traded jamesle01 to the MIA for a 2011 2nd round draft pick (macvami01 was later selected), a 2012 2nd round draft pick (crowdja01 was later selected), a 2013 1st round draft pick (nedovne01 was later selected) and a 2016 1st round draft pick (luwawti01 was later selected). Cleveland also received a trade exception from Miami. Cleveland had the option to swap 1st round draft picks with Miami in 2012 but did not do so.':
-                v = 7
             if transaction_type is None:
                 continue
             analyzed_transaction = self.analyzer.analyze_transaction(self.season, parsed_transaction, transaction_type, transaction_to_find)

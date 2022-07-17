@@ -3,12 +3,12 @@ with
         select distinct Transactions.*,
                         Transactions.Season/10 * 10 as Decade
         from Transactions
-            inner join BoxScoreP BSP on PLAYER_ID=PlayerNBAId and BSP.SEASON between Transactions.Season - 2 and Transactions.Season and SEASON_TYPE=3
+            inner join BoxScoreP BSP on PlayerId=PlayerNBAId and BSP.Season between Transactions.Season - 2 and Transactions.Season and SeasonType=3
         where TradeeType='player'
         order by Year, Month, Day
     )
 select Decade,
-       group_concat(PlayerNBAName || ' from ' || AllStarsTransactions.TeamBNBAName || ' to ' || AllStarsTransactions.TeamANBAName, char(10)),
+       group_concat(PlayerNBAName || ' from ' || AllStarsTransactions.TeamBNBAName || ' to ' || AllStarsTransactions.TeamANBAName, char(10)) as Transactions,
        count(*) as TransactionsNumber
 from AllStarsTransactions
 group by Decade

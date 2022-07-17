@@ -1,48 +1,48 @@
 with
-     RUNNING_TOTALS_FRANCHISE as (
-         select PLAYER_ID, PLAYER_NAME, TEAM_ID, TEAM_NAME, GAME_ID, GAME_DATE, PTS,
-                sum(PTS) over (partition by PLAYER_ID, TEAM_ID order by GAME_DATE rows between unbounded preceding and current row) as TotalPointsFollowing
-         from BoxScoreP
-         where SEASON_TYPE=2
-         ),
-     RUNNING_TOTALS_WITH_FRANCHISE_LEADER as (
-         select *,
-                max(TotalPointsFollowing) over W2 as MaxPointsFranchiseEntering,
-                max(TotalPointsFollowing) over W1 as MaxPointsFranchiseFollowing
-         from RUNNING_TOTALS_FRANCHISE RTF1
-         window W1 as (partition by TEAM_ID order by GAME_DATE range between unbounded preceding and current row),
-             W2 as (partition by TEAM_ID order by GAME_DATE groups between unbounded preceding and 1 preceding)
-     ),
-     RUNNING_TOTALS_WITH_FRANCHISE_LEADER_ID as (
-         select RTF1.*,
-                min(RTF2.GAME_DATE) as MinAchieved,
-                RTF2.PLAYER_ID as FranchiseLeaderId,
-                RTF2.PLAYER_NAME as FranchiseLeaderName
-         from RUNNING_TOTALS_WITH_FRANCHISE_LEADER RTF1
-             inner join RUNNING_TOTALS_FRANCHISE RTF2 on RTF2.GAME_DATE < RTF1.GAME_DATE and RTF2.TEAM_ID = RTF1.TEAM_ID and RTF2.TotalPointsFollowing = RTF1.MaxPointsFranchiseEntering
-         group by RTF1.GAME_ID, RTF1.PLAYER_ID
-     ),
-     FRANCHISE_LEADERS_GAMES as (
-         select *
-         from RUNNING_TOTALS_WITH_FRANCHISE_LEADER_ID
-         where TotalPointsFollowing > MaxPointsFranchiseEntering and TotalPointsFollowing = MaxPointsFranchiseFollowing and PLAYER_ID != FranchiseLeaderId
-         order by GAME_DATE desc
-     ),
-     WITH_EVENTS as (
-         select FLG.*,
-                Description,
-                Period,
-                RemainingSeconds,
-                TeamAScore,
-                TeamBScore,
-                ScoreMargin,
-                sum(ShotValue) over (partition by GameId, PlayerAId order by EventOrder rows between unbounded preceding and current row) - Event.ShotValue as ScoreBefore,
-                ShotValue
-         from FRANCHISE_LEADERS_GAMES FLG
-            inner join Event on GameId = GAME_ID and PlayerAId = PLAYER_ID and (EventType = 1 or (EventType = 3 and Description not like '%MISS%'))
-     )
+    RunningTotalsFranchise as (
+        select PlayerId, PlayerName, TeamId, TeamName, GameId, GameDate, PTS,
+               sum(PTS) over (partition by PlayerId, TeamId order by GameDate rows between unbounded preceding and current row) as TotalPointsFollowing
+        from BoxScoreP
+        where SeasonType=2
+    ),
+    RunningTotalsWithFranchiseLeader as (
+        select *,
+               max(TotalPointsFollowing) over W2 as MaxPointsFranchiseEntering,
+               max(TotalPointsFollowing) over W1 as MaxPointsFranchiseFollowing
+        from RunningTotalsFranchise RTF1
+        window W1 as (partition by TeamId order by GameDate range between unbounded preceding and current row),
+         W2 as (partition by TeamId order by GameDate groups between unbounded preceding and 1 preceding)
+    ),
+    RunningTotalsWithFranchiseLeaderId as (
+        select RTF1.*,
+               min(RTF2.GameDate) as MinAchieved,
+               RTF2.PlayerId as FranchiseLeaderId,
+               RTF2.PlayerName as FranchiseLeaderName
+        from RunningTotalsWithFranchiseLeader RTF1
+            inner join RunningTotalsFranchise RTF2 on RTF2.GameDate < RTF1.GameDate and RTF2.TeamId = RTF1.TeamId and RTF2.TotalPointsFollowing = RTF1.MaxPointsFranchiseEntering
+        group by RTF1.GameId, RTF1.PlayerId
+    ),
+    FranchiseLeadersGames as (
+        select *
+        from RunningTotalsWithFranchiseLeaderId
+        where TotalPointsFollowing > MaxPointsFranchiseEntering and TotalPointsFollowing = MaxPointsFranchiseFollowing and PlayerId != FranchiseLeaderId
+        order by GameDate desc
+    ),
+    WithEvents as (
+        select FLG.*,
+            Description,
+            Period,
+            RemainingSeconds,
+            TeamAScore,
+            TeamBScore,
+            ScoreMargin,
+            sum(ShotValue) over (partition by Event.GameId, PlayerAId order by EventOrder rows between unbounded preceding and current row) - Event.ShotValue as ScoreBefore,
+            ShotValue
+        from FranchiseLeadersGames FLG
+            inner join Event on Event.GameId = FLG.GameId and PlayerAId = PlayerId and (EventType = 1 or (EventType = 3 and Description not like '%MISS%'))
+    )
 select *,
        TotalPointsFollowing - PTS + ScoreBefore + ShotValue as CurrentTotal
-from WITH_EVENTS
+from WithEvents
 where CurrentTotal > MaxPointsFranchiseEntering and TotalPointsFollowing - PTS + ScoreBefore <= MaxPointsFranchiseEntering
-order by GAME_DATE desc
+order by GameDate desc

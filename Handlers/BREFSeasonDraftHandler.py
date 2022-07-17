@@ -1,14 +1,13 @@
-import json
 import re
 
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 import unidecode
 from bs4 import BeautifulSoup
-import pandas as pd
 from constants import *
 
 
-class BREFSeasonDraftHandler:
+class BREFSeasonDraftHandler(HandlerAbs):
     def __init__(self, season, leage):
         self.season = season
         self.league = leage

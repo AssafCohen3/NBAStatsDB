@@ -1,13 +1,12 @@
-import json
 import re
 
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from bs4 import BeautifulSoup
-import pandas as pd
 from constants import *
 
 
-class BREFStartersHandler:
+class BREFStartersHandler(HandlerAbs):
     def __init__(self, season, team_id, players_mapping):
         self.season = season
         self.team_id = team_id

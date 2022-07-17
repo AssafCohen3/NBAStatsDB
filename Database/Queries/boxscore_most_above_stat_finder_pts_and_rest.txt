@@ -1,17 +1,18 @@
-with GamesInCategories as (
-select PLAYER_ID, PLAYER_NAME,
-       MPTS.value as MinPTS,
-       MREST.value as MinRest,
-       MPTS.value || ' and ' || MREST.value as Description,
-       count(*) as GamesNumber
-from BoxScoreP,
-     generate_series(20, 40, 5) MPTS,
-     generate_series(5, 15, 5) MREST
-where SEASON = 2021 and SEASON_TYPE=2 and
-      PTS >= MPTS.value and
-      max(5*(BoxScoreP.STL - 4), 5 * (BLK - 4), AST, REB) >= MREST.value
-group by PLAYER_ID, MPTS.value, MREST.value
-order by GamesNumber desc
+with
+    GamesInCategories as (
+        select PlayerId, PlayerName,
+               MPTS.value as MinPTS,
+               MREST.value as MinRest,
+               MPTS.value || ' and ' || MREST.value as Description,
+               count(*) as GamesNumber
+        from BoxScoreP,
+             generate_series(20, 40, 5) MPTS,
+             generate_series(5, 15, 5) MREST
+        where Season = 2021 and SeasonType=2 and
+              PTS >= MPTS.value and
+              max(5*(BoxScoreP.STL - 4), 5 * (BLK - 4), AST, REB) >= MREST.value
+        group by PlayerId, MPTS.value, MREST.value
+        order by GamesNumber desc
     ),
     Ranked as (
         select *,

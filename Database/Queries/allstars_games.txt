@@ -1,6 +1,13 @@
-select SEASON, GAME_ID, GAME_DATE, MATCHUP, count(distinct A.PLAYER_ID) as ALLSTARS_COUNT, group_concat(A.PLAYER_NAME) as ALLSTARS from (
-    select SEASON, GAME_ID, GAME_DATE, MATCHUP, AC.PLAYER_ID, AC.PLAYER_NAME from BoxScoreP inner join AllstarCareer AC on BoxScoreP.PLAYER_ID = AC.PLAYER_ID
-    where SEASON_TYPE != 3
-    ) A
-group by GAME_ID
-order by ALLSTARS_COUNT desc
+with
+    AllStars as (
+        select Season, GameId, GameDate,
+               MATCHUP, AC.PlayerId, AC.PlayerName
+        from BoxScoreP
+            inner join AllstarCareer AC on BoxScoreP.PlayerId = AC.PlayerId
+        where SeasonType != 3
+    )
+select Season, GameId, GameDate, Matchup,
+       count(distinct A.PlayerId) as AllstarsCount, group_concat(A.PlayerName) as AllStars
+from AllStars A
+group by GameId
+order by AllstarsCount desc

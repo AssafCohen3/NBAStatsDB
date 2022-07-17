@@ -1,57 +1,59 @@
 with
-     Champions as (
-         select Season, WinnerId as TeamId, WinnerName as TeamName
-         from PlayoffSerieSummary
-         where SerieOrder=1
-     ),
-     ChampionsPlayers as (
-         select C.Season,
-                C.TeamId,
-                C.TeamName,
-                P.PLAYER_ID,
-                PLAYER_NAME,
-                GAMES_PLAYED,
-                AVG_MIN,
-                TOTAL_MIN,
-                AVG_PTS,
-                rank() over (partition by C.Season order by TOTAL_MIN desc) as MinutesRank
-         from Champions C
-            inner join PlayerPlayoffsFullStats P on P.SEASON = C.Season and P.TEAM_ID = C.TeamId
-     ),
-     ChampionsTopPlayers as (
-         select *
-         from ChampionsPlayers
-         where MinutesRank <= 5
-     ),
-     ChampionsFirstGame as (
-         select C.*,
-                min(GAME_DATE) as FirstPlayoffGameDate
-         from Champions C
-            inner join BoxScoreT BT on BT.SEASON = C.Season and BT.TEAM_ID = C.TeamId and Bt.SEASON_TYPE=4
-         group by C.Season, C.TeamId
-     ),
-     PlayersAge as (
-         select CP.*,
-                BirthDate,
-                FirstPlayoffGameDate,
-                cast(strftime('%Y.%j', FirstPlayoffGameDate) - strftime('%Y.%j', BirthDate) as int) as AgeYears,
-                cast((julianday(FirstPlayoffGameDate) -
-                      julianday(datetime(BirthDate, '+' || cast(strftime('%Y.%j', FirstPlayoffGameDate) - strftime('%Y.%j', BirthDate) as int) || ' years'))) as integer)
-                    as AgeDays
-         from ChampionsTopPlayers CP
-             inner join PlayersWithAgeCorrected on PLAYER_ID=PlayerId
-             inner join ChampionsFirstGame C on C.Season = CP.Season
-     ),
-     ChampionsAge as (
-         select Season,
-                TeamId,
-                TeamName,
-                group_concat(PLAYER_NAME, ', ') as Players,
-                avg(AgeYears) as AverageAgeYears,
-                avg(AgeDays) as AverageAgeDays
-         from PlayersAge
-         group by Season, TeamId
-     )
+    Champions as (
+        select Season, WinnerId as TeamId, WinnerName as TeamName
+        from PlayoffSerieSummary
+        where SerieOrder=1
+    ),
+    ChampionsPlayers as (
+        select C.Season,
+            C.TeamId,
+            C.TeamName,
+            P.PlayerId,
+            PlayerName,
+            GamesPlayed,
+            AverageMIN,
+            TotalMIN,
+            AveragePTS,
+            rank() over (partition by C.Season order by TotalMIN desc) as MinutesRank
+        from Champions C
+            inner join PlayerPlayoffsFullStats P on P.Season = C.Season and P.TeamId = C.TeamId
+    ),
+    ChampionsTopPlayers as (
+        select *
+        from ChampionsPlayers
+        where MinutesRank <= 5
+    ),
+    ChampionsFirstGame as (
+        select C.*,
+            min(GameDate) as FirstPlayoffGameDate
+        from Champions C
+            inner join BoxScoreT BT on BT.Season = C.Season and BT.TeamId = C.TeamId and Bt.SeasonType=4
+        group by C.Season, C.TeamId
+    ),
+    PlayersAge as (
+        select
+            CP.*,
+            RealBirthDate,
+            FirstPlayoffGameDate,
+            cast(strftime('%Y.%j', FirstPlayoffGameDate) - strftime('%Y.%j', RealBirthDate) as int) as AgeYears,
+            cast((julianday(FirstPlayoffGameDate) -
+                  julianday(datetime(RealBirthDate, '+' || cast(strftime('%Y.%j', FirstPlayoffGameDate) - strftime('%Y.%j', RealBirthDate) as int) || ' years'))) as integer)
+                as AgeDays
+        from ChampionsTopPlayers CP
+            inner join PlayerWithCorrectedAge WAC on CP.PlayerId=WAC.PlayerId
+            inner join ChampionsFirstGame C on C.Season = CP.Season
+    ),
+    ChampionsAge as (
+        select
+            Season,
+            TeamId,
+            TeamName,
+            group_concat(PlayerName, ', ') as Players,
+            avg(AgeYears) as AverageAgeYears,
+            avg(AgeDays) as AverageAgeDays
+        from PlayersAge
+        group by Season, TeamId
+    )
 select *
 from ChampionsAge
 order by AverageAgeYears desc, AverageAgeDays desc

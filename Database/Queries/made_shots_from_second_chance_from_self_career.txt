@@ -1,5 +1,5 @@
 with
-     PLAYERS_SECOND_CHANCE_OF_SELF as (
+     PlayersSecondChanceOfSelf as (
          select
                 E1.PlayerAId as ShootingPlayerId,
                 E2.PlayerAId as RebounderId,
@@ -13,14 +13,14 @@ with
              inner join Event E3
                 on E3.GameId = E1.GameId and E3.RealPossesionNumber = E2.RealPossesionNumber
                 and (E3.EventType = 2 or (E3.EventType = 3 and E3.Description like '%MISS%' and E3.EventActionType in (10, 12, 15))) and E3.EventOrder < E2.EventOrder
-             inner join BoxScoreP BSP on BSP.GAME_ID = E1.GameId and E1.PlayerAId = BSP.PLAYER_ID
-         where E1.EventType = 1 and BSP.SEASON_TYPE=2
+         where E1.EventType = 1 and E1.SeasonType=2
          group by E1.GameId, E1.EventOrder
      )
-select PLAYER_ID, PSFS.PLAYER_NAME, PSFS.TOTAL_FGA, PSFS.TOTAL_FGM,
-       count(*) as SecondChanceFromSelf, count(*) * 1.0 / TOTAL_FGM as SecondChanceFromSelfRatio
-from PLAYERS_SECOND_CHANCE_OF_SELF P
-    inner join PlayerCareerPBPSeasonFullStats PSFS on P.ShootingPlayerId = PSFS.PLAYER_ID
+select PlayerId, PSFS.PlayerName, PSFS.TotalFGA, PSFS.TotalFGM,
+       count(*) as SecondChanceFromSelf,
+       count(*) * 1.0 / TotalFGM as SecondChanceFromSelfRatio
+from PlayersSecondChanceOfSelf P
+    inner join PlayerCareerPBPSeasonFullStats PSFS on P.ShootingPlayerId = PSFS.PlayerId
 where RebounderId = ShootingPlayerId and MissingPlayerId = ShootingPlayerId and MissingType=2
 group by ShootingPlayerId
 order by SecondChanceFromSelfRatio desc

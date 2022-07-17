@@ -54,7 +54,7 @@ class TransactionsCreator:
 
     @staticmethod
     def add_properties(action_type, on_roster_after, sub_type_a):
-        def def_to_ret(analyzed_transaction):
+        def def_to_ret(_):
             return {
                 'action_type': action_type,
                 'sub_type_a': sub_type_a,

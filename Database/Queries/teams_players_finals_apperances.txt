@@ -1,17 +1,22 @@
 with
+    PlayersToPlayIn as (
+        select distinct TeamId, PlayerId, PlayerName
+        from BoxScoreP
+        where SeasonType in (2, 4, 5)
+    ),
     TeamFinalsAppeareances as (
-        select T.TEAM_ID, T.TEAM_NAME, BSP.SEASON, group_concat(distinct PC.PLAYER_ID || '(' || PC.PLAYER_NAME || ')')
+        select T.TeamId, T.TeamName, BSP.Season, group_concat(distinct PC.PlayerId || '(' || PC.PlayerName || ')')
         from TeamsCurrentName T
-            left join PlayerCareerTeams PC on PC.TEAM_ID = T.TEAM_ID
-            left join PlayoffBoxScoreP BSP on BSP.PLAYER_ID = PC.PLAYER_ID and BSP.SerieOrder=1
-        where BSP.SEASON is not null
-        group by T.TEAM_ID, BSP.SEASON
+            left join PlayersToPlayIn PC on PC.TeamId = T.TeamId
+            left join PlayoffBoxScoreP BSP on BSP.PlayerId = PC.PlayerId and BSP.SerieOrder=1
+        where BSP.Season is not null
+        group by T.TeamId, BSP.Season
     )
-select TC.TEAM_ID, TC.TEAM_NAME,
-       count(*) filter ( where T.SEASON is not null ) as FinalsAppereances,
-       count(*) filter ( where T.SEASON is null ) as MissedApereances,
-       group_concat(Season.value) filter ( where T.SEASON is null ) as MissedSeasons
-from generate_series(1946, 2020, 1) Season, TeamsCurrentName TC
-    left join TeamFinalsAppeareances T on T.SEASON = Season.value and T.TEAM_ID=TC.TEAM_ID
-group by TC.TEAM_ID
+select TC.TeamId, TC.TeamName,
+       count(*) filter ( where T.Season is not null ) as FinalsAppereances,
+       count(*) filter ( where T.Season is null ) as MissedApereances,
+       group_concat(Season.value) filter ( where T.Season is null ) as MissedSeasons
+from generate_series(1946, 2021, 1) Season, TeamsCurrentName TC
+    left join TeamFinalsAppeareances T on T.Season = Season.value and T.TeamId=TC.TeamId
+group by TC.TeamId
 order by FinalsAppereances desc

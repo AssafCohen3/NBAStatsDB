@@ -1,9 +1,11 @@
 import json
-import requests
+
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from constants import *
 
 
-class TeamDetailsHandler:
+class TeamDetailsHandler(HandlerAbs):
     def __init__(self, team_id):
         self.team_id = team_id
 

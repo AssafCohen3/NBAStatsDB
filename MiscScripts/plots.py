@@ -345,13 +345,71 @@ def plot_seasons_average_career_misc(conn):
     fig.tight_layout()
     plt.show()
 
+
+def plot_seasons_average_miss(conn):
+    sql = """with
+                PlayersGames as (
+                    select BoxScoreP.Season, PlayerId, PlayerName,
+                           count(*) as GamesNumber,
+                           SSC.MaxGames as SeasonGames,
+                           100 - (count(*)*100.0/MaxGames) as MissingGamesPercent
+                    from BoxScoreP
+                        inner join SeasonStatsCriteria SSC on BoxScoreP.Season = SSC.Season
+                    where SeasonType=2
+                    group by BoxScoreP.Season, PlayerId
+                ),
+                WithAwards as (
+                    select P.*,
+                           max(A.Season) as AllNBASeason,
+                           max(AP.Season) as AllStarSeason
+                    from PlayersGames P
+                        left join Awards A on A.Season between P.Season-1 and P.Season and A.Description='All-NBA' and A.PlayerId=P.PlayerId
+                        left join BoxScoreP AP on AP.PlayerId=P.PlayerId and AP.Season between P.Season-1 and P.Season and AP.SeasonType=3
+                    group by P.PlayerId, P.Season
+                ),
+                BySeasons as (
+                    select Season,
+                           SeasonGames,
+                           count(*) as PlayersAboveCriteria,
+                           count(*) filter ( where AllNBASeason is not null or AllStarSeason is not null) as StartAboveCriteria,
+                           avg(MissingGamesPercent) as AverageMissingGamesPercent,
+                           avg(MissingGamesPercent) filter ( where AllNBASeason is not null or AllStarSeason is not null) as AverageStarsMissingGamesPercent
+                    from WithAwards
+                    where GamesNumber >= SeasonGames*0.25
+                    group by Season
+                ),
+                ByPeriod as (
+                    select (Season/5) * 5 as Season,
+                           count(*) as SeasonsCount,
+                           avg(AverageMissingGamesPercent) as AverageMissingGamesPercent,
+                           avg(AverageStarsMissingGamesPercent) as AverageStarsMissingGamesPercent
+                    from BySeasons
+                    group by (Season/5) * 5
+                )
+            select *
+            from ByPeriod"""
+    df = pd.read_sql_query(sql, conn)
+    fig, ax = plt.subplots()
+    df.plot(kind="line", ax=ax, x='Season', y=['AverageMissingGamesPercent', 'AverageStarsMissingGamesPercent'])
+    ax.legend(['All players', 'Stars(AllStar or All-NBA in the last 2 seasons)'])
+    ax.tick_params(axis='x', labelsize=8)
+    ax.set_xlabel('Season')
+    ax.set_ylabel('Average % of missed games')
+    plt.title("Average % of missed games by players.\n(players who played more than 1/4 of possible games)")
+    # for idx, row in df.iterrows():
+    #     ax.annotate(int(row['AverageMissingGames']), (row['Season'] - 0.35, row['AverageMissingGames'] + 0.2), fontsize=6)
+    #     ax.annotate(int(row['AverageStarsMissingGames']), (row['Season'] - 0.35, row['AverageStarsMissingGames'] + 0.2), fontsize=6)
+    fig.tight_layout()
+    plt.show()
+
+
 def get_connection():
-    return sqlite3.connect(DATABASE_PATH + DATABASE_NAME + '.sqlite')
+    return sqlite3.connect(DATABASE_PATH + DATABASE_NAME_NEW + '.sqlite')
 
 
 def main():
     conn = get_connection()
-    plot_seasons_average_career_misc(conn)
+    plot_seasons_average_miss(conn)
 
 
 if __name__ == '__main__':

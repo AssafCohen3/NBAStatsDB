@@ -1,9 +1,11 @@
 import json
-import requests
+
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from constants import *
 
 
-class PlayerAwardsHandler:
+class PlayerAwardsHandler(HandlerAbs):
     def __init__(self, player_id):
         self.player_id = player_id
 
@@ -15,7 +17,8 @@ class PlayerAwardsHandler:
 
     def downloader(self):
         to_send = PLAYER_AWARDS_ENDPOINT % self.player_id
-        return requests.get(to_send, headers=STATS_HEADERS).json()
+        r = requests.get(to_send, headers=STATS_HEADERS)
+        return r.json()
 
     def to_cache(self, data):
         return True

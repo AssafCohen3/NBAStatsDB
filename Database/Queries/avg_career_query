@@ -1,4 +1,5 @@
-select ((Start_Year/ :range * :range) || ' - ' || ((Start_Year/ :range * :range) + 5)) as season, round(avg(Career_Length), 2) as Average_Rookie_Career_Length
-from
-	(select min(Year) as Start_Year, max(Years_Experience) as Career_Length from PlayerSeasonWithExperience where G >= :minimum_games group by Player_ID having Career_Length >= :minimum_career_length)
-group by Start_Year/:range * :range
+select ((FirstSeason/ :range * :range) || ' - ' || ((FirstSeason/ :range * :range) + 5)) as Season,
+       round(avg(SeasonsNum), 2) as AverageRookieCareerLength
+from PlayerCareerFullStats
+where SeasonsNum >= :minimum_career_length
+group by FirstSeason/:range * :range

@@ -16,10 +16,10 @@ with
         where LastOrder is null or LastOrder != SerieOrder
     ),
     WithObjects as (
-select *,
-       json_group_array(json_array(Season, NextSeason - 1, SerieOrder)) as Objects
-from WithRanges
-group by LevelTitle
+        select *,
+               json_group_array(json_array(Season, NextSeason - 1, SerieOrder)) as Objects
+        from WithRanges
+        group by LevelTitle
     )
 select json_group_object(LevelTitle, Objects)
 from WithObjects

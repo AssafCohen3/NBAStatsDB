@@ -277,7 +277,7 @@ templates = {
     'rest_of_season_sign': CaselessLiteral('The') + team_nt('team') + 'signed' + person_or_unknown('player', 'to') + Opt(MatchFirst([Literal('a 10-day contract'), Literal('two 10-day contracts')]) + ', then signed to') + 'a contract for the rest of the season.' + Opt(Group(signing_additional)('additional')),
     're_signing': 'The' + team_nt('team') + 're-signed' + person_or_unknown('player', '.', excluded_chars='.') + Opt(Group(signing_additional)('additional')),
     # TODO refine
-    'subtitution_contract': 'The' + team_nt('team') + 'signed' + person_or_unknown('player', 'to a substitution contract (') +
+    'subtitution_contract': 'The' + team_nt('team') + 'signed' + person_or_unknown('player', 'to a substitution contract. (') +
                             ('substituting for' +
                              person_or_unknown('substituted_player', MatchFirst([Literal(','), Literal(';'), Literal(')')]), excluded_chars=';,)', consume=False) +
                              Suppress(subtitution_additinonal)
@@ -302,12 +302,12 @@ templates = {
                   Opt(MatchFirst([Literal('(Appointed on an interim basis)'),
                                   Literal('Named interim head coach')])),
     'convert_contract': 'The' + team_nt('team') + 'converted' + person_or_unknown('player', 'from a two-way contract to a regular contract.'),
-    'suspension_by_league': person_or_unknown('player', 'was suspended by the league (') +
+    'suspension_by_league': person_or_unknown('player', 'was suspended by the league. (') +
                         Opt(MatchFirst([
                                 number('suspension_length_games') + '-game suspension',
                                 number('suspension_length_weeks') + '-week suspension',
                                 Literal('Indefinite')])) + ')',
-    'suspension_by_team': person_or_unknown('player', 'was suspended from the') + team_nt('team') + Opt('(' + number('suspension_length') + '-game suspension)'),
+    'suspension_by_team': person_or_unknown('player', 'was suspended from the') + team_nt('team') + '.' + Opt('(' + number('suspension_length') + '-game suspension)'),
     'assigned_to': 'The' + team_nt('team') + 'assigned' + person_or_unknown('player', 'to the') + (take_until_new('of the', 'assigned_to_team') | 'of the') + take_until_new('.', 'where', excluded_chars='.'),
     'recalling': 'The' + team_nt('team') + 'recalled' + person_or_unknown('player', 'from the') + (take_until_new('of the', 'recalling_from_team') | 'of the') + take_until_new('.', 'where', excluded_chars='.'),
     'resignation': person_or_unknown('person', 'resigns as') + possible_roles('role') + 'for' + team_nt('team') + '.',
@@ -317,8 +317,8 @@ templates = {
     'released': 'The' + team_nt('team') + 'released' + person_or_unknown('player', '.' + line_end, excluded_chars='.'),
     'reassignment': 'The' + team_nt('team') + 'reassigned' + possible_roles('role') + person_or_unknown('person', '.' + line_end, excluded_chars='.'),
     'expansion_draft': 'The' + team_nt('new_team') + 'drafted' + person_or_unknown('player', 'from the') + team_nt('old_team') + 'in the NBA expansion draft.',
-    'role_retire_from_team': possible_roles('role') + person_or_unknown('person', 'retired from the') + team_nt('team'),
-    'retire_from_team': person_or_unknown('player', 'retired from the') + team_nt('team'),
+    'role_retire_from_team': possible_roles('role') + person_or_unknown('person', 'retired from the') + team_nt('team') + '.',
+    'retire_from_team': person_or_unknown('player', 'retired from the') + team_nt('team') + '.',
 }
 
 

@@ -1,10 +1,11 @@
-select PS.PLAYER_ID, PS.PLAYER_NAME, count(distinct SERIES_START) as SERIES_COUNT,
-       sum(case PS.SHOULD_WON = 1 and PS.WON = 1 when true then 1 else 0 end) as FAVOURITE_WINS,
-       sum(case PS.SHOULD_WON = 1 and PS.WON = 0 when true then 1 else 0 end) as FAVOURITE_LOSES,
-       sum(case PS.SHOULD_LOST = 1 and PS.WON = 1 when true then 1 else 0 end) as UNDERDOG_WINS,
-       sum(case PS.SHOULD_LOST = 1 and PS.WON = 0 when true then 1 else 0 end) as UNDERDOG_LOSES,
-       sum(case PS.SHOULD_LOST = 1 and PS.WON = 1 when true then 1 else 0 end) - sum(case PS.SHOULD_WON = 1 and PS.WON = 0 when true then 1 else 0 end) as RATIO
-from PlayerSeriesWithOdds PS inner join Teams T on T.TEAM_ABBREVIATION = PS.TEAM_SERIE and PS.SEASON <= T.LAST_USED and PS.SEASON >= T.FIRST_USED
-where AVG_MIN >= 30
-group by PS.PLAYER_ID
-order by SERIES_COUNT desc
+select PS.PlayerId, PS.PlayerName, count(distinct Season||SerieOrder) as SeriesCount,
+       sum((1-ShouldWon) * (1-ShouldLost)) as NeutralSeries,
+       sum(ShouldWon*Won) as FavouriteWins,
+       sum(ShouldWon*(1-Won)) as FavouriteLoses,
+       sum(ShouldLost*Won) as UnderdogWins,
+       sum(ShouldLost*(1-Won)) as UnderdogLoses,
+       sum(ShouldLost*Won) - sum(ShouldWon*(1-Won)) as Ratio
+from PlayerSeriesWithOdds PS
+where AverageMIN >= 30
+group by PS.PlayerId
+order by Ratio

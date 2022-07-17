@@ -1,13 +1,12 @@
-import json
 import re
 
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from bs4 import BeautifulSoup
-import pandas as pd
 from constants import *
 
 
-class BRPlayoffsSummaryHandler:
+class BRPlayoffsSummaryHandler(HandlerAbs):
     def __init__(self, season, season_link, current_teams):
         self.season = season
         self.season_link = season_link

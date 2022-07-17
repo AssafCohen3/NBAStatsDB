@@ -1,6 +1,6 @@
 with
     GoAheadShots as (
-        select PlayerAId, PLAYER_NAME, PlayerTeamName, SEASON, TeamAName, TeamBName, GAME_DATE, GameId,
+        select PlayerAId, PlayerName, PlayerTeamName, Season, TeamAName, TeamBName, GameDate, GameId,
                SerieOrder, LevelTitle, Period, RemainingSeconds, ShotValue, MadeShot,
                iif(PlayerTeamId = TeamAId, TeamAScore, TeamBScore) - ShotValue*MadeShot as PlayerTeamScoreBefore,
                iif(PlayerTeamId = TeamAId, TeamBScore, TeamAScore) as OponentTeamScoreBefore,
@@ -12,7 +12,7 @@ with
                 (PlayerTeamId = TeamBId and TeamBScore - ShotValue * MadeShot <= TeamAScore and TeamBScore - ShotValue*MadeShot + ShotValue > TeamAScore)) and
                 RemainingSeconds <= 20 and Period >= 4
     )
-select PlayerAId, PLAYER_NAME, group_concat(distinct PlayerTeamName) as PlayerTeams,
+select PlayerAId, PlayerName, group_concat(distinct PlayerTeamName) as PlayerTeams,
        count(*) as GoAheadShotsNumber,
        sum(MadeShot) as MadeGoAheadShotsNumber,
        sum(MadeShot)*1.0 / count(*) as Percentage,

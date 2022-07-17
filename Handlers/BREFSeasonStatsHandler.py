@@ -1,13 +1,12 @@
-import json
-import re
 import unidecode
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from constants import *
 
 
-class BREFSeasonStatsHandler:
+class BREFSeasonStatsHandler(HandlerAbs):
     def __init__(self, season, leage):
         self.season = season
         self.league = leage
@@ -41,7 +40,7 @@ class BREFSeasonStatsHandler:
         # drop Player row
         df.drop(df[df.G == 'G'].index, inplace=True)
         # replace names
-        df.insert(loc=0, column='PlayerName', value= player_names)
+        df.insert(loc=0, column='PlayerName', value=player_names)
         # insert player_ids
         df.insert(loc=1, column='PlayerId', value=player_ids)
         # insert year

@@ -1,9 +1,7 @@
-import pbpstats
 from pbpstats.resources.enhanced_pbp.rebound import EventOrderError
 from pbpstats.resources.enhanced_pbp.stats_nba import StatsViolation
-
-pbpstats.REQUEST_TIMEOUT = 60
-import requests
+import pbp.PatchTimeout
+from MainRequestsSession import requests_session as requests
 from pbpstats import HEADERS, REQUEST_TIMEOUT
 from pbpstats.resources.enhanced_pbp import (
     FieldGoal,
@@ -63,27 +61,24 @@ def _get_starters_from_boxscore_request(self):
     }
     starters_by_team = {}
     response = requests.get(
-        base_url, params, headers=HEADERS, timeout=REQUEST_TIMEOUT
+        base_url, params=params, headers=HEADERS, timeout=REQUEST_TIMEOUT
     )
     if response.status_code == 200:
         response_json = response.json()
+        headers = response_json["resultSets"][0]["headers"]
+        rows = response_json["resultSets"][0]["rowSet"]
+        players = [dict(zip(headers, row)) for row in rows]
+        starters = sorted(
+            players, key=lambda k: int(k["MIN"].split(":")[1]), reverse=True
+        )
+        for starter in starters[0:10]:
+            team_id = starter["TEAM_ID"]
+            player_id = starter["PLAYER_ID"]
+            if team_id not in starters_by_team.keys():
+                starters_by_team[team_id] = []
+            starters_by_team[team_id].append(player_id)
     else:
         response.raise_for_status()
-
-    headers = response_json["resultSets"][0]["headers"]
-    rows = response_json["resultSets"][0]["rowSet"]
-    players = [dict(zip(headers, row)) for row in rows]
-    starters = sorted(
-        players, key=lambda k: int(k["MIN"].split(":")[1]), reverse=True
-    )
-
-    for starter in starters[0:10]:
-        team_id = starter["TEAM_ID"]
-        player_id = starter["PLAYER_ID"]
-        if team_id not in starters_by_team.keys():
-            starters_by_team[team_id] = []
-        starters_by_team[team_id].append(player_id)
-
     for team_id, starters in starters_by_team.items():
         if len(starters) != 5:
             raise InvalidNumberOfStartersException(
@@ -101,7 +96,7 @@ def get_offense_team_id(self):
         # offensive foul returns team id
         # this isn't separate method in Foul class because some fouls can be committed
         # on offense or defense (loose ball, flagrant, technical)
-        return self.team_id
+        return getattr(self, 'team_id')
     event_to_check = self.previous_event
     team_ids = list(self.current_players.keys())
     while event_to_check is not None and not (
@@ -116,7 +111,7 @@ def get_offense_team_id(self):
                     and not event_to_check.is_technical_ft
             )
     ):
-        event_to_check = event_to_check.previous_event
+        event_to_check = getattr(event_to_check, 'previous_event')
     if event_to_check is None and self.next_event is not None \
             and (not isinstance(self.next_event, Turnover) or not self.next_event.is_no_turnover or self.next_event.previous_event != self):
         # should only get here on first possession of period when first event is non-offensive foul,
@@ -125,34 +120,34 @@ def get_offense_team_id(self):
     if isinstance(event_to_check, Turnover) and not event_to_check.is_no_turnover:
         return (
             team_ids[0]
-            if team_ids[1] == event_to_check.get_offense_team_id()
+            if team_ids[1] == getattr(event_to_check, 'get_offense_team_id')()
             else team_ids[1]
         )
     if isinstance(event_to_check, Rebound) and event_to_check.is_real_rebound:
         if not event_to_check.oreb:
             return (
                 team_ids[0]
-                if team_ids[1] == event_to_check.get_offense_team_id()
+                if team_ids[1] == getattr(event_to_check, 'get_offense_team_id')()
                 else team_ids[1]
             )
-        return event_to_check.get_offense_team_id()
+        return getattr(event_to_check, 'get_offense_team_id')()
     if isinstance(event_to_check, (FieldGoal, FreeThrow)):
-        if event_to_check.is_possession_ending_event:
+        if getattr(event_to_check, 'is_possession_ending_event'):
             return (
                 team_ids[0]
-                if team_ids[1] == event_to_check.get_offense_team_id()
+                if team_ids[1] == getattr(event_to_check, 'get_offense_team_id')()
                 else team_ids[1]
             )
-        return event_to_check.get_offense_team_id()
+        return getattr(event_to_check, 'get_offense_team_id')()
     if isinstance(event_to_check, JumpBall):
-        if event_to_check.count_as_possession:
+        if getattr(event_to_check, 'count_as_possession'):
             team_ids = list(self.current_players.keys())
             return (
                 team_ids[0]
-                if team_ids[1] == event_to_check.get_offense_team_id()
+                if team_ids[1] == getattr(event_to_check, 'get_offense_team_id')()
                 else team_ids[1]
             )
-        return event_to_check.get_offense_team_id()
+        return getattr(event_to_check, 'get_offense_team_id')()
 
 
 @property
@@ -173,11 +168,11 @@ def new_rebound_missed_shot_property(self):
         and self.previous_event.is_shot_clock_violation
     ):
         if isinstance(self.previous_event, FieldGoal):
-            return self.previous_event.previous_event
+            return getattr(self.previous_event, 'previous_event')
     elif isinstance(self.previous_event, JumpBall):
-        prev_event = self.previous_event.previous_event
+        prev_event = getattr(self.previous_event, 'previous_event')
         while isinstance(prev_event, (Substitution, Timeout)):
-            prev_event = prev_event.previous_event
+            prev_event = getattr(prev_event, 'previous_event')
         if isinstance(prev_event, (FieldGoal, FreeThrow)):
             return prev_event
     to_ret = Object()
@@ -204,17 +199,17 @@ def missed_shot(self):
         and self.previous_event.is_shot_clock_violation
     ):
         if isinstance(self.previous_event, FieldGoal):
-            return self.previous_event.previous_event
+            return getattr(self.previous_event, 'previous_event')
     elif isinstance(self.previous_event, JumpBall):
-        prev_event = self.previous_event.previous_event
+        prev_event = getattr(self.previous_event, 'previous_event')
         while isinstance(prev_event, (Substitution, Timeout)):
-            prev_event = prev_event.previous_event
+            prev_event = getattr(prev_event, 'previous_event')
         if isinstance(prev_event, (FieldGoal, FreeThrow)):
             return prev_event
     elif isinstance(self.previous_event, StatsViolation) and self.previous_event.is_lane_violation \
-            and isinstance(self.previous_event.previous_event, (FieldGoal, FreeThrow)):
-        if not self.previous_event.previous_event.is_made:
-            return self.previous_event.previous_event
+            and isinstance(getattr(self.previous_event, 'previous_event'), (FieldGoal, FreeThrow)):
+        if not getattr(self.previous_event, 'previous_event').is_made:
+            return getattr(self.previous_event, 'previous_event')
     raise EventOrderError(
         f"previous event: {self.previous_event} is not a missed free throw or field goal"
     )
@@ -226,4 +221,4 @@ setattr(StatsStartOfPeriod, '_get_starters_from_boxscore_request', _get_starters
 
 
 def foo():
-    return 8
+    return pbp.PatchTimeout.foo()

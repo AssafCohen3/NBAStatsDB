@@ -1,45 +1,46 @@
-with GROUPED_SHOTS as (
-    select PlayerAId, PLAYER_NAME,
-           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
-           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
-           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
-           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS,
-           count(distinct GameId) filter ( where ShotValue > 1 ) as FgsGamesCount
-    from RegularSeasonShots
-    where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5
-    group by PlayerAId
-),
-     WITH_CLUTCH_SECONDS as (
-         select PS.*,
-                count(distinct BSP.GAME_ID) as TotalPlayerGames,
-                count(distinct GC.GameId) as TotalPlayerParticipatedGamesWithClutch,
-                count(distinct PGCS.GameId) as TotalPlayerClutchGames,
-                sum(GC.ClutchTime) as TotalParticipatedGamesClutchSeconds,
-                sum(PGCS.ClutchTime) as TotalPlayerClutchSeconds
-         from GROUPED_SHOTS PS
-            inner join BoxScoreP BSP on PLAYER_ID=PlayerAId and SEASON_TYPE=2
-            left join GameClutchSeconds GC on GC.GameId = BSP.GAME_ID
-            left join PlayerGameClutchSeconds PGCS on BSP.GAME_ID = PGCS.GameId and PGCS.PlayerId=PS.PlayerAId
-         group by PS.PlayerAId
+with
+    GroupedShots as (
+        select PlayerAId, PlayerName,
+               sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+               sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+               sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+               sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS,
+               count(distinct GameId) filter ( where ShotValue > 1 ) as FgsGamesCount
+        from RegularSeasonShots
+        where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5
+        group by PlayerAId
+    ),
+    WithClutchSeconds as (
+        select PS.*,
+               count(distinct BSP.GameId) as TotalPlayerGames,
+               count(distinct GC.GameId) as TotalPlayerParticipatedGamesWithClutch,
+               count(distinct PGCS.GameId) as TotalPlayerClutchGames,
+               sum(GC.ClutchTime) as TotalParticipatedGamesClutchSeconds,
+               sum(PGCS.ClutchTime) as TotalPlayerClutchSeconds
+        from GroupedShots PS
+            inner join BoxScoreP BSP on BSP.PlayerId=PlayerAId and SeasonType=2
+            left join GameClutchSeconds GC on GC.GameId = BSP.GameId
+            left join PlayerGameClutchSeconds PGCS on BSP.GameId = PGCS.GameId and PGCS.PlayerId=PS.PlayerAId
+        group by PS.PlayerAId
      ),
-     WITH_PERCENTS as (
-select playeraid, player_name,
-       FgsGamesCount,
-       TotalPlayerGames, TotalPlayerParticipatedGamesWithClutch, TotalPlayerClutchGames,
-       TotalParticipatedGamesClutchSeconds, TotalPlayerClutchSeconds,
-       TotalPlayerClutchSeconds * 1.0 / TotalParticipatedGamesClutchSeconds as Ratio,
-       PLAYER_NAME as SecondPartName,
-       PTS, PTS * 60.0 / TotalPlayerClutchSeconds as PointsPerClutchMinute,
-       FGA * 60.0 / TotalPlayerClutchSeconds as FGAPerClutchMinute,
-       FTA * 60.0 / TotalPlayerClutchSeconds as FTAPerClutchMinute,
-       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
-       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
-       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
-       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
-       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
-from WITH_CLUTCH_SECONDS
-where FGA >= 200
-)
-
-select * from WITH_PERCENTS
-order by FG_PCT desc
+    WithPercents as (
+        select PlayerAId, PlayerName,
+               FgsGamesCount,
+               TotalPlayerGames, TotalPlayerParticipatedGamesWithClutch, TotalPlayerClutchGames,
+               TotalParticipatedGamesClutchSeconds, TotalPlayerClutchSeconds,
+               TotalPlayerClutchSeconds * 1.0 / TotalParticipatedGamesClutchSeconds as Ratio,
+               PlayerName as SecondPartName,
+               PTS, PTS * 60.0 / TotalPlayerClutchSeconds as PointsPerClutchMinute,
+               FGA * 60.0 / TotalPlayerClutchSeconds as FGAPerClutchMinute,
+               FTA * 60.0 / TotalPlayerClutchSeconds as FTAPerClutchMinute,
+               FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FTPercent,
+               FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FGPercent,
+               FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3Percent,
+               iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+               round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+        from WithClutchSeconds
+        where FGA >= 200
+    )
+select *
+from WithPercents
+order by FGPercent desc

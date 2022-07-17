@@ -1,3 +1,5 @@
-select PLAYER_ID, PLAYER_NAME, max(F.SEASON) as LAST_TEAM_CHAMP from BoxScoreP left join Finals F on BoxScoreP.TEAM_ID = F.WINNER_ID
-group by PLAYER_ID
-having LAST_TEAM_CHAMP is null
+select PlayerId, PlayerName, max(PSS.Season) as LastTeamChamp
+from BoxScoreP
+    left join PlayoffSerieSummary PSS on BoxScoreP.TeamId = PSS.WinnerId and PSS.SerieOrder=1
+group by PlayerId
+having LastTeamChamp is null

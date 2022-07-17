@@ -1,13 +1,13 @@
 with
     GamesNumbers as (
-        select distinct GAME_ID,
+        select distinct GameId,
                         count(*) over W2 as GameNumber
         from BoxScoreT
-        where SEASON_TYPE=4
-        window W2 as (partition by SEASON, TeamAId, TeamBId, TEAM_ID order by GAME_DATE)
+        where SeasonType=4
+        window W2 as (partition by Season, TeamAId, TeamBId, TeamId order by GameDate)
     ),
     Spans as (
-        select PLAYER_ID, PLAYER_NAME, SEASON, GAME_DATE, BoxScoreP.GAME_ID, TEAM_NAME, TeamAName, TeamBName,
+        select PlayerId, PlayerName, Season, GameDate, BoxScoreP.GameId, TeamName, TeamAName, TeamBName,
                FGA, FGM, PTS, TOV,
                sum(FGA) over W1 as TotalFGA,
                sum(FGM) over W1 as TotalFGM,
@@ -17,14 +17,14 @@ with
                sum(TOV) over W1 as TotalTOV,
                GameNumber
         from BoxScoreP
-            inner join GamesNumbers GN on GN.GAME_ID=BoxScoreP.GAME_ID
-        where SEASON_TYPE=4
-        window W1 as (partition by PLAYER_ID, SEASON order by GAME_DATE rows between 1 preceding and current row)
+            inner join GamesNumbers GN on GN.GameId=BoxScoreP.GameId
+        where SeasonType=4
+        window W1 as (partition by PlayerId, Season order by GameDate rows between 1 preceding and current row)
 
     )
 select *
 from Spans
 where TotalFGA >= 40 and TotalFGM * 1.0 / TotalFGA <= 13.0/41 and TotalTOV >= 12
-order by GAME_DATE desc
+order by GameDate desc
 -- select *
 -- from GamesNumbers

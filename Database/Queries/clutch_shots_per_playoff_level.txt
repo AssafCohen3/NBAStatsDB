@@ -1,11 +1,11 @@
 with
     LevelsClutchShots as (
-        select SEASON, SerieOrder, LevelTitle,
+        select Season, SerieOrder, LevelTitle,
                count(*) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 ) as ClutchShots,
                count(distinct PlayerAId) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 ) as ClutchShotsPlayers,
                count(distinct GameId) as GamesCount
         from PlayoffShots
-        group by SEASON, SerieOrder
+        group by Season, SerieOrder
     ),
     WithRatio as (
         select *,

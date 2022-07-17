@@ -1,13 +1,12 @@
-import json
-import re
+import datetime
 import unidecode
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from bs4 import BeautifulSoup
-import pandas as pd
 from constants import *
 
 
-class BREFPlayerHandler:
+class BREFPlayerHandler(HandlerAbs):
     def __init__(self, letter):
         self.letter = letter
         self.resp = None
@@ -24,7 +23,8 @@ class BREFPlayerHandler:
         self.resp = r.text
         return self.from_html(r.text)
 
-    def from_html(self, html_resp):
+    @staticmethod
+    def from_html(html_resp):
         soup = BeautifulSoup(html_resp, 'html.parser')
         players_rows = soup.select('table tbody tr')
         to_ret = []
@@ -49,6 +49,7 @@ class BREFPlayerHandler:
                 month = birth_date[4:6]
                 day = birth_date[6:8]
                 birth_date = year + '-' + month + '-' + day
+                birth_date = datetime.datetime.strptime(birth_date, '%Y-%m-%d').date()
             else:
                 birth_date = None
             to_ret.append([player_id, player_name, from_year, to_year, position, height, weight, birth_date, is_active, hof])

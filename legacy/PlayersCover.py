@@ -1,9 +1,9 @@
-import json
 import heapq
 from collections import defaultdict
-
 import numpy
 import numpy as np
+if False or None:
+    import cvxpy
 
 
 # for franchise in {Boston, Atlanta, ...}, year in {2021, 2020, ...} define team(franchise, year) as the roster of the franchise at the end of the year
@@ -20,7 +20,6 @@ def create_matrix(teams_rosters):
 
 # a test with linear programming. thats improve the solution only by 50 teams so the greedy is enough
 def linear_programming(teams_rosters):
-    import cvxpy
     columns, players_rows = create_matrix(teams_rosters)
     selection = cvxpy.Variable(len(teams_rosters), boolean=True)
     b = np.full(players_rows.shape[0], 1)
@@ -35,19 +34,19 @@ def linear_programming(teams_rosters):
     print(prob.constraints[0].dual_value)
 
 
-def get_teams_cover(conn):
-    players_last_team = conn.execute("""
-        with DISTINCT_PLAYER_TEAMS as (
-            select distinct SEASON,
-                            first_value(TEAM_ID) over (partition by SEASON, PLAYER_ID order by GAME_DATE desc) as LastTeamId,
-                            PLAYER_ID,
-                            PLAYER_NAME
-            from BoxScoreP
-            inner join Player on PLAYER_ID = Player.PlayerId
-            where SEASON_TYPE=2 and Player.BirthDate is null
-        )
-        select SEASON, LastTeamId, PLAYER_ID
-        from DISTINCT_PLAYER_TEAMS""").fetchall()
+def get_teams_cover(players_last_team):
+    # players_last_team = conn.execute("""
+    #     with DISTINCT_PLAYER_TEAMS as (
+    #         select distinct SEASON,
+    #                         first_value(TEAM_ID) over (partition by SEASON, PLAYER_ID order by GAME_DATE desc) as LastTeamId,
+    #                         PLAYER_ID,
+    #                         PLAYER_NAME
+    #         from BoxScoreP
+    #         inner join Player on PLAYER_ID = Player.PlayerId
+    #         where SEASON_TYPE=2 and Player.BirthDate is null
+    #     )
+    #     select SEASON, LastTeamId, PLAYER_ID
+    #     from DISTINCT_PLAYER_TEAMS""").fetchall()
     teams_rosters = defaultdict(set)
     for season, last_team_id, player_id in players_last_team:
         teams_rosters[(season, last_team_id)].add(player_id)

@@ -1,22 +1,30 @@
 with
-    LevelsClutchShots as (
-        select SEASON, SerieOrder, group_concat(distinct LevelTitle) as Titles,
-               count(*) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 ) as ClutchShots,
-               count(distinct PlayerAId) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 ) as ClutchShotsPlayers,
-               count(distinct GameId) as GamesCount
+    LastLevelShot as (
+        select *,
+               min(SerieOrder) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2  ) over (partition by Season, PlayerAId) as LastLevelWithClutchShot
         from PlayoffShots
-        group by SEASON, SerieOrder
+    ),
+    LevelsClutchShots as (
+        select Season, SerieOrder, group_concat(distinct LevelTitle) as Titles,
+               count(*) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 ) as ClutchShots,
+               count(distinct PlayerAId) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 and SerieOrder=LastLevelWithClutchShot ) as ClutchShotsPlayers,
+               count(distinct GameId) filter ( where RemainingSeconds <= 300 and Period >= 4 and abs(ScoreMargin) <= 5 and ShotValue >= 2 ) as ClutchGamesCount,
+               count(distinct GameId) as GamesCount
+        from LastLevelShot
+        group by Season, SerieOrder
     ),
     SinceLevel as (
-        select SEASON, SerieOrder, Titles,
+        select Season, SerieOrder, Titles,
                sum(ClutchShots) over W1 as ClutchShots,
                sum(ClutchShotsPlayers) over W1 as ClutchShotsPlayers,
+               sum(ClutchGamesCount) over W1 as ClutchGamesCount,
                sum(GamesCount) over W1 as GamesCount
         from LevelsClutchShots
-        window W1 as (partition by SEASON order by SerieOrder rows between unbounded preceding and current row )
+        window W1 as (partition by Season order by SerieOrder rows between unbounded preceding and current row )
     ),
     WithRatio as (
         select *,
+               ClutchGamesCount*1.0/GamesCount as ClutchGamesRatio,
                ClutchShots*1.0 / GamesCount as ClutchShotsPerGame
         from SinceLevel
     ),
@@ -24,9 +32,12 @@ with
         select *,
                rank() over (partition by SerieOrder order by ClutchShots desc ) as ClutchShotsRank,
                rank() over (partition by SerieOrder order by ClutchShotsPerGame desc ) as ClutchShotsPerGameRank,
+--                rank() over (partition by SerieOrder order by ClutchGamesCount desc ) as ClutchGamesRank,
+--                rank() over (partition by SerieOrder order by ClutchGamesRatio desc ) as ClutchGamesRatioRank,
                rank() over (partition by SerieOrder order by ClutchShotsPlayers desc ) as ClutchShotsPlayersRank
         from WithRatio
     )
 select *
 from Ranked
 order by ClutchShotsRank + ClutchShotsPerGameRank + ClutchShotsPlayersRank
+--              + ClutchGamesRank + ClutchGamesRatioRank

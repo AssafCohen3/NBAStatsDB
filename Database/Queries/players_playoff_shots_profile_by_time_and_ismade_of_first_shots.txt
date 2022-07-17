@@ -1,0 +1,106 @@
+with
+    AfterFirst as (
+        select GameId, GameDate, PlayerAId, PlayerName, PlayerTeamName, Season,
+               TeamAName, TeamBName, Period, RemainingSeconds, MadeShot, EventOrder, WL,
+               rank() over (partition by GameId, PlayerAId order by EventOrder) as ShotNumber
+        from PlayoffShots
+        where ShotValue=3
+    ),
+    Grouped as (
+        select GameId, GameDate, PlayerAId, PlayerName, PlayerTeamName, Season,
+               count(*) as ShotsNumber,
+               count(*) filter ( where MadeShot=1 ) as MadeShots,
+               count(*) filter ( where MadeShot=1 and ShotNumber=1 ) as MadeFirst,
+               count(*) filter ( where MadeShot=1 and ShotNumber=2 ) as MadeSecond,
+               max(Period*12*60  - RemainingSeconds) filter ( where ShotNumber=1 ) as WhenFirstShot,
+               WL
+        from AfterFirst
+        group by GameId, PlayerAId
+    ),
+    WithAll as (
+        select *,
+               sum(ShotsNumber) over (partition by PlayerAId) as RegularShotsNumber,
+               sum(MadeShots) over (partition by PlayerAId) as RegularMadeShots
+        from Grouped
+    ),
+    WithTimeRanges as (
+        select *, MAFTER.value as AfterMinute, iif(MBEFORE.value=20, 100, MBEFORE.value) as BeforeMinute
+        from WithAll, generate_series(0, 20, 1) MAFTER, generate_series(0, 20, 1) MBEFORE
+        where MBEFORE.value > MAFTER.value + 1
+    ),
+    GroupedByPlayer as (
+        select PlayerAId, PlayerName, group_concat(distinct PlayerTeamName) as Teams, group_concat(distinct Season) as Seasons,
+               AfterMinute as FirstAfterMinute, BeforeMinute as FirstBeforeMinute,
+               RegularShotsNumber, RegularMadeShots,
+               sum(ShotsNumber) filter ( where WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsNumber,
+               sum(MadeShots) filter ( where WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShots,
+               --                taken shots cases
+               sum(ShotsNumber-1) filter ( where MadeFirst=1 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsAfterMadeFirst,
+               sum(ShotsNumber-2) filter ( where MadeFirst=1 and MadeSecond=1 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsAfterMadeFirstTwo,
+               sum(ShotsNumber-1) filter ( where MadeFirst=0 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsAfterMissFirst,
+               sum(ShotsNumber-2) filter ( where MadeFirst=0 and MadeSecond=0 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsAfterMissFirstTwo,
+               sum(ShotsNumber-2) filter ( where MadeFirst=1 and MadeSecond=0 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsAfterMadeFirstMissSecond,
+               sum(ShotsNumber-2) filter ( where MadeFirst=0 and MadeSecond=1 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as ShotsAfterMissFirstMadeSecond,
+               --                made shots cases
+               sum(MadeShots-MadeFirst) filter ( where MadeFirst=1 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShotsAfterMadeFirst,
+               sum(MadeShots-MadeFirst-MadeSecond) filter ( where MadeFirst=1 and MadeSecond=1 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShotsAfterMadeFirstTwo,
+               sum(MadeShots-MadeFirst) filter ( where MadeFirst=0 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShotsAfterMissFirst,
+               sum(MadeShots-MadeFirst-MadeSecond) filter ( where MadeFirst=0 and MadeSecond=0 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShotsAfterMissFirstTwo,
+               sum(MadeShots-MadeFirst-MadeSecond) filter ( where MadeFirst=1 and MadeSecond=0 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShotsAfterMadeFirstMissSecond,
+               sum(MadeShots-MadeFirst-MadeSecond) filter ( where MadeFirst=0 and MadeSecond=1 and WhenFirstShot*1.0/60 >= AfterMinute and WhenFirstShot*1.0/60 <= BeforeMinute ) as MadeShotsAfterMissFirstMadeSecond
+        from WithTimeRanges
+        group by PlayerAId, AfterMinute, BeforeMinute
+    ),
+    WithPercents as (
+        select PlayerAId, PlayerName, FirstAfterMinute, FirstBeforeMinute, Teams, Seasons,
+               RegularShotsNumber, RegularMadeShots, RegularMadeShots*1.0/RegularShotsNumber as RegularPercent,
+               ShotsNumber, MadeShots, MadeShots*1.0/ShotsNumber as Percent,
+               MadeShotsAfterMadeFirst*1.0/ShotsAfterMadeFirst as AfterMadeFirstPercent,
+               MadeShotsAfterMissFirst*1.0/ShotsAfterMissFirst as AfterMissFirstPercent,
+               MadeShotsAfterMadeFirstTwo*1.0/ShotsAfterMadeFirstTwo as AfterMadeFirstTwoPercent,
+               MadeShotsAfterMissFirstTwo*1.0/ShotsAfterMissFirstTwo as AfterMissFirstTwoPercent,
+               MadeShotsAfterMadeFirstMissSecond*1.0/ShotsAfterMadeFirstMissSecond as AfterMadeFirstMissSecondPercent,
+               MadeShotsAfterMissFirstMadeSecond*1.0/ShotsAfterMissFirstMadeSecond as AfterMissFirstMadeSecondPercent
+        from GroupedByPlayer
+    ),
+    WithDiffs as (
+        select PlayerAId, PlayerName, Seasons, Teams, ShotsNumber, MadeShots, FirstAfterMinute, FirstBeforeMinute,
+               RegularPercent, RegularShotsNumber, RegularMadeShots,
+               Percent,
+               -RegularPercent + AfterMadeFirstPercent as DiffAfterMadeFirst,
+               -RegularPercent + AfterMissFirstPercent as DiffAfterMissFirst,
+               -RegularPercent + AfterMadeFirstTwoPercent as DiffAfterMadeFirstTwo,
+               -RegularPercent + AfterMissFirstTwoPercent as DiffAfterMissFirstTwo,
+               -RegularPercent + AfterMadeFirstMissSecondPercent as DiffAfterMadeFirstMissSecond,
+               -RegularPercent + AfterMissFirstMadeSecondPercent as DiffAfterMissFirstMadeSecond
+        from WithPercents
+    ),
+    GroupedSections as (
+        select PlayerAId, PlayerName, FirstAfterMinute, FirstBeforeMinute,
+               RegularShotsNumber, RegularMadeShots, RegularPercent,
+               sum(ShotsNumber) filter ( where FirstAfterMinute=0 and FirstBeforeMinute=2 ) as StartShotsNumber,
+               sum(MadeShots) filter ( where FirstAfterMinute=0 and FirstBeforeMinute=2 ) as StartMadeShots,
+               sum(Percent) filter ( where FirstAfterMinute=0 and FirstBeforeMinute=2 ) as StartPercent,
+               sum(Percent-RegularPercent) filter ( where FirstAfterMinute=0 and FirstBeforeMinute=2 ) as StartDiff,
+               sum(ShotsNumber) filter ( where FirstAfterMinute=2 and FirstBeforeMinute=5 ) as MiddleShotsNumber,
+               sum(MadeShots) filter ( where FirstAfterMinute=2 and FirstBeforeMinute=5 ) as MiddleMadeShots,
+               sum(Percent) filter ( where FirstAfterMinute=2 and FirstBeforeMinute=5 ) as MiddlePercent,
+               sum(Percent-RegularPercent) filter ( where FirstAfterMinute=2 and FirstBeforeMinute=5 ) as MiddleDiff,
+               sum(ShotsNumber) filter ( where FirstAfterMinute=5 and FirstBeforeMinute=100 ) as EndShotsNumber,
+               sum(MadeShots) filter ( where FirstAfterMinute=5 and FirstBeforeMinute=100 ) as EndMadeShots,
+               sum(Percent) filter ( where FirstAfterMinute=5 and FirstBeforeMinute=100 ) as EndPercent,
+               sum(Percent-RegularPercent) filter ( where FirstAfterMinute=5 and FirstBeforeMinute=100 ) as EndDiff
+        from WithDiffs
+        group by PlayerAId
+    ),
+    WithSectionsDiff as (
+        select avg(StartDiff) as AverageStartDiff,
+               avg(MiddleDiff) as AverageMiddleDiff,
+               avg(EndDiff) as AverageEndDiff
+        from GroupedSections
+        where RegularShotsNumber>=100
+    )
+select *
+from GroupedSections
+where RegularShotsNumber>=100 and StartDiff <= -0.02 and EndDiff <= -0.02 and MiddleDiff>=0.04
+order by RegularShotsNumber desc

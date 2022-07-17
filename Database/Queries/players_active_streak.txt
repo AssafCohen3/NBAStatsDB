@@ -1,14 +1,17 @@
-with ISLANDS as
-    (select PLAYER_ID, PLAYER_NAME, SEASON, GAME_DATE, GAME_ID, TEAM_ID, TEAM_NAME,
-            row_number() over w1 - row_number() over w2 as diff1,
-            row_number() over w2 - dense_rank() over w3 as diff2
-    from BoxScoreP
-    where SEASON_TYPE = 2
-    WINDOW w1 AS (partition by PLAYER_ID order by GAME_DATE),
-        w2 as (PARTITION BY PLAYER_ID, TEAM_ID ORDER BY GAME_DATE),
-        w3 as (PARTITION BY TEAM_ID order by GAME_DATE))
-select PLAYER_ID, PLAYER_NAME, min(GAME_DATE) as START_DATE, max(GAME_DATE) as END_DATE,
-       min(SEASON) as FIRST_SEASON, max(SEASON) as LAST_SEASON, count(distinct GAME_ID) as GAMES_COUNT,
-       group_concat(distinct TEAM_NAME) as TEAM_NAMES, TEAM_ID
-from ISLANDS
-group by diff1, diff2, PLAYER_ID
+with
+    Islands as (
+        select PlayerId, PlayerName, Season, GameDate, GameId, TeamId, TeamName,
+                row_number() over w1 - row_number() over w2 as diff1,
+                row_number() over w2 - dense_rank() over w3 as diff2
+        from BoxScoreP
+        where SeasonType = 2
+        WINDOW w1 AS (partition by PlayerId order by GameDate),
+            w2 as (PARTITION BY PlayerId, TeamId ORDER BY GameDate),
+            w3 as (PARTITION BY TeamId order by GameDate)
+    )
+select PlayerId, PlayerName, min(GameDate) as StartDate, max(GameDate) as EndDate,
+       min(Season) as FirstSeason, max(Season) as LastSeason, count(distinct GameId) as GamesCount,
+       group_concat(distinct TeamName) as TeamNames, TeamId
+from Islands
+group by diff1, diff2, PlayerId
+order by GamesCount desc

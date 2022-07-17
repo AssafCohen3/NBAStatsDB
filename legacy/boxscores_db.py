@@ -1,5 +1,4 @@
 import csv
-import json
 import re
 import sqlite3
 import os
@@ -16,23 +15,23 @@ import pbp.Patcher
 from requests import HTTPError
 
 import EventMaker
-from Handlers import OddsCacheHandler
+from Handlers import OddsHandler
 from Handlers.BREFPlayers import BREFPlayerHandler
 from Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
 from Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
 from Handlers.BREFStartersHandler import BREFStartersHandler
 from Handlers.BREFTransactionsHandler import BREFTransactionsHandler
 from Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
-from Handlers.OddsCacheHandler import OddsCacheHandler
-from Handlers.PBPCacheHandler import PBPCacheHandler
+from Handlers.OddsHandler import OddsHandler
+from Handlers.PBPHandler import PBPHandler
 from Handlers.PlayerAwardsHandler import PlayerAwardsHandler
 from Handlers.PlayerProfileHandler import PlayerProfileHandler
 from Handlers.TeamDetailsHandler import TeamDetailsHandler
-from PlayersCover import get_teams_cover
+from legacy.PlayersCover import get_teams_cover
 from Handlers.PlayersHandler import PlayersHandler
 from Handlers.TeamRosterHandler import TeamRosterHandler
 from constants import *
-from Handlers.BoxScoreCacheHandler import BoxScoreCacheHandler
+from Handlers.BoxScoreHandler import BoxScoreHandler
 
 
 class DatabaseHandler:
@@ -671,7 +670,7 @@ class DatabaseHandler:
         date_from = start_date
         continue_loop = True
         while continue_loop:
-            data = self.handle_cache(BoxScoreCacheHandler(date_from, season_type_index, box_score_type))
+            data = self.handle_cache(BoxScoreHandler(date_from, season_type_index, box_score_type))
             if not data:
                 break
             data = data["resultSets"][0]
@@ -697,7 +696,7 @@ class DatabaseHandler:
 
     # download and saves all events of a game
     def collect_all_game_events(self, game_id, teamaid, teamaname, teambid, teambname):
-        handler = PBPCacheHandler(game_id)
+        handler = PBPHandler(game_id)
         data = self.handle_cache(handler)
         if not data:
             return
@@ -824,7 +823,7 @@ class DatabaseHandler:
 
     # download and saves odds for a season
     def collect_season_odds(self, season):
-        df = self.handle_cache(OddsCacheHandler(season))
+        df = self.handle_cache(OddsHandler(season))
         if df is None:
             return
         to_ret = None
@@ -966,28 +965,25 @@ class DatabaseHandler:
             self.collect_season_odds(i)
 
     def load_players_ids_mapping(self):
-        sql = """select * from PlayerMapping limit 1"""
-        res = self.conn.execute(sql).fetchall()
-        if not res:
-            with open('players_ids/players.csv', encoding='ISO-8859-1') as f:
-                csvreader = csv.reader(f,)
-                headers = next(csvreader)
-                bref_id_idx = headers.index('BBRefID')
-                bref_name_idx = headers.index('BBRefName')
-                bref_birthdate_idx = headers.index('BBRefBirthDate')
-                nba_id_idx = headers.index('NBAID')
-                nba_name_idx = headers.index('NBAName')
-                nba_birthdate_idx = headers.index('NBABirthDate')
-                to_insert = []
-                for p in csvreader:
-                    if p[bref_id_idx] != 'NA' and p[nba_id_idx] != 'NA':
-                        to_insert.append([int(p[nba_id_idx]),
-                                          p[nba_name_idx] if p[nba_name_idx] != 'NA' else None,
-                                          p[nba_birthdate_idx] if p[nba_birthdate_idx] != 'NA' else None,
-                                          p[bref_id_idx],
-                                          p[bref_name_idx] if p[bref_name_idx] != 'NA' else None,
-                                          p[bref_birthdate_idx] if p[bref_birthdate_idx] != 'NA' else None])
-                self.insert_players_mapping(to_insert)
+        with open('../players_ids/players.csv', encoding='ISO-8859-1') as f:
+            csvreader = csv.reader(f,)
+            headers = next(csvreader)
+            bref_id_idx = headers.index('BBRefID')
+            bref_name_idx = headers.index('BBRefName')
+            bref_birthdate_idx = headers.index('BBRefBirthDate')
+            nba_id_idx = headers.index('NBAID')
+            nba_name_idx = headers.index('NBAName')
+            nba_birthdate_idx = headers.index('NBABirthDate')
+            to_insert = []
+            for p in csvreader:
+                if p[bref_id_idx] != 'NA' and p[nba_id_idx] != 'NA':
+                    to_insert.append([int(p[nba_id_idx]),
+                                      p[nba_name_idx] if p[nba_name_idx] != 'NA' else None,
+                                      p[nba_birthdate_idx] if p[nba_birthdate_idx] != 'NA' else None,
+                                      p[bref_id_idx],
+                                      p[bref_name_idx] if p[bref_name_idx] != 'NA' else None,
+                                      p[bref_birthdate_idx] if p[bref_birthdate_idx] != 'NA' else None])
+            self.insert_players_mapping(to_insert)
 
     def load_views(self, views_file):
         with open(views_file, 'r') as f:
@@ -1019,6 +1015,8 @@ class DatabaseHandler:
         print('setting players mapping table...')
         self.create_players_ids_mapping()
         self.load_players_ids_mapping()
+        print('setting bref players tables...')
+        self.create_bref_players_table()
 
     def update_odds_database(self):
         print('setting odds table...')
@@ -1049,11 +1047,6 @@ class DatabaseHandler:
         elif option == 'playin':
             self.update_missing_events(SEASON_TYPES[3])
 
-    def update_bref_players_database(self):
-        print('setting bref players tables...')
-        self.create_bref_players_table()
-        self.collect_bref_players()
-
     def update_bref_transactions_database(self, season):
         print('setting bref transactions tables...')
         self.create_bref_transactions_table()
@@ -1074,7 +1067,6 @@ def main():
     parser.add_argument('-b', '--birthdates', help='Update Players birthdates', default=False, action='store_true')
     parser.add_argument('-hof', '--hof', help='Update Hall of fame inductees and retired jersys players', default=False, action='store_true')
     parser.add_argument('-aw', '--awards', help='Update Players awards', default=False, action='store_true')
-    parser.add_argument('-brefp', '--bref_players', help='Update BREF Players data', default=False, action='store_true')
     parser.add_argument('-starters', '--starters', help='Update Starters data from BREF', default=False, action='store_true')
     parser.add_argument('-t', '--transactions', help='Update BREF Transactions table', nargs='?', default=None, action='store', const='all')
     parser.add_argument('-lv', '--views_in', type=str, help='Load views from file(override other options)')
@@ -1097,8 +1089,6 @@ def main():
             handler.update_hof_database()
         if args.awards:
             handler.update_awards_database()
-        if args.bref_players:
-            handler.update_bref_players_database()
         if args.starters:
             handler.collect_bref_starters()
         if args.transactions:

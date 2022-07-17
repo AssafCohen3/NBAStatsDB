@@ -1,9 +1,11 @@
 import json
-import requests
+
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from constants import *
 
 
-class PBPCacheHandler:
+class PBPHandler(HandlerAbs):
     def __init__(self, game_id):
         self.game_id = game_id
 
@@ -15,7 +17,8 @@ class PBPCacheHandler:
 
     def downloader(self):
         to_send = PBP_ENDPOINT % self.game_id
-        return requests.get(to_send, headers=STATS_HEADERS).json()
+        resp = requests.get(to_send, headers=STATS_HEADERS)
+        return json.loads(resp.content)
 
     def to_cache(self, data):
         return True

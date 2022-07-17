@@ -1,13 +1,13 @@
 with
-     PLAYERS_SECOND_CHANCE_OF_SELF as (
+     PlayersSecondChanceOfSelf as (
          select
-                SEASON,
+                E1.Season,
                 E1.GameId,
                 E1.TeamAId,
                 E1.TeamAName,
                 E1.TeamBId,
                 E1.TeamBName,
-                GAME_DATE,
+                GameDate,
                 FGM,
                 FGA,
                 E1.EventType,
@@ -16,7 +16,7 @@ with
                 E1.Description,
                 E1.RealPossesionNumber,
                 E1.PlayerAId,
-                BSP.PLAYER_NAME,
+                BSP.PlayerName,
                 max(E2.EventOrder + E3.EventOrder) as ClosestEventsSummed,
                 E2.EventOrder as ReboundEvent,
                 E3.EventOrder as MissEvent,
@@ -32,34 +32,34 @@ with
              inner join Event E3
                 on E3.GameId = E1.GameId and E3.RealPossesionNumber = E2.RealPossesionNumber
                 and (E3.EventType = 2 or (E3.EventType = 3 and E3.Description like '%MISS%' and E3.EventActionType in (10, 12, 15))) and E3.EventOrder < E2.EventOrder
-             inner join BoxScoreP BSP on BSP.GAME_ID = E1.GameId and E1.PlayerAId = BSP.PLAYER_ID
-         where E1.EventType = 1 and BSP.SEASON_TYPE=2
---          and E1.PlayerAId=203999
+             inner join BoxScoreP BSP on BSP.GameId = E1.GameId and E1.PlayerAId = BSP.PlayerId
+         where E1.EventType = 1 and BSP.SeasonType=2
+         and E1.PlayerAId=203999
          group by E1.GameId, E1.EventOrder
      )
--- select GameId, P.GAME_DATE, P.TeamAName, P.TeamBName, FGA, FGM, PlayerAId, PLAYER_NAME,
+-- select GameId, P.GameDate, P.TeamAName, P.TeamBName, FGA, FGM, PlayerAId, PlayerName,
 --        count(*) as SecondChanceFromSelf, count(*) * 1.0 / FGM as SecondChanceFromSelfRatio
 -- --        ReboundEvent, RebounderId, ReboundDesc, MissEvent, MissingPlayerId, MissingDesc
--- from PLAYERS_SECOND_CHANCE_OF_SELF P
+-- from PlayersSecondChanceOfSelf P
 -- where RebounderId = PlayerAId and MissingPlayerId = PlayerAId and MissingType=2 and FGM >= 5
 -- --     inner join BoxScoreP on GAME_ID = GameId and PLAYER_ID = 203999
 -- -- where PlayerAId=203999 and FGM >= 5
 -- group by GameId, PlayerAId
 -- order by SecondChanceFromSelfRatio desc
--- select P.SEASON, PSFS.TOTAL_FGA, PSFS.TOTAL_FGM, PlayerAId, PSFS.PLAYER_NAME,
---        count(*) as SecondChanceFromSelf, count(*) * 1.0 / TOTAL_FGM as SecondChanceFromSelfRatio
+-- select P.Season, PSFS.TotalFGA, PSFS.TotalFGM, PlayerAId, PSFS.PlayerName,
+--        count(*) as SecondChanceFromSelf, count(*) * 1.0 / TotalFGM as SecondChanceFromSelfRatio
 -- --        ReboundEvent, RebounderId, ReboundDesc, MissEvent, MissingPlayerId, MissingDesc
--- from PLAYERS_SECOND_CHANCE_OF_SELF P
---     inner join PlayerSeasonFullStats PSFS on P.SEASON=PSFS.SEASON and P.PlayerAId = PSFS.PLAYER_ID
+-- from PlayersSecondChanceOfSelf P
+--     inner join PlayerSeasonFullStats PSFS on P.Season=PSFS.Season and P.PlayerAId = PSFS.PlayerId
 -- where RebounderId = PlayerAId and MissingPlayerId = PlayerAId and MissingType=2
 -- --     inner join BoxScoreP on GAME_ID = GameId and PLAYER_ID = 203999
 -- -- where PlayerAId=203999 and FGM >= 5
--- group by P.SEASON, PlayerAId
+-- group by P.Season, PlayerAId
 -- union all
-select PLAYER_ID, PSFS.PLAYER_NAME, PSFS.TOTAL_FGA, PSFS.TOTAL_FGM,
-       count(*) as SecondChanceFromSelf, count(*) * 1.0 / TOTAL_FGM as SecondChanceFromSelfRatio
-from PLAYERS_SECOND_CHANCE_OF_SELF P
-    inner join PlayerCareerSeasonFullStats PSFS on P.PlayerAId = PSFS.PLAYER_ID
+select PlayerId, PSFS.PlayerName, PSFS.TotalFGA, PSFS.TotalFGM,
+       count(*) as SecondChanceFromSelf, count(*) * 1.0 / TotalFGM as SecondChanceFromSelfRatio
+from PlayersSecondChanceOfSelf P
+    inner join PlayerCareerPBPSeasonFullStats PSFS on P.PlayerAId = PSFS.PlayerId
 where RebounderId = PlayerAId and MissingPlayerId = PlayerAId and MissingType=2
 --     inner join BoxScoreP on GAME_ID = GameId and PLAYER_ID = 203999
 -- where PlayerAId=203999 and FGM >= 5

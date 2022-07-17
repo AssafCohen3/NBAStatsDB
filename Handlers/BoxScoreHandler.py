@@ -1,8 +1,11 @@
 import json
-import requests
+
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from constants import *
 
-class BoxScoreCacheHandler:
+
+class BoxScoreHandler(HandlerAbs):
     def __init__(self, date_from, season_type_index, box_score_type):
         self.date_from = date_from
         self.season_type_index = season_type_index
@@ -18,7 +21,9 @@ class BoxScoreCacheHandler:
 
     def downloader(self):
         to_send = BOXSCORES_ENDPOINT % (self.date_from, self.box_score_type, SEASON_TYPES[self.season_type_index]['name'])
-        return requests.get(to_send, headers=STATS_HEADERS).json()
+        r = requests.get(to_send, headers=STATS_HEADERS)
+        to_ret = json.loads(r.content)
+        return to_ret
 
     def to_cache(self, data):
         data = data["resultSets"][0]

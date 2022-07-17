@@ -1,35 +1,37 @@
-with GROUPED_SHOTS as (
-    select PlayerAId, PLAYER_NAME, SecondsLeft.Seconds,
-           sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
-           sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
-           sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
-           sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS,
-           count(distinct GameId) filter ( where ShotValue > 1 ) as FgsGamesCount
-    from RegularSeasonShots,
-         (select 300 as Seconds union all
-         select 240 union all
-         select 180 union all
-         select 120 union all
-         select 60 union all
-         select 50 union all
-         select 40 union all
-         select 30 union all
-         select 20 union all
-         select 10) SecondsLeft
-    where RemainingSeconds <= SecondsLeft.Seconds and Period >= 4 and abs(ScoreMargin) <= 5 and SEASON=2021
-    group by PlayerAId, SecondsLeft.Seconds
-),
-     WITH_PERCENTS as (
-select playeraid, player_name, Seconds, FgsGamesCount,
-       PTS,
-       FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FT_PCT,
-       FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FG_PCT,
-       FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3_PCT,
-       iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
-       round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
-from GROUPED_SHOTS
-where FGA >= 20
-)
-select * from WITH_PERCENTS
+with
+    GroupedShots as (
+        select PlayerAId, PlayerName, SecondsLeft.Seconds,
+               sum(iif(ShotValue = 1, MadeShot, 0)) * 1.0 as FTM, sum(iif(ShotValue = 1, 1, 0)) * 1.0 as FTA,
+               sum(iif(ShotValue >= 2, MadeShot, 0)) * 1.0 as FGM, sum(iif(ShotValue >= 2, 1, 0)) * 1.0 as FGA,
+               sum(iif(ShotValue = 3, MadeShot, 0)) * 1.0 as FG3M, sum(iif(ShotValue = 3, 1, 0)) * 1.0 as FG3A,
+               sum(iif(MadeShot, ShotValue, 0)) * 1.0 as PTS,
+               count(distinct GameId) filter ( where ShotValue > 1 ) as FgsGamesCount
+        from RegularSeasonShots,
+             (select 300 as Seconds union all
+             select 240 union all
+             select 180 union all
+             select 120 union all
+             select 60 union all
+             select 50 union all
+             select 40 union all
+             select 30 union all
+             select 20 union all
+             select 10) SecondsLeft
+        where RemainingSeconds <= SecondsLeft.Seconds and Period >= 4 and abs(ScoreMargin) <= 5 and Season=2021
+        group by PlayerAId, SecondsLeft.Seconds
+    ),
+    WithPercents as (
+        select PlayerAId, PlayerName, Seconds, FgsGamesCount,
+               PTS,
+               FTM, FTA, iif(FTA > 0, round(FTM / FTA, 2), null) as FTPercent,
+               FGM, FGA, iif(FGA > 0, round(FGM / FGA, 2), null) as FGPercent,
+               FG3M, FG3A, iif(FG3A > 0, round(FG3M / FG3A, 2), null) as FG3Percent,
+               iif(FGA > 0, round((FGM + 0.5 * FG3M) / FGA, 2), 0) as EFG,
+               round(PTS / (2 * (FGA + 0.44 * FTA)), 2) as TS
+        from GroupedShots
+        where FGA >= 20
+    )
+select *
+from WithPercents
 where Seconds=300
-order by FG_PCT desc
+order by FGPercent desc

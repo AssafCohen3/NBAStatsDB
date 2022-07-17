@@ -1,14 +1,11 @@
-from pathlib import Path
-
-import requests
+from Handlers.HandlerAbs import HandlerAbs
+from MainRequestsSession import requests_session as requests
 from bs4 import BeautifulSoup
 import pandas as pd
-
-import constants
 from constants import *
 
 
-class OddsCacheHandler:
+class OddsHandler(HandlerAbs):
     def __init__(self, season):
         self.season = season
 
@@ -24,6 +21,8 @@ class OddsCacheHandler:
         r = requests.get(to_send)
         soup = BeautifulSoup(r.content, 'html.parser')
         table = soup.find('table', {'class': "soh1"})
+        if not table:
+            return None
         df = pd.read_html(str(table))[0]
         return df
 

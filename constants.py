@@ -3,15 +3,16 @@ PBP_ENDPOINT = 'https://stats.nba.com/stats/playbyplayv2?GameId=%s&StartPeriod=0
 ODDS_ENDPOINT = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
 PLAYERS_INDEX_ENDPOINT = 'https://stats.nba.com/stats/playerindex?Historical=1&LeagueID=00&Season=%s&SeasonType=Regular+Season'
 TEAM_ROSTER_ENDPOINT = 'https://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=%s&TeamID=%s'
-PLAYER_PROFILE_ENDPOINT = 'http://stats.nba.com/stats/commonplayerinfo/?playerId=%s'
+PLAYER_PROFILE_ENDPOINT = 'https://stats.nba.com/stats/commonplayerinfo/?playerId=%s'
 PLAYER_AWARDS_ENDPOINT = 'https://stats.nba.com/stats/playerawards?PlayerID=%s'
-TEAM_DETAILS_ENDPOINT = 'http://stats.nba.com/stats/teamdetails/?teamId=%s'
+TEAM_DETAILS_ENDPOINT = 'https://stats.nba.com/stats/teamdetails/?teamId=%s'
 BREF_SEASON_STATS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_per_game.html'
 BREF_PLAYERS_ENDPOINT = 'https://www.basketball-reference.com/players/%s'
 BREF_DRAFT_ENDPOINT = 'https://www.basketball-reference.com/draft/%s_%s.html'
 BREF_STARTERS_ENDPOINT = 'https://www.basketball-reference.com/teams/%s/%s_start.html'
 BREF_TRANSACTIONS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_transactions.html'
 
+STATS_DELAY_SECONDS = 0.5
 STATS_HEADERS = {
     'Host': 'stats.nba.com',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
@@ -21,7 +22,7 @@ STATS_HEADERS = {
     'x-nba-stats-origin': 'stats',
     'x-nba-stats-token': 'true',
     'Connection': 'keep-alive',
-    'Referer': 'https://stats.nba.com/',
+    'Referer': 'https://www.nba.com/',  # options www.nba/stats.nba
     'Pragma': 'no-cache',
     'Cache-Control': 'no-cache'}
 SEASON_TYPES = [
@@ -51,6 +52,7 @@ ODDS_TYPES = [
 DATABASE_PATH = 'Database/'
 CACHE_PATH = 'quick_cache/'
 DATABASE_NAME = "boxscores_full_database"
+DATABASE_NAME_NEW = "boxscores_full_database_new"
 API_COUNT_THRESHOLD = 30000
 LAST_SEASON = 2021
 FIRST_ODDS_SEASON = 1972
