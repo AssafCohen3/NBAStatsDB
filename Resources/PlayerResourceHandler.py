@@ -85,6 +85,8 @@ class PlayerResourceHandler(ResourceAbc):
         return self.session.execute(stmt).fetchall()
 
     def insert_players(self, players):
+        if not players:
+            return
         insert_stmt = insert(Player)
         stmt = insert_stmt.on_conflict_do_update(
             set_={
@@ -107,6 +109,8 @@ class PlayerResourceHandler(ResourceAbc):
         self.session.commit()
 
     def update_players_birthdate(self, players_birthdates):
+        if not players_birthdates:
+            return
         stmt = (
             update(Player).
             where(Player.PlayerId == bindparam('PlayerIdToUpdate')).

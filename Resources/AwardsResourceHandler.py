@@ -60,6 +60,8 @@ class AwardsResourceHandler(ResourceAbc):
         return self.session.execute(stmt).fetchall()
 
     def insert_awards(self, awards):
+        if not awards:
+            return
         stmt = insert(Awards).on_conflict_do_nothing()
         self.session.execute(stmt, awards)
         self.session.commit()

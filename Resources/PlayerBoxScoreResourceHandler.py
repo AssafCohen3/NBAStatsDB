@@ -66,13 +66,13 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
         return res[0][0] if res else ''
 
     def insert_boxscores(self, boxscores):
+        if not boxscores:
+            return
         stmt = insert(BoxScoreP).on_conflict_do_nothing()
         self.session.execute(stmt, boxscores)
         self.session.commit()
 
     def save_boxscores(self, boxscores_rows, headers):
-        if not boxscores_rows:
-            return
         to_save = self.transform_boxscores(boxscores_rows, headers)
         self.insert_boxscores(to_save)
 
@@ -114,6 +114,8 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
             self.collect_all_season_type_boxscores(i, start_date=last_date)
 
     def update_boxscores_starters_all(self, games_ids, games_with_starters):
+        if not games_ids or not games_with_starters:
+            return
         update_starters_stmt = (
             update(BoxScoreP).
             where(and_(

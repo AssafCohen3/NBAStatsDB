@@ -15,6 +15,8 @@ from sqlalchemy.dialects.sqlite import insert
 class BREFPlayerResourceHandler(ResourceAbc):
 
     def insert_bref_players(self, bref_players):
+        if not bref_players:
+            return
         insert_stmt = insert(BREFPlayer)
         stmt = insert_stmt.on_conflict_do_update(set_={
             c.name: c for c in insert_stmt.excluded

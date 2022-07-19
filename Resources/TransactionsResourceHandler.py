@@ -48,6 +48,8 @@ class TransactionsResourceHandler(ResourceAbc):
         super().__init__(session)
 
     def insert_transactions(self, transactions):
+        if not transactions:
+            return
         stmt = insert(Transactions)
         self.session.execute(stmt, transactions)
         self.session.commit()

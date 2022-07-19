@@ -13,6 +13,8 @@ from constants import FIRST_ODDS_SEASON, ODDS_TYPES, ODDS_TEAM_NAMES
 class OddsResourceHandler(ResourceAbc):
 
     def insert_odds(self, odds):
+        if not odds:
+            return
         stmt = insert(Odds).on_conflict_do_nothing()
         self.session.execute(stmt, odds)
         self.session.commit()

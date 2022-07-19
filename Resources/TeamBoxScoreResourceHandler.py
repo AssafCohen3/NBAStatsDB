@@ -57,13 +57,13 @@ class TeamBoxScoreResourceHandler(ResourceAbc):
         return res[0][0] if res else ''
 
     def insert_boxscores(self, boxscores):
+        if not boxscores:
+            return
         stmt = insert(BoxScoreT).on_conflict_do_nothing()
         self.session.execute(stmt, boxscores)
         self.session.commit()
 
     def save_boxscores(self, boxscores_rows, headers):
-        if not boxscores_rows:
-            return
         to_save = self.transform_boxscores(boxscores_rows, headers)
         self.insert_boxscores(to_save)
 

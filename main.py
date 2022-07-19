@@ -1,5 +1,9 @@
 import csv
+import sqlite3
 import subprocess
+from builtins import RuntimeError
+
+from tensorboard.data.provider import Run
 
 import MainRequestsSession
 from MainRequestsSession import requests_session as requests
@@ -263,7 +267,15 @@ class NbaStatsDB:
         self.session.close()
 
 
+def validate_sqlite():
+    sqlite_version = sqlite3.sqlite_version
+    sqlite_version = tuple([int(p) for p in sqlite_version.split('.')])
+    if sqlite_version < SQLITE_MIN_VERSION:
+        raise RuntimeError(f'sqlite3 version should be 3.31 or higher. your version: {sqlite_version}')
+
+
 def main():
+    validate_sqlite()
     pbp.Patcher.foo()  # just for making sure formatter wont optimize out the Patcher import
     Database.Models.foo()  # just for making sure formatter wont optimize out the tables import
     MainRequestsSession.foo()  # just for making sure formatter wont optimize out the session import

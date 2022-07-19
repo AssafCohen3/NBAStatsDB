@@ -260,3 +260,5 @@ TEAM_NBA_ID_TO_NBA_NAME = {
     1610612764: "Washington Wizards", 1610612765: "Detroit Pistons", 1610612766: "Charlotte Hornets",
     1610616833: "Team Durant", 1610616834: "Team LeBron"
 }
+
+SQLITE_MIN_VERSION = (3, 31, 0)

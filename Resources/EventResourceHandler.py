@@ -149,6 +149,8 @@ class EventResourceHandler(ResourceAbc):
         return self.session.execute(stmt).fetchall()
 
     def insert_events(self, events):
+        if not events:
+            return
         stmt = insert(Event).on_conflict_do_nothing()
         self.session.execute(stmt, events)
         self.session.commit()

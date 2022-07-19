@@ -47,22 +47,29 @@ may be incorrect or crush(important to update the parser with new transactions)
 * this require only a request per season so downloading and parsing all transactions should take arround 2 minutes
 
 # Setting up
-* requires Python >=3.6  
+* requires Python >= 3.6  
+* requires sqlite3 >= 3.31.0
 <!-- end of the list -->
 
-download the project and install required libraries
+download the project:
 ```bash
-git clone https://github.com/AssafCohen3/nba_utils.git
-cd nba_utils
-pip3 install -r requirements.txt
+git clone https://github.com/AssafCohen3/NBAStatsDB.git
 ```
+or download the library and extract it.
+<br />
 
+install requirements:
+```bash
+cd NBAStatsDB
+pip3 install -r requirements.txt
+
+```
 # How to use #
 
 ## First use ##
 create and update the database with the base resources:
 ```bash
-python3 boxscores_db.py #update only the base resoureces(boxscore tables, players index, bref players index, playoff series)
+python3 main.py #update only the base resoureces(boxscore tables, players index, bref players index, playoff series)
 ```
 
 ## Download resource ##
@@ -70,7 +77,7 @@ run the main script with arguments specifying which resources to download in add
 <br />
 for example:
 ```bash
-python3 boxscores_db.py -e all #update the base resources and all missing events
+python3 main.py -e all #update the base resources and all missing events
 ```
 
 ### options ###
@@ -99,11 +106,11 @@ the library will download only the necessary updates
 you can find the views i created in Database/views.txt.
 to load them execute:
 ```bash
-python3 boxscores_db.py -lv Database/views.txt
+python3 main.py -lv Database/views.txt
 ```
 you can also save views you have created with
 ```bash
-python3 boxscores_db.py -wv Database/views.txt #or any other output file
+python3 main.py -wv Database/views.txt #or any other output file
 ```
 
 # Queries

@@ -18,6 +18,8 @@ from sqlalchemy.dialects.sqlite import insert
 class PlayerMappingResourceHandler(ResourceAbc):
 
     def insert_mappings(self, mappings):
+        if not mappings:
+            return
         insert_stmt = insert(PlayerMapping)
         stmt = insert_stmt.on_conflict_do_update(
             set_={

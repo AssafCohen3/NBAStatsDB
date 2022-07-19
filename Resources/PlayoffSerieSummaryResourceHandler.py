@@ -20,6 +20,8 @@ class PlayoffSerieSummaryResourceHandler(ResourceAbc):
         return res
 
     def insert_series(self, series):
+        if not series:
+            return
         stmt = insert(PlayoffSerieSummary).on_conflict_do_nothing()
         self.session.execute(stmt, series)
         self.session.commit()
