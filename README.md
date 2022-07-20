@@ -69,7 +69,7 @@ pip3 install -r requirements.txt
 ## First use ##
 create and update the database with the base resources:
 ```bash
-python3 main.py #update only the base resoureces(boxscore tables, players index, bref players index, playoff series)
+python3 cli.py #update only the base resoureces(boxscore tables, players index, bref players index, playoff series)
 ```
 
 ## Download resource ##
@@ -77,7 +77,7 @@ run the main script with arguments specifying which resources to download in add
 <br />
 for example:
 ```bash
-python3 main.py -e all #update the base resources and all missing events
+python3 cli.py -e all #update the base resources and all missing events
 ```
 
 ### options ###
@@ -106,11 +106,11 @@ the library will download only the necessary updates
 you can find the views i created in Database/views.txt.
 to load them execute:
 ```bash
-python3 main.py -lv Database/views.txt
+python3 cli.py -lv Database/views.txt
 ```
 you can also save views you have created with
 ```bash
-python3 main.py -wv Database/views.txt #or any other output file
+python3 cli.py -wv Database/views.txt #or any other output file
 ```
 
 # Queries
