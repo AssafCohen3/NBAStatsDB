@@ -15,8 +15,8 @@
     "i18n:report": "vue-cli-service i18n:report --src \"./src/**/*.?(js|vue)\" --locales \"./src/locales/**/*.json\"",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
-    "python:build": "python -m PyInstaller --onefile --clean ./src/pyflask/api.py --distpath ./src/pyflaskdist",
-    "python:dev": "python ./src/pyflask/api.py"
+    "python:build": "python3 -m PyInstaller --onefile --clean ./api.py --distpath ./src/pyflaskdist",
+    "python:dev": "python3 ./api.py"
   },
   "main": "background.js",
   "dependencies": {

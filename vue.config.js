@@ -7,13 +7,14 @@ module.exports = {
 			nodeIntegration: false,
 			preload: 'src/preload.js',
 			builderOptions: {
+				// TODO replace
 				appId: 'com.megasanjay.electronvueflask',
 				afterSign: './scripts/notarize.js',
 				asar: true,
 				generateUpdatesFilesForAllChannels: true,
 				files: [
 					'**/*',
-					'!pyflask/',
+					'!dbmanager/',
 					'!build/',
 					'!api.spec'
 				],
@@ -58,6 +59,7 @@ module.exports = {
 					deleteAppDataOnUninstall: true,
 					installerIcon: './src/assets/app-icons/windowsAppIcon.ico'
 				},
+				// TODO replace
 				publish: {
 					provider: 'github',
 					repository: 'https://github.com/megasanjay/electron-vue3-flask.git'

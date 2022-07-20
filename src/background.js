@@ -1,7 +1,6 @@
 'use strict';
 
 import { app, protocol, BrowserWindow, ipcMain } from 'electron';
-// import { enable as enableWebContents } from "@electron/remote/main";
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import { autoUpdater } from 'electron-updater';
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
@@ -22,7 +21,6 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 // const PY_DIST_FOLDER = "pyflaskdist";
-const PY_FOLDER = 'pyflask';
 const PY_MODULE = 'api';
 
 let win;
@@ -44,7 +42,7 @@ const guessPackaged = () => {
 // check if the python dist folder exists
 const getScriptPath = () => {
 	if (!guessPackaged()) {
-		return path.join(__dirname, '../src', PY_FOLDER, PY_MODULE + '.py');
+		return path.join(__dirname, '../', PY_MODULE + '.py');
 	}
 
 	if (process.platform === 'win32') {
@@ -61,11 +59,11 @@ const createPyProc = () => {
 
 	console.log(`Starting python process at ${script}`);
 	if (guessPackaged()) {
-		pyProc = require('child_process').execFile(script, [pyPort], {
+		pyProc = require('child_process').execFile(script, [pyPort, isDevelopment], {
 			stdio: 'ignore',
 		});
 	} else {
-		pyProc = require('child_process').spawn('python3', [script, pyPort], {
+		pyProc = require('child_process').spawn('python3', [script, pyPort, isDevelopment], {
 			stdio: 'ignore',
 		});
 	}
