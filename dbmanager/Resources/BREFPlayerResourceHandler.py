@@ -43,23 +43,8 @@ class BREFPlayerResourceHandler(ResourceAbc):
         self.insert_bref_players(data)
 
     def collect_bref_players(self):
-        headers = [
-            'PlayerId',
-            'PlayerName',
-            'FromYear',
-            'ToYear',
-            'Position',
-            'Height',
-            'Weight',
-            'Birthdate',
-            'Active',
-            'HOF'
-        ]
         for letter in string.ascii_lowercase:
-            handler = BREFPlayerHandler(letter)
-            data = handler.downloader()
-            data = [dict(zip(headers, p)) for p in data]
-            self.insert_bref_players(data)
+            self.collect_bref_players_by_letter(letter)
 
     def complete_missing_players_data(self):
         missing_players_cte = (

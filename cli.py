@@ -13,8 +13,11 @@ from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Resources.AwardsResourceHandler import AwardsResourceHandler
 from dbmanager.Resources.BREFPlayerResourceHandler import BREFPlayerResourceHandler
 from dbmanager.Resources.EventResourceHandler import EventResourceHandler
+from dbmanager.Resources.HonoursResourceHandler import HonoursResourceHandler
 from dbmanager.Resources.OddsResourceHandler import OddsResourceHandler
+from dbmanager.Resources.PlayerBirthdateResourceHandler import PlayerBirthdateResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
+from dbmanager.Resources.PlayerBoxScoreStartersResourceHandler import PlayerBoxScoreStartersResourceHandler
 from dbmanager.Resources.PlayerMappingResourceHandler import PlayerMappingResourceHandler
 from dbmanager.Resources.PlayerResourceHandler import PlayerResourceHandler
 from dbmanager.Resources.PlayoffSerieSummaryResourceHandler import PlayoffSerieSummaryResourceHandler
@@ -42,12 +45,15 @@ class NbaStatsDB:
         self.engine = create_engine('sqlite:///' + 'dbmanager/' + DATABASE_PATH + DATABASE_NAME_NEW + '.sqlite')
         self.session = Session(self.engine)
         self.players_boxscores_handler = None
+        self.players_boxscores_starters_handler = None
         self.teams_boxscores_handler = None
         self.event_handler = None
         self.odds_handler = None
         self.playoff_series_summary_handler = None
         self.players_handler = None
+        self.players_birthdate_handler = None
         self.awards_handler = None
+        self.honours_handler = None
         self.mappings_handler = None
         self.bref_players_handler = None
         self.transactions_handler = None
@@ -56,6 +62,11 @@ class NbaStatsDB:
         if not self.players_boxscores_handler:
             self.players_boxscores_handler = PlayerBoxScoreResourceHandler(self.session)
         return self.players_boxscores_handler
+
+    def get_players_boxscores_starters_handler(self):
+        if not self.players_boxscores_starters_handler:
+            self.players_boxscores_starters_handler = PlayerBoxScoreStartersResourceHandler(self.session, self.map_players())
+        return self.players_boxscores_starters_handler
 
     def get_teams_boxscores_handler(self):
         if not self.teams_boxscores_handler:
@@ -82,10 +93,20 @@ class NbaStatsDB:
             self.players_handler = PlayerResourceHandler(self.session)
         return self.players_handler
 
+    def get_players_birthdate_handler(self):
+        if not self.players_birthdate_handler:
+            self.players_birthdate_handler = PlayerBirthdateResourceHandler(self.session)
+        return self.players_birthdate_handler
+
     def get_awards_handler(self):
         if not self.awards_handler:
             self.awards_handler = AwardsResourceHandler(self.session, self.collect_teams())
         return self.awards_handler
+
+    def get_honours_handler(self):
+        if not self.honours_handler:
+            self.honours_handler = HonoursResourceHandler(self.session)
+        return self.honours_handler
 
     def get_mappings_handler(self):
         if not self.mappings_handler:
@@ -237,15 +258,15 @@ class NbaStatsDB:
             if args.odds:
                 self.get_odds_handler().update_odds()
             if args.birthdates:
-                self.get_players_handler().update_players_birthdates()
+                self.get_players_birthdate_handler().update_players_birthdates()
             if args.hof:
-                self.get_awards_handler().collect_hofs_and_retires()
+                self.get_honours_handler().collect_hofs_and_retires()
             if args.awards:
                 self.run_awards(args.awards)
             if args.transactions:
                 self.run_transactions(args.transactions)
             if args.starters:
-                self.get_players_boxscores_handler().collect_bref_starters(self.map_players())
+                self.get_players_boxscores_starters_handler().collect_bref_starters()
 
     def load_views(self, views_file):
         with open(views_file, 'r') as f:

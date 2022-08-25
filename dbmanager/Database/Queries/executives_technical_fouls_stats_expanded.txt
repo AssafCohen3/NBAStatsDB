@@ -1,0 +1,156 @@
+with
+    RelevantGames as (
+        select distinct GameId
+        from Event
+        where PersonAType in (6, 7) and EventType=6 and EventActionType != 16 and Season>=2000 and SeasonType in (2, 4, 5)
+    ),
+    Hosts as (
+        select T.GameId, T.GameDate,
+               max(TeamId) filter ( where Matchup like '%vs.%' ) as HostTeamId,
+               max(TeamName) filter ( where Matchup like '%vs.%' ) as HostTeamName,
+               max(WL) filter ( where Matchup like '%vs.%' ) as IsHostWon,
+               max(TeamId) filter ( where Matchup not like '%vs.%' ) as VisitorTeamId,
+               max(TeamName) filter ( where Matchup not like '%vs.%' ) as VisitorTeamName,
+               max(WL) filter ( where Matchup not like '%vs.%' ) as IsVisitorWon
+        from BoxScoreT T
+            inner join RelevantGames R on R.GameId=T.GameId
+        group by T.GameId
+    ),
+    RelevantGamesEvents as (
+        select E.GameId, E.Season, E.SeasonType, GameDate,
+               E.TeamAId, E.TeamBId, TeamAScore, TeamBScore,
+               HostTeamId, HostTeamName, IsHostWon,
+               VisitorTeamId, VisitorTeamName, IsVisitorWon,
+               EventType, EventActionType, Description, EventOrder,
+               Period, RemainingSeconds,
+               min(4, Period-1) * 12 * 60 + max(Period - 5, 0) * 5 * 60 +
+                iif(Period > 4, 5, 12) * 60 - RemainingSeconds as SecondsFromStart,
+               PersonAType, PlayerAId, PlayerATeamId,
+               PersonBType, PlayerBId, PlayerBTeamId,
+               PersonCType, PlayerCId, PlayerCTeamId
+        from Event E
+            inner join Hosts T on T.GameId=E.GameId
+    ),
+    WithStats as (
+        select *,
+               count(*) filter ( where PlayerATeamId=TeamAId and EventType=1 and PersonAType=PersonBType) over W1 as TeamAAST,
+               count(*) filter ( where PlayerATeamId=TeamAId and EventType=4 and PersonAType in (4,5) ) over W1 as TeamAREB,
+               count(*) filter ( where PlayerCTeamId=TeamAId and EventType=2 and PersonAType != PersonCType ) over W1 as TeamABLK,
+               count(*) filter ( where PlayerBTeamId=TeamAId and EventType=5 and PersonAType != PersonBType ) over W1 as TeamASTL,
+               count(*) filter ( where EventType=6 and
+                                       EventActionType not in (11, 12, 13, 16, 17, 18, 19, 25, 30) and
+                                       (PlayerATeamId=TeamAId or (EventActionType=10 and PlayerBTeamId=TeamAId))) over W1 as TeamAPF,
+               count(*) filter ( where PlayerATeamId=TeamBId and EventType=1 and PersonAType=PersonBType) over W1 as TeamBAST,
+               count(*) filter ( where PlayerATeamId=TeamBId and EventType=4 and PersonAType in (4,5) ) over W1 as TeamBREB,
+               count(*) filter ( where PlayerCTeamId=TeamBId and EventType=2 and PersonAType != PersonCType ) over W1 as TeamBBLK,
+               count(*) filter ( where PlayerBTeamId=TeamBId and EventType=5 and PersonAType != PersonBType ) over W1 as TeamBSTL,
+               count(*) filter ( where EventType=6 and
+                                       EventActionType not in (11, 12, 13, 16, 17, 18, 19, 25, 30) and
+                                       (PlayerATeamId=TeamBId or (EventActionType=10 and PlayerBTeamId=TeamBId))) over W1 as TeamBPF
+        from RelevantGamesEvents
+        window W1 as (partition by GameId order by EventOrder rows between unbounded preceding and current row)
+    ),
+    TechnicalEvents as (
+        select *,
+               PlayerATeamId as ExecutiveId,
+               substring(Description, 1, instr(Description, ' Foul:')) as ExecutiveName,
+               iif(PersonAType=6, HostTeamId, VisitorTeamId) as TeamId,
+               iif(PersonAType=6, HostTeamName, VisitorTeamName) as TeamName,
+               iif(PersonAType=6, IsHostWon, IsVisitorWon) as WL
+        from WithStats
+        where PersonAType in (6, 7) and EventType=6 and EventActionType != 16
+    ),
+    TechnicalEventsWithStats as (
+        select GameId, Season, SeasonType, GameDate, EventOrder, TeamAId, TeamBId, HostTeamId, HostTeamName, VisitorTeamId, VisitorTeamName, SecondsFromStart,
+               ExecutiveId, ExecutiveName, TeamId, TeamName, WL,
+               Period, RemainingSeconds,
+               iif(TeamId=TeamAId, TeamAScore, TeamBScore) as TeamScore, iif(TeamId=TeamAId, TeamBScore, TeamAScore) as OpponentScore,
+               iif(TeamId=TeamAId, TeamAAST, TeamBAST) as TeamAST, iif(TeamId=TeamAId, TeamBAST, TeamAAST) as OpponentAST,
+               iif(TeamId=TeamAId, TeamAREB, TeamBREB) as TeamREB, iif(TeamId=TeamAId, TeamBREB, TeamAREB) as OpponentREB,
+               iif(TeamId=TeamAId, TeamABLK, TeamBBLK) as TeamBLK, iif(TeamId=TeamAId, TeamBBLK, TeamABLK) as OpponentBLK,
+               iif(TeamId=TeamAId, TeamASTL, TeamBSTL) as TeamSTL, iif(TeamId=TeamAId, TeamBSTL, TeamASTL) as OpponentSTL,
+               iif(TeamId=TeamAId, TeamAPF, TeamBPF) as TeamPF, iif(TeamId=TeamAId, TeamBPF, TeamAPF) as OpponentPF
+        from TechnicalEvents
+    ),
+    TechnicalEventsWithCloseEvents as (
+        select TE.GameId, TE.EventOrder as TechnicalEventOrder, OM.value as MinutesOffset,
+               W.EventOrder as ClosestEventOrder,
+               W.Period as ClosestEventPeriod,
+               W.RemainingSeconds as ClosestEventRemainingSeconds,
+               max(W.SecondsFromStart) as ClosestEventSecondsFromStart,
+               iif(TeamId=TE.TeamAId, W.TeamAScore, W.TeamBScore) as TeamScore, iif(TeamId=TE.TeamAId, W.TeamBScore, W.TeamAScore) as OpponentScore,
+               iif(TeamId=TE.TeamAId, W.TeamAAST, W.TeamBAST) as TeamAST, iif(TeamId=TE.TeamAId, W.TeamBAST, W.TeamAAST) as OpponentAST,
+               iif(TeamId=TE.TeamAId, W.TeamAREB, W.TeamBREB) as TeamREB, iif(TeamId=TE.TeamAId, W.TeamBREB, W.TeamAREB) as OpponentREB,
+               iif(TeamId=TE.TeamAId, W.TeamABLK, W.TeamBBLK) as TeamBLK, iif(TeamId=TE.TeamAId, W.TeamBBLK, W.TeamABLK) as OpponentBLK,
+               iif(TeamId=TE.TeamAId, W.TeamASTL, W.TeamBSTL) as TeamSTL, iif(TeamId=TE.TeamAId, W.TeamBSTL, W.TeamASTL) as OpponentSTL,
+               iif(TeamId=TE.TeamAId, W.TeamAPF, W.TeamBPF) as TeamPF, iif(TeamId=TE.TeamAId, W.TeamBPF, W.TeamAPF) as OpponentPF
+        from TechnicalEvents TE, generate_series(-5, 5, 2) OM
+            left join WithStats W on TE.GameId=W.GameId and
+                                     W.SecondsFromStart <= (TE.SecondsFromStart + OM.value * 60) and
+                                     W.SecondsFromStart >= (TE.SecondsFromStart + OM.value * 60 - 30)
+        group by TE.GameId, TE.EventOrder, OM.value
+    ),
+    JoinedEvents as (
+        select TE.GameId, Season, case SeasonType when 2 then 'Regular Season' when 4 then 'Playoffs' else 'Playin' end as SeasonType,
+               GameDate, TeamAId, TeamBId, TE.HostTeamId, TE.HostTeamName, TE.VisitorTeamId, TE.VisitorTeamName, TE.TeamId, TE.TeamName, TE.WL,
+               TE.ExecutiveId, TE.ExecutiveName, EventOrder, Period, RemainingSeconds, TE.SecondsFromStart,
+               TE.TeamScore, TE.OpponentScore,
+               TE.TeamAST, TE.OpponentAST,
+               TE.TeamREB, TE.OpponentREB,
+               TE.TeamBLK, TE.OpponentBLK,
+               TE.TeamSTL, TE.OpponentSTL,
+               TE.TeamPF, TE.OpponentPF,
+--                five minutes before
+               TEFIVEBEFORE.TeamScore as '5 Minutes before - Score', TEFIVEBEFORE.OpponentScore as '5 Minutes before - Opponent Score',
+               TEFIVEBEFORE.TeamAST as '5 Minutes before - AST', TEFIVEBEFORE.OpponentAST as '5 Minutes before - Opponent AST',
+               TEFIVEBEFORE.TeamREB as '5 Minutes before - REB', TEFIVEBEFORE.OpponentREB as '5 Minutes before - Opponent REB',
+               TEFIVEBEFORE.TeamBLK as '5 Minutes before - BLK', TEFIVEBEFORE.OpponentBLK as '5 Minutes before - Opponent BLK',
+               TEFIVEBEFORE.TeamSTL as '5 Minutes before - STL', TEFIVEBEFORE.OpponentSTL as '5 Minutes before - Opponent STL',
+               TEFIVEBEFORE.TeamPF as '5 Minutes before - PF', TEFIVEBEFORE.OpponentPF as '5 Minutes before - Opponent PF',
+--                three minutes before
+               TETHREEBEFORE.TeamScore as '3 Minutes before - Score', TETHREEBEFORE.OpponentScore as '3 Minutes before - Opponent Score',
+               TETHREEBEFORE.TeamAST as '3 Minutes before - AST', TETHREEBEFORE.OpponentAST as '3 Minutes before - Opponent AST',
+               TETHREEBEFORE.TeamREB as '3 Minutes before - REB', TETHREEBEFORE.OpponentREB as '3 Minutes before - Opponent REB',
+               TETHREEBEFORE.TeamBLK as '3 Minutes before - BLK', TETHREEBEFORE.OpponentBLK as '3 Minutes before - Opponent BLK',
+               TETHREEBEFORE.TeamSTL as '3 Minutes before - STL', TETHREEBEFORE.OpponentSTL as '3 Minutes before - Opponent STL',
+               TETHREEBEFORE.TeamPF as '3 Minutes before - PF', TETHREEBEFORE.OpponentPF as '3 Minutes before - Opponent PF',
+--                one minute before
+               TEONEBEFORE.TeamScore as '1 Minute before - Score', TEONEBEFORE.OpponentScore as '1 Minute before - Opponent Score',
+               TEONEBEFORE.TeamAST as '1 Minute before - AST', TEONEBEFORE.OpponentAST as '1 Minute before - Opponent AST',
+               TEONEBEFORE.TeamREB as '1 Minute before - REB', TEONEBEFORE.OpponentREB as '1 Minute before - Opponent REB',
+               TEONEBEFORE.TeamBLK as '1 Minute before - BLK', TEONEBEFORE.OpponentBLK as '1 Minute before - Opponent BLK',
+               TEONEBEFORE.TeamSTL as '1 Minute before - STL', TEONEBEFORE.OpponentSTL as '1 Minute before - Opponent STL',
+               TEONEBEFORE.TeamPF as '1 Minute before - PF', TEONEBEFORE.OpponentPF as '1 Minute before - Opponent PF',
+--                one minute after
+               TEONEAFTER.TeamScore as '1 Minute after - Score', TEONEAFTER.OpponentScore as '1 Minute after - Opponent Score',
+               TEONEAFTER.TeamAST as '1 Minute after - AST', TEONEAFTER.OpponentAST as '1 Minute after - Opponent AST',
+               TEONEAFTER.TeamREB as '1 Minute after - REB', TEONEAFTER.OpponentREB as '1 Minute after - Opponent REB',
+               TEONEAFTER.TeamBLK as '1 Minute after - BLK', TEONEAFTER.OpponentBLK as '1 Minute after - Opponent BLK',
+               TEONEAFTER.TeamSTL as '1 Minute after - STL', TEONEAFTER.OpponentSTL as '1 Minute after - Opponent STL',
+               TEONEAFTER.TeamPF as '1 Minute after - PF', TEONEAFTER.OpponentPF as '1 Minute after - Opponent PF',
+--                three minutes after
+               TETHREEAFTER.TeamScore as '3 Minutes after - Score', TETHREEAFTER.OpponentScore as '3 Minutes after - Opponent Score',
+               TETHREEAFTER.TeamAST as '3 Minutes after - AST', TETHREEAFTER.OpponentAST as '3 Minutes after - Opponent AST',
+               TETHREEAFTER.TeamREB as '3 Minutes after - REB', TETHREEAFTER.OpponentREB as '3 Minutes after - Opponent REB',
+               TETHREEAFTER.TeamBLK as '3 Minutes after - BLK', TETHREEAFTER.OpponentBLK as '3 Minutes after - Opponent BLK',
+               TETHREEAFTER.TeamSTL as '3 Minutes after - STL', TETHREEAFTER.OpponentSTL as '3 Minutes after - Opponent STL',
+               TETHREEAFTER.TeamPF as '3 Minutes after - PF', TETHREEAFTER.OpponentPF as '3 Minutes after - Opponent PF',
+--                five minutes after
+               TEFIVEAFTER.TeamScore as '5 Minutes after - Score', TEFIVEAFTER.OpponentScore as '5 Minutes after - Opponent Score',
+               TEFIVEAFTER.TeamAST as '5 Minutes after - AST', TEFIVEAFTER.OpponentAST as '5 Minutes after - Opponent AST',
+               TEFIVEAFTER.TeamREB as '5 Minutes after - REB', TEFIVEAFTER.OpponentREB as '5 Minutes after - Opponent REB',
+               TEFIVEAFTER.TeamBLK as '5 Minutes after - BLK', TEFIVEAFTER.OpponentBLK as '5 Minutes after - Opponent BLK',
+               TEFIVEAFTER.TeamSTL as '5 Minutes after - STL', TEFIVEAFTER.OpponentSTL as '5 Minutes after - Opponent STL',
+               TEFIVEAFTER.TeamPF as '5 Minutes after - PF', TEFIVEAFTER.OpponentPF as '5 Minutes after - Opponent PF'
+        from TechnicalEventsWithStats TE
+            inner join TechnicalEventsWithCloseEvents TEFIVEBEFORE on TE.GameId=TEFIVEBEFORE.GameId and TE.EventOrder=TEFIVEBEFORE.TechnicalEventOrder and TEFIVEBEFORE.MinutesOffset=-5
+            inner join TechnicalEventsWithCloseEvents TETHREEBEFORE on TE.GameId=TETHREEBEFORE.GameId and TE.EventOrder=TETHREEBEFORE.TechnicalEventOrder and TETHREEBEFORE.MinutesOffset=-3
+            inner join TechnicalEventsWithCloseEvents TEONEBEFORE on TE.GameId=TEONEBEFORE.GameId and TE.EventOrder=TEONEBEFORE.TechnicalEventOrder and TEONEBEFORE.MinutesOffset=-1
+            inner join TechnicalEventsWithCloseEvents TEONEAFTER on TE.GameId=TEONEAFTER.GameId and TE.EventOrder=TEONEAFTER.TechnicalEventOrder and TEONEAFTER.MinutesOffset=1
+            inner join TechnicalEventsWithCloseEvents TETHREEAFTER on TE.GameId=TETHREEAFTER.GameId and TE.EventOrder=TETHREEAFTER.TechnicalEventOrder and TETHREEAFTER.MinutesOffset=3
+            inner join TechnicalEventsWithCloseEvents TEFIVEAFTER on TE.GameId=TEFIVEAFTER.GameId and TE.EventOrder=TEFIVEAFTER.TechnicalEventOrder and TEFIVEAFTER.MinutesOffset=5
+        group by TE.GameId, TE.EventOrder
+    )
+select *
+from JoinedEvents
+order by GameDate, EventOrder

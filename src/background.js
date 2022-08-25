@@ -64,10 +64,18 @@ const createPyProc = () => {
 		});
 	} else {
 		pyProc = require('child_process').spawn('python3', [script, pyPort, isDevelopment], {
-			stdio: 'ignore',
 		});
+		if(pyProc){
+			pyProc.stdout.setEncoding('utf8');
+			pyProc.stdout.on('data', function(data) {
+				console.log('server: ' + data);
+			});		
+			pyProc.stderr.setEncoding('utf8');
+			pyProc.stderr.on('data', function(data) {
+				console.log('server stderr: ' + data);
+			});
+		}
 	}
-
 	if (pyProc != null) {
 		console.log('child process success on port ' + pyPort);
 	} else {

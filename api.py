@@ -1,4 +1,5 @@
 from __future__ import print_function
+import sys
 from flask import Flask
 from flask_cors import CORS
 from flask_restx import Api, Resource, reqparse
@@ -30,7 +31,5 @@ class HelloWorld(Resource):
 		return "Server active!!"
 
 
-# 5000 is the flask default port. You can change it to something else if you want.
-# Remove `debug=True` when creating the standalone pyinstaller file
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5000, debug=True)
+	app.run(host="127.0.0.1", port=int(sys.argv[1]), debug=sys.argv[2] == 'true')

@@ -1,0 +1,22 @@
+with
+    TimeSpent as (
+        select ActivePlayer.value as PlayerId, Season, count(distinct GameId) as Games,
+               sum(SecondsSincePreviousEvent) as PeriodTime,
+               sum(min(300, RemainingSeconds + SecondsSincePreviousEvent) - RemainingSeconds) filter ( where RemainingSeconds <= 300 and abs(ScoreMargin) <= 5 ) as ClutchTime,
+               sum(SecondsSincePreviousEvent) filter ( where abs(ScoreMargin) >= 10 ) as BigDiffTime
+        from Event,
+             json_each(rtrim(TeamALineupIds, ']') || ', ' || ltrim(TeamBLineupIds, '[')) ActivePlayer
+        where Period = 4 and Season=2005 and SeasonType=2
+        group by ActivePlayer.value, Season
+    ),
+    WithPlayer as (
+        select Player.FullName, TimeSpent.*,
+               PeriodTime*1.0/Games as PeriodTimePerGame,
+               ClutchTime*1.0/Games as ClutchTimePerGame,
+               BigDiffTime*1.0/Games as BigDiffTimePerGame
+        from TimeSpent
+            inner join Player on Player.PlayerId=TimeSpent.PlayerId
+    )
+select *
+from WithPlayer
+order by ClutchTimePerGame desc

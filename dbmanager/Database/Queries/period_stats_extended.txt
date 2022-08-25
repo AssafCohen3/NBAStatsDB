@@ -1,0 +1,100 @@
+with
+    PerGame as (
+        select PlayerAId, PlayerName, Season, GameDate, GameId,
+               WL,
+               sum(ShotValue*MadeShot) as PTS,
+               sum(ShotValue*MadeShot) filter ( where RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchPTS,
+               sum(abs(ScoreMargin)) as ShotsScoreMargin,
+--                FT
+               count(*) filter ( where ShotValue=1 ) as FTA,
+               count(*) filter ( where ShotValue=1 and MadeShot=1 ) as FTM,
+               count(*) filter ( where ShotValue=1 and RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchFTA,
+               count(*) filter ( where ShotValue=1 and MadeShot=1 and RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchFTM,
+--                FG
+               count(*) filter ( where ShotValue>=2 ) as FGA,
+               count(*) filter ( where ShotValue>=2 and MadeShot=1 ) as FGM,
+               count(*) filter ( where ShotValue>=2 and RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchFGA,
+               count(*) filter ( where ShotValue>=2 and MadeShot=1 and RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchFGM,
+               sum(abs(ScoreMargin)) filter ( where ShotValue>=2 ) as FGScoreMargin,
+--                FG3
+               count(*) filter ( where ShotValue=3 ) as FG3A,
+               count(*) filter ( where ShotValue=3 and MadeShot=1 ) as FG3M,
+               count(*) filter ( where ShotValue=3 and RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchFG3A,
+               count(*) filter ( where ShotValue=3 and MadeShot=1 and RemainingSeconds<=300 and abs(ScoreMargin)<=5 ) as ClutchFG3M
+        from RegularSeasonShots
+        where Season=2005 and Period=4
+        group by GameId, PlayerAId
+    ),
+    PerSeason as (
+        select PlayerAId, PlayerName, Season,
+               count(*) filter ( where WL='W' ) as Wins,
+               count(*) filter ( where WL='L' ) as Loses,
+               sum(ShotsScoreMargin)*1.0 / sum(FGA + FTA) as AverageSeasonScoreMargin,
+               sum(FGScoreMargin)*1.0 / sum(FGA) as AverageSeasonFGScoreMargin,
+--                FT
+               sum(FTA) as SeasonFTA,
+               sum(FTM) as SeasonFTM,
+               sum(ClutchFTA) as SeasonClutchFTA,
+               sum(ClutchFTM) as SeasonClutchFTM,
+--                FG
+               sum(FGA) as SeasonFGA,
+               sum(FGM) as SeasonFGM,
+               sum(ClutchFGA) as SeasonClutchFGA,
+               sum(ClutchFGM) as SeasonClutchFGM,
+--                FG3
+               sum(FG3A) as SeasonFG3A,
+               sum(FG3M) as SeasonFG3M,
+               sum(ClutchFG3A) as SeasonClutchFG3A,
+               sum(ClutchFG3M) as SeasonClutchFG3M,
+--                all
+               sum(PTS) as SeasonPTS,
+               sum(ClutchPTS) as SeasonClutchPTS,
+               avg(PTS) as SeasonAveragePTS,
+               avg(ClutchPTS) as SeasonAverageClutchPTS,
+--                W
+               sum(PTS) filter ( where WL='W' ) as SeasonWinPTS,
+               sum(ClutchPTS) filter ( where WL='W' ) as SeasonWinClutchPTS,
+               avg(PTS) filter ( where WL='W' ) as SeasonWinAveragePTS,
+               avg(ClutchPTS) filter ( where WL='W' ) as SeasonWinAverageClutchPTS,
+--                L
+               sum(PTS) filter ( where WL='L' ) as SeasonLosePTS,
+               sum(ClutchPTS) filter ( where WL='L' ) as SeasonLoseClutchPTS,
+               avg(PTS) filter ( where WL='L' ) as SeasonLoseAveragePTS,
+               avg(ClutchPTS) filter ( where WL='L' ) as SeasonLoseAverageClutchPTS
+        from PerGame
+        group by Season, PlayerAId
+    ),
+    WithStats as (
+        select PlayerAId, PlayerName, Season,
+               Wins, Loses,
+               AverageSeasonScoreMargin, AverageSeasonFGScoreMargin,
+               SeasonClutchPTS*1.0 / SeasonPTS as ClutchPTSRate,
+--                all
+               SeasonPTS, SeasonClutchPTS, SeasonAveragePTS, SeasonAverageClutchPTS,
+--                W
+               SeasonWinPTS, SeasonWinClutchPTS, SeasonWinAveragePTS, SeasonWinAverageClutchPTS,
+--                L
+               SeasonLosePTS, SeasonLoseClutchPTS, SeasonLoseAveragePTS, SeasonLoseAverageClutchPTS,
+--                rates
+               SeasonWinPTS / SeasonPTS as WinPercentPTS,
+               SeasonLosePTS / SeasonPTS as LosePercentPTS,
+               SeasonWinClutchPTS / SeasonClutchPTS as ClutchWinPercentPTS,
+               SeasonLoseClutchPTS / SeasonClutchPTS as ClutchLosePercentPTS,
+--                FG
+               SeasonFGM*1.0/SeasonFGA as SeasonFGPercent,
+               SeasonClutchFGM*1.0/SeasonClutchFGA as SeasonClutchFGPercent,
+--                FG3
+               SeasonFG3M*1.0/SeasonFG3A as SeasonFG3Percent,
+               SeasonClutchFG3M*1.0/SeasonClutchFG3A as SeasonClutchFG3Percent,
+--                EFG
+               (SeasonFGM*1.0 + SeasonFG3M*0.5)/SeasonFGA as SeasonEFGPercent,
+               (SeasonClutchFGM*1.0 + SeasonClutchFG3M*0.5)/SeasonClutchFGA as SeasonClutchEFGPercent,
+--                TS
+               SeasonPTS*1.0 / (2 * (SeasonFGA + 0.44 * SeasonFTA)) as SeasonTSPercent,
+               SeasonClutchPTS*1.0 / (2 * (SeasonClutchFGA + 0.44 * SeasonClutchFTA)) as SeasonClutchTSPercent
+        from PerSeason
+    )
+select *
+from WithStats
+where SeasonPTS>=200
+order by ClutchPTSRate

@@ -1,0 +1,66 @@
+with
+    ShotsAndOponentStandings as (
+        select S.Season, PlayerAId, PlayerName,
+               TS.TeamId as OpponentId, TS.TeamNames as OpponentName, TS.Standing as OpponentStanding,
+               TS.WinPercent as OpponentWinPercent,
+               sum(MadeShot*ShotValue) as PTS,
+               sum(MadeShot*ShotValue) filter ( where RemainingSeconds <= 300 and abs(ScoreMargin) <= 5 ) as ClutchPTS
+        from RegularSeasonShots S
+            inner join TeamSeason TS on S.Season = TS.Season and TS.TeamId = S.OpponentId
+        where Period=4
+        group by GameId, PlayerAId
+    ),
+    PTSAgainstWinPercent as (
+        select S.*,
+               StandingBucket.value*1.0/10 as PercentBucket
+        from ShotsAndOponentStandings S, generate_series(2, 10, 1) as StandingBucket
+        where StandingBucket.value*1.0/10 >= S.OpponentWinPercent and (StandingBucket.value-1)*1.0/10 < S.OpponentWinPercent
+    ),
+    Grouped as (
+        select G.Season, G.PlayerAId, G.PlayerName,
+               sum(G.PTS) as BucketPTS,
+               avg(G.PTS) as BucketAveragePTS,
+               sum(G.ClutchPTS) as BucketClutchPTS,
+               avg(G.ClutchPTS) as BucketAverageClutchPTS,
+               G.PercentBucket
+        from PTSAgainstWinPercent G
+        group by G.Season, G.PlayerAId, G.PercentBucket
+    ),
+    Ranked as (
+        select *,
+               BucketPTS*1.0/(sum(BucketPTS) over W1)as BucketPTSPercent,
+               BucketClutchPTS*1.0/(sum(BucketClutchPTS) over W1)as BucketClutchPTSPercent,
+               rank() over (W1 order by BucketPTS desc) as BucketRank,
+               rank() over (W1 order by BucketClutchPTS desc) as BucketClutchRank,
+               sum(BucketPTS) over W1 as SeasonPTS,
+               sum(BucketClutchPTS) over W1 as SeasonClutchPTS
+        from Grouped
+        window W1 as (partition by Season, PlayerAId)
+    ),
+    WithBestBucket as (
+        select *
+        from Ranked
+        where BucketRank=1
+    ),
+    CommonBucket as (
+        select Season, PercentBucket,
+               count(*) as PlayersInBucket
+        from WithBestBucket
+        where SeasonPTS>=100
+        group by Season, PercentBucket
+    ),
+    CommonBucketRanked as (
+        select *,
+               PlayersInBucket * 1.0 / (sum(PlayersInBucket) over W1) as PlayersPercent,
+               rank() over (W1 order by PlayersInBucket desc) as BucketRank
+        from CommonBucket
+        window W1 as (partition by Season)
+    ),
+    MostCommonBucket as (
+        select *
+        from CommonBucketRanked
+        where BucketRank=1
+    )
+select *
+from Ranked
+where Season=2005 and PlayerAId=977
