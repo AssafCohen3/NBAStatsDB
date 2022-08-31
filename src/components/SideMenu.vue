@@ -1,11 +1,11 @@
 <template>
 	<v-navigation-drawer
-		class="bg-[#340444]"
+		class="bg-[#0e0730]"
 		app
 		dark
 		permanent>
 		<img
-			class="h-[80px] w-full object-contain mt-[10px]"
+			class="h-[160px] w-full object-contain mt-[10px]"
 			src="images/logo.png">
 		<v-divider />
 		<!-- home -->
@@ -13,73 +13,67 @@
 			link
 			no-action
 			exact
-			:to="{name: 'main'}"
-			class="w-full mt-[20px]">
-			<v-list-item-icon
-				class="pe-2">
-				mdi-home
-			</v-list-item-icon>
-			<v-list-item-title>
-				{{ $t('generic.home') }}
-			</v-list-item-title>
+			:to="{name: 'home'}"
+			prepend-icon="mdi-home"
+			:title="$t('generic.home')">
 		</v-list-item>
-		<v-list-item
-			link
-			no-action
-			exact
-			class="w-full">
-			<v-list-item-icon
-				class="pe-2">
-				mdi-database-cog
-			</v-list-item-icon>
-			<v-list-item-title>
-				{{ $t('generic.resources') }}
-			</v-list-item-title>
-		</v-list-item>
+		<v-list v-model:opened="open"
+			bg-color="transparent">
+			<v-list-group
+				value="resources">
+				<template #activator="{props}">
+					<v-list-item
+						v-bind="props"
+						prepend-icon="mdi-database-cog"
+						:title="$t('generic.resources')">
+					</v-list-item>
+				</template>
+			</v-list-group>
+		</v-list>
 	</v-navigation-drawer>
 </template>
 
 <script>
 
 export default {
-	computed: {
-	}
+	data: () => ({
+		open: [],
+	}),
 };
 </script>
 
 <style scoped>
-.v-locale--is-rtl .v-navigation-drawer--start{
-	left: auto !important;
-	right: 0 !important;
-}
-.v-list-item-icon{
-	margin-inline-end: 0 !important;
-	margin-inline-start: 0 !important
-}
-.v-list-item .v-list-item-title{
-	font-weight: 700;
-	letter-spacing: 0;
-	font-size: 20px;
+
+.v-list-item--active >>> .v-list-item-title{
+	font-weight: 500;
 	z-index: 1000;
 }
-a.v-list-item--active *{
-	font-weight: bold !important;
-}
-a {
-	text-decoration: none;
+
+.v-list-item >>> .v-list-item__overlay{
+	background-color: #120d3a !important;
+	z-index: 0;
 }
 
-.v-list-item--variant-text >>> .v-list-item__overlay{
-	background-color: #712c72 !important;
+.v-list-item >>> .v-list-item-header{
+	z-index: 1;
+}
+
+.v-list-item--active >>> .v-list-item__overlay{
+	opacity: 1.0 !important;
 }
 
 .v-list-item:hover >>> .v-list-item__overlay{
-	opacity: 0.2 !important;
+	opacity: 0.8 !important;
 }
-.v-list-item--active >>> .v-list-item__overlay{
+
+
+.v-list-item:not(.v-list-item--active) >>> .v-list-item-icon, 
+.v-list-item:not(.v-list-item--active) >>> .v-list-item-title{
 	opacity: 0.35 !important;
 }
+
+
 .v-list-item{
-	color: #dad9e9 !important;
+	color: #d9e1ff !important;
 }
 </style>

@@ -6,4 +6,8 @@ import 'vuetify/styles';
 import { createVuetify } from 'vuetify';
 
 export default createVuetify({
+	// for testing hebrew
+	// locale: {
+	// 	defaultLocale: 'he'
+	// }
 });

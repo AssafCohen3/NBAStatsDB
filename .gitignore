@@ -26,7 +26,7 @@ pnpm-debug.log*
 /dist_electron
 
 #python files and folders
-dbmanager/**/__pycache__
+**/__pycache__
 build
 src/pyflaskdist
 api.spec

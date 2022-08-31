@@ -2,16 +2,16 @@
 	<v-app-bar
 		app
 		class="flex justify-items-stretch myappbar"
-		color="#340444"
-		height="100"
+		color="transparent"
+		elevation="0"
 		:style="{
 			marginInlineStart: currentMargin
 		}">
 		<v-spacer />
 		<v-btn
-			icon
-			append-icon="notifications"
-			class="mx-[4px]">
+			color="white"
+			size="x-large"
+			icon="mdi-message-text-outline">
 		</v-btn>
 	</v-app-bar>
 </template>

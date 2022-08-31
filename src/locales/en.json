@@ -3,6 +3,7 @@
 	"generic": {
 		"home": "Home",
 		"nbastatsdb": "NBAStatsDB",
-		"resources": "Resources"
+		"resources": "Resources",
+		"last_updated": "Last updated"
 	}
 }
