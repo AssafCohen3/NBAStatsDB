@@ -3,7 +3,7 @@ from alive_progress import alive_it
 from sqlalchemy import update, bindparam, and_
 from sqlalchemy.sql import select
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
-from dbmanager.Handlers.BREFStartersHandler import BREFStartersHandler
+from dbmanager.Downloaders.BREFStartersHandler import BREFStartersHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 
 

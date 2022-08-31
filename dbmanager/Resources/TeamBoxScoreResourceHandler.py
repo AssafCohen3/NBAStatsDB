@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy.sql import select
 
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
-from dbmanager.Handlers.BoxScoreHandler import BoxScoreHandler
+from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 from dbmanager.constants import SEASON_TYPES, API_COUNT_THRESHOLD, STATS_DELAY_SECONDS

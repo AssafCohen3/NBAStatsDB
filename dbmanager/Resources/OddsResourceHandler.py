@@ -2,7 +2,7 @@ from alive_progress import alive_it
 from sqlalchemy.sql import select
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Database.Models.Odds import Odds
-from dbmanager.Handlers.OddsHandler import OddsHandler
+from dbmanager.Downloaders.OddsHandler import OddsHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 import pandas as pd

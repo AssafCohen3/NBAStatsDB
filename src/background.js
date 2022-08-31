@@ -63,7 +63,8 @@ const createPyProc = () => {
 			stdio: 'ignore',
 		});
 	} else {
-		pyProc = require('child_process').spawn('python3', [script, pyPort, isDevelopment], {
+		// TODO python 3.9?
+		pyProc = require('child_process').spawn('python3.9', [script, pyPort, isDevelopment], {
 		});
 		if(pyProc){
 			pyProc.stdout.setEncoding('utf8');

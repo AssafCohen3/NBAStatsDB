@@ -1,7 +1,7 @@
 from sqlalchemy.sql import select
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Database.Models.Player import Player
-from dbmanager.Handlers.PlayersHandler import PlayersHandler
+from dbmanager.Downloaders.PlayersHandler import PlayersHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 

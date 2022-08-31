@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.sql import select
 from dbmanager.Database.Models.Awards import Awards
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
-from dbmanager.Handlers.TeamDetailsHandler import TeamDetailsHandler
+from dbmanager.Downloaders.TeamDetailsHandler import TeamDetailsHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 from dbmanager.constants import STATS_DELAY_SECONDS

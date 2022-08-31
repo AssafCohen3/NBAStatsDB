@@ -2,7 +2,7 @@ from alive_progress import alive_it
 from sqlalchemy import func, delete
 from sqlalchemy.sql import select
 from dbmanager.Database.Models.PlayoffSerieSummary import PlayoffSerieSummary
-from dbmanager.Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
+from dbmanager.Downloaders.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 

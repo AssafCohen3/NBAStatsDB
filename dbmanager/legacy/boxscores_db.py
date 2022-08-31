@@ -15,22 +15,22 @@ import pbp.Patcher
 from requests import HTTPError
 
 import EventMaker
-from dbmanager.Handlers.BREFPlayers import BREFPlayerHandler
-from dbmanager.Handlers.BREFSeasonDraftHandler import BREFSeasonDraftHandler
-from dbmanager.Handlers.BREFSeasonStatsHandler import BREFSeasonStatsHandler
-from dbmanager.Handlers.BREFStartersHandler import BREFStartersHandler
-from dbmanager.Handlers.BREFTransactionsHandler import BREFTransactionsHandler
-from dbmanager.Handlers.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
-from dbmanager.Handlers.OddsHandler import OddsHandler
-from dbmanager.Handlers.PBPHandler import PBPHandler
-from dbmanager.Handlers.PlayerAwardsHandler import PlayerAwardsHandler
-from dbmanager.Handlers.PlayerProfileHandler import PlayerProfileHandler
-from dbmanager.Handlers.TeamDetailsHandler import TeamDetailsHandler
+from dbmanager.Downloaders.BREFPlayers import BREFPlayerHandler
+from dbmanager.Downloaders.BREFSeasonDraftHandler import BREFSeasonDraftHandler
+from dbmanager.Downloaders.BREFSeasonStatsHandler import BREFSeasonStatsHandler
+from dbmanager.Downloaders.BREFStartersHandler import BREFStartersHandler
+from dbmanager.Downloaders.BREFTransactionsHandler import BREFTransactionsHandler
+from dbmanager.Downloaders.BRPlayoffsSummaryHandler import BRPlayoffsSummaryHandler
+from dbmanager.Downloaders.OddsHandler import OddsHandler
+from dbmanager.Downloaders.PBPHandler import PBPHandler
+from dbmanager.Downloaders.PlayerAwardsHandler import PlayerAwardsHandler
+from dbmanager.Downloaders.PlayerProfileHandler import PlayerProfileHandler
+from dbmanager.Downloaders.TeamDetailsHandler import TeamDetailsHandler
 from dbmanager.legacy.PlayersCover import get_teams_cover
-from dbmanager.Handlers.PlayersHandler import PlayersHandler
-from dbmanager.Handlers.TeamRosterHandler import TeamRosterHandler
+from dbmanager.Downloaders.PlayersHandler import PlayersHandler
+from dbmanager.Downloaders.TeamRosterHandler import TeamRosterHandler
 from dbmanager.constants import *
-from dbmanager.Handlers.BoxScoreHandler import BoxScoreHandler
+from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreHandler
 
 
 class DatabaseHandler:

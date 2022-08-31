@@ -1,4 +1,4 @@
-from dbmanager.Handlers.HandlerAbs import HandlerAbs
+from dbmanager.Downloaders.DownloaderAbs import HandlerAbs
 from dbmanager.MainRequestsSession import requests_session as requests
 from bs4 import BeautifulSoup
 import pandas as pd

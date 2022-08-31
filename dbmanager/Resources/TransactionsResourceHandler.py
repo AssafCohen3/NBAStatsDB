@@ -1,7 +1,7 @@
 from alive_progress import alive_it
 from sqlalchemy import delete
 from dbmanager.Database.Models.Transactions import Transactions
-from dbmanager.Handlers.BREFTransactionsHandler import BREFTransactionsHandler
+from dbmanager.Downloaders.BREFTransactionsHandler import BREFTransactionsHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 

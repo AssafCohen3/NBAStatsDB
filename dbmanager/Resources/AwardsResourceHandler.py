@@ -7,7 +7,7 @@ from dbmanager.Database.Models.Awards import Awards
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Database.Models.Player import Player
-from dbmanager.Handlers.PlayerAwardsHandler import PlayerAwardsHandler
+from dbmanager.Downloaders.PlayerAwardsHandler import PlayerAwardsHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 from dbmanager.constants import STATS_DELAY_SECONDS
@@ -33,14 +33,17 @@ class AwardsResourceHandler(ResourceAbc):
             'SubTypeB',
             'SubTypeC'
         ]
+        # TODO use franchise history
         self.teams_spans = teams_spans
         super().__init__(session)
 
     def get_players_ids_and_names(self):
+        # TODO use api
         stmt = select(Player.PlayerId, Player.FullName).distinct()
         return self.session.execute(stmt).fetchall()
 
     def get_active_players_ids_and_names(self):
+        # TODO use api
         # get players who played a game in the last two seasons
         last_season_stmt = select(BoxScoreT.Season).order_by(BoxScoreT.GameDate.desc()).limit(1)
         # TODO maybe no last season
@@ -112,6 +115,7 @@ class AwardsResourceHandler(ResourceAbc):
         self.collect_players_awards(player_ids)
 
     def collect_player_awards(self, player_id):
+        # TODO use api
         player_name = self.session.execute(select(Player.FullName).where(Player.PlayerId == player_id)).fetchall()
         if not player_name:
             print(f'could not find player with id {player_id}')

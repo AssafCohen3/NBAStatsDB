@@ -9,8 +9,8 @@ from sqlalchemy.sql import select
 
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Database.Models.Player import Player
-from dbmanager.Handlers.PlayerProfileHandler import PlayerProfileHandler
-from dbmanager.Handlers.TeamRosterHandler import TeamRosterHandler
+from dbmanager.Downloaders.PlayerProfileHandler import PlayerProfileHandler
+from dbmanager.Downloaders.TeamRosterHandler import TeamRosterHandler
 from dbmanager.MainRequestsSession import call_with_retry
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from dbmanager.constants import STATS_DELAY_SECONDS

@@ -7,7 +7,7 @@ from sqlalchemy.sql import select
 from dbmanager.Database.Models.BREFPlayer import BREFPlayer
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
-from dbmanager.Handlers.BREFPlayers import BREFPlayerHandler
+from dbmanager.Downloaders.BREFPlayers import BREFPlayerHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert
 

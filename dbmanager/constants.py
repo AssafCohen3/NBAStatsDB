@@ -1,4 +1,4 @@
-BOXSCORES_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
+BOXSCORES_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
 PBP_ENDPOINT = 'https://stats.nba.com/stats/playbyplayv2?GameId=%s&StartPeriod=0&EndPeriod=14'
 ODDS_ENDPOINT = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
 PLAYERS_INDEX_ENDPOINT = 'https://stats.nba.com/stats/playerindex?Historical=1&LeagueID=00&Season=%s&SeasonType=Regular+Season'
@@ -25,24 +25,6 @@ STATS_HEADERS = {
     'Referer': 'https://www.nba.com/',  # options www.nba/stats.nba
     'Pragma': 'no-cache',
     'Cache-Control': 'no-cache'}
-SEASON_TYPES = [
-    {
-        'name': "Regular+Season",
-        'code': 2
-    },
-    {
-        'name': "All+Star",
-        'code': 3
-    },
-    {
-        'name': "Playoffs",
-        'code': 4
-    },
-    {
-        'name': "PlayIn",
-        'code': 5
-    },
-]
 ODDS_TYPES = [
     "Round 1",
     "ConfSemis",
@@ -54,7 +36,8 @@ CACHE_PATH = 'quick_cache/'
 DATABASE_NAME = "boxscores_full_database"
 DATABASE_NAME_NEW = "boxscores_full_database_new"
 API_COUNT_THRESHOLD = 30000
-LAST_SEASON = 2021
+FIRST_NBA_SEASON = 1946
+# LAST_SEASON = 2021
 FIRST_ODDS_SEASON = 1972
 BOXSCORE_FILE_TEMPLATE = "boxscore_%s_%s_%s.json"
 PBP_FILE_TEMPLATE = "pbp_%s.json"

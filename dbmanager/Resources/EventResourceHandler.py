@@ -5,7 +5,7 @@ from sqlalchemy import and_, or_, outerjoin
 from sqlalchemy.sql import select
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Database.Models.Event import Event
-from dbmanager.Handlers.PBPHandler import PBPHandler
+from dbmanager.Downloaders.PBPHandler import PBPHandler
 from dbmanager.MainRequestsSession import call_with_retry, requests_session as requests
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert

@@ -1,35 +1,38 @@
 from __future__ import print_function
 import sys
-from flask import Flask
+from threading import Thread
+from flask import Flask, session
 from flask_cors import CORS
-from flask_restx import Api, Resource, reqparse
+import json
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
+from dbmanager.TaskManager import run_tasks_loop
+from dbmanager.blueprints.resources import resources_bp
+from dbmanager.constants import DATABASE_PATH, DATABASE_NAME_NEW
+from dbmanager.extensions import db_manager, CustomJSONEncoder
 
 API_VERSION = "1.1.0"
 
 app = Flask(__name__)
+app.config.from_file("flask.config.json", load=json.load)
+app.json_encoder = CustomJSONEncoder
 CORS(app)
-api = Api(
-	app,
-	version=API_VERSION,
-	title="Flask backend api",
-	description="The backend api system for the Electron Vue app",
-	doc="/docs",
-)
+engine = create_engine('sqlite:///dbmanager/' + DATABASE_PATH + DATABASE_NAME_NEW + '.sqlite')
+session_factory = sessionmaker(bind=engine)
+ScopedSession = scoped_session(session_factory)
+app_session = ScopedSession()
+db_manager.init(engine, app_session)
+tasks_thread = Thread(target=run_tasks_loop, daemon=True)
+tasks_thread.start()
 
 
-@api.route("/api_version", endpoint="apiVersion")
-class ApiVersion(Resource):
-	def get(self):
-		return API_VERSION
-
-
-@api.route("/echo", endpoint="echo")
-class HelloWorld(Resource):
-	@api.response(200, "Success")
-	@api.response(400, "Validation Error")
-	def get(self):
-		return "Server active!!"
-
+app.register_blueprint(resources_bp)
 
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=int(sys.argv[1]), debug=sys.argv[2] == 'true')
+	port = 5000
+	debug = True
+	if len(sys.argv) > 1:
+		port = int(sys.argv[1])
+	if len(sys.argv) > 2:
+		debug = sys.argv[2] == 'true'
+	app.run(host="127.0.0.1", port=port, debug=debug)

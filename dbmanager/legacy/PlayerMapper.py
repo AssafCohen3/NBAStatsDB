@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-from dbmanager.Handlers.BREFPlayers import BREFPlayerHandler
+from dbmanager.Downloaders.BREFPlayers import BREFPlayerHandler
 
 
 def get_player_stats_id(player_url):
