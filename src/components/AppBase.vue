@@ -59,12 +59,20 @@ export default {
 	background-attachment: fixed;
 }
 
-.v-locale--is-rtl .v-navigation-drawer--start{
+/* .v-locale--is-rtl .v-navigation-drawer--start{
 	left: auto !important;
 	right: 0 !important;
-}
+} */
 
 .app-section{
 	@apply bg-section-bg rounded-lg	
 }
+
+.local-changer-select-menu .v-list{
+	@apply !bg-section-bg
+}
+.normal-flag{
+	margin: 0 !important
+}
+
 </style>

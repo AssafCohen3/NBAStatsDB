@@ -82,6 +82,22 @@
 					</v-icon>
 					{{ $t('common.actions') }}
 				</div>
+				<v-expansion-panels
+					variant="inset">
+					<v-expansion-panel
+						v-for="actionSpec, index in currentResource.actions_specs"
+						:title="actionSpec.action_title"
+						class="action_panel !bg-section-bg !text-dimmed-white font-bold"
+						:key="index">
+						<v-expansion-panel-text>
+							<div
+								class="p-[20px]">
+								<action-form
+									:actionSpec="actionSpec" />
+							</div>
+						</v-expansion-panel-text>
+					</v-expansion-panel>
+				</v-expansion-panels>
 			</div>
 		</div>
 	</div>
@@ -89,7 +105,9 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import ActionForm from './ActionForm.vue';
 export default {
+	components: { ActionForm },
 	data(){
 		return {
 			currentResource: null,
@@ -120,6 +138,12 @@ export default {
 };
 </script>
 
-<style>
+<style
+	lang="postcss"
+	scoped>
+
+.v-expansion-panel.action_panel >>> .v-expansion-panel-title{
+	@apply text-[20px]
+}
 
 </style>

@@ -4,7 +4,9 @@
 		"last_updated": "Last updated",
 		"messages": "Messages",
 		"never": "Never",
-		"status": "Status"
+		"status": "Status",
+		"season_type": "Season type",
+		"submit": "Submit"
 	},
 	"generic": {
 		"home": "Home",
@@ -12,5 +14,12 @@
 		"nbastatsdb": "NBAStatsDB",
 		"resources": "Resources"
 	},
-	"message": "Message"
+	"message": "Message",
+	"validations": {
+		"required": "The field is required"
+	},
+	"langs": {
+		"he": "Hebrew",
+		"en": "English"
+	}
 }

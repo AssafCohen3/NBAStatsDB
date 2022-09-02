@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { createI18n } from 'vue-i18n';
 
 /**
@@ -19,8 +20,21 @@ function loadLocaleMessages() {
 	return messages;
 }
 
+
+const currentLocal = localStorage.getItem('locale') || 'en';
 export default createI18n({
-	locale: process.env.VUE_APP_I18N_LOCALE || 'en',
+	legacy: false,
+	globalInjection: true,
+	locale: currentLocal,
 	fallbackLocale: process.env.VUE_APP_I18N_FALLBACK_LOCALE || 'en',
 	messages: loadLocaleMessages()
 });
+
+
+export function setI18nLanguage(i18n, newLocale){
+	if(i18n.availableLocales.includes(newLocale)){
+		axios.defaults.headers.common['Accept-Language'] = newLocale;
+		localStorage.setItem('locale', newLocale);
+		i18n.locale = newLocale;
+	}
+}

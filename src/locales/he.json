@@ -11,6 +11,15 @@
 		"last_updated": "עודכן לאחרונה",
 		"messages": "הודעות",
 		"status": "סטאטוס",
-		"actions": "פעולות"
+		"actions": "פעולות",
+		"season_type": "סוג עונה",
+		"submit": "אישור"
+	},
+	"validations": {
+		"required": "השדה נדרש"
+	},
+	"langs": {
+		"he": "עברית",
+		"en": "אנגלית"
 	}
 }

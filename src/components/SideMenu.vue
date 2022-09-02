@@ -86,7 +86,7 @@ export default {
 	z-index: 0;
 }
 
-.v-list-item >>> .v-list-item-header{
+.v-list-item >>> .v-list-item__content {
 	z-index: 1;
 }
 

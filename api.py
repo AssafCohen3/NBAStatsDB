@@ -6,6 +6,9 @@ from flask_cors import CORS
 import json
 
 from flask_sqlalchemy import SQLAlchemy
+
+from dbmanager import FlaskLanguage
+from dbmanager.FlaskLanguage import Language
 from dbmanager.TaskManager import run_tasks_loop
 from dbmanager.blueprints.resources import resources_bp
 from dbmanager.constants import DATABASE_PATH, DATABASE_NAME_NEW
@@ -20,6 +23,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json_encoder = CustomJSONEncoder
 CORS(app)
 db = SQLAlchemy(app)
+Language(app)
 # engine = create_engine()
 # session_factory = sessionmaker(bind=engine)
 # app_session = scoped_session(session_factory)
