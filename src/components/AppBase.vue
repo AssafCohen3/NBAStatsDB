@@ -16,9 +16,25 @@
 <script>
 import AppHeader from './AppHeader.vue';
 import SideMenu from './SideMenu.vue';
+import io from 'socket.io-client';
+import axios from 'axios';
+
 export default {
 	components: { SideMenu, AppHeader },
-
+	mounted(){
+		let appUrl = axios.defaults.baseURL;
+		setTimeout(() => {
+			console.log('initiating');
+			var socket = io.connect(appUrl);
+			socket.on('connect',function(){
+				console.log('connected');
+				socket.emit('first-connect','A user has connected');
+			});
+			socket.on('refresh-data', function(data){
+				console.log('recieved ' + data);
+			});
+		}, 5000);
+	},
 };
 </script>
 

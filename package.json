@@ -32,6 +32,7 @@
     "ps-tree": "^1.2.0",
     "roboto-fontface": "*",
     "semver": "^7.3.5",
+    "socket.io-client": "^4.5.1",
     "vue": "^3.0.0",
     "vue-country-flag-next": "^2.3.2",
     "vue-i18n": "^9.1.0",

@@ -39,14 +39,14 @@
 			<!-- messages -->
 			<div
 				class="pt-[40px] select-none">
-				<div
+				<!-- <div
 					class="flex flex-row text-primary-light font-bold text-[30px] p-[20px] pb-[20px]">
 					<v-icon
 						class="pe-5">
 						mdi-help-circle-outline
 					</v-icon>
 					{{ $t('common.status') }}
-				</div>
+				</div> -->
 				<div
 					class="w-[80%] min-w-[500px] flex flex-wrap gap-[30px]">
 					<div
@@ -121,19 +121,25 @@ export default {
 	},
 	methods: {
 		...mapActions('resources', ['fetchResource']),
+		refreshPage(){
+			if(this.resourceId !== undefined){
+				this.fetchResource([this.resourceId])
+					.then(resource => {
+						this.currentResource = resource;
+					});
+			}
+		},
 	},
 	watch: {
 		resourceId: {
 			handler(newVal){
-				if(newVal !== undefined){
-					this.fetchResource([newVal])
-						.then(resource => {
-							this.currentResource = resource;
-						});	
-				} 
+				this.refreshPage();
 			},
 			immediate: true
-		}
+		},
+	},
+	onLocaleChange(){
+		this.refreshPage();
 	}
 };
 </script>

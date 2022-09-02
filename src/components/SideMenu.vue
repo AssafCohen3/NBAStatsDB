@@ -71,6 +71,9 @@ export default {
 	mounted(){
 		this.fetchResources();
 	},
+	onLocaleChange(){
+		this.fetchResources();
+	}
 };
 </script>
 

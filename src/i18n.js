@@ -31,6 +31,7 @@ export default createI18n({
 });
 
 
+// TODO remove notifier
 export function setI18nLanguage(i18n, newLocale){
 	if(i18n.availableLocales.includes(newLocale)){
 		axios.defaults.headers.common['Accept-Language'] = newLocale;
