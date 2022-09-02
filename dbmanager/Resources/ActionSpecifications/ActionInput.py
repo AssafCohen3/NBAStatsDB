@@ -22,7 +22,7 @@ class SeasonTypeSelector(ActionInput):
     def __post_init__(self):
         self.input_name = 'SeasonTypeSelector'
         self.expected_params = [
-            ActionParameter('season_type_code', 'int', True)
+            ActionParameter('season_type_code', 'str', True)
         ]
 
 

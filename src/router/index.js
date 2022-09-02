@@ -1,6 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import AppBase from '../components/AppBase';
 import HomePage from '../components/HomePage';
+import ResourcePage from '../components/ResourcePage';
 
 const routes = [
 	{
@@ -11,13 +12,18 @@ const routes = [
 				path: '/',
 				name: 'home',
 				component: HomePage
+			},
+			{
+				path: 'resources/:resourceId',
+				name: 'resource-page',
+				component: ResourcePage
 			}
 		]
 	},
 ];
 
 const router = createRouter({
-	history: createWebHistory(process.env.BASE_URL),
+	history: createWebHashHistory(process.env.BASE_URL),
 	routes
 });
 

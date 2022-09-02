@@ -28,17 +28,49 @@
 						:title="$t('generic.resources')">
 					</v-list-item>
 				</template>
+				<v-list-item
+					v-for="resource, index in resources"
+					:key="index"
+					:title="resource.resource_name"
+					exact
+					:to="{name: 'resource-page', params: {
+						resourceId: resource.resource_id
+					}}"
+					link>
+				</v-list-item>
 			</v-list-group>
 		</v-list>
 	</v-navigation-drawer>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 
 export default {
 	data: () => ({
 		open: [],
 	}),
+	computed: {
+		...mapGetters({
+			resources: 'resources/resources',
+			fetchingResources: 'resources/fetchingResources'
+		}),
+	},
+	methods: {
+		...mapActions('resources', ['fetchResources']),
+		resourceClicked(resource){
+			console.log('resource clicked', resource);
+			this.$router.push({
+				name: 'resource-page',
+				params: {
+					resourceId: resource.resourceId
+				},
+			});
+		},
+	},
+	mounted(){
+		this.fetchResources();
+	},
 };
 </script>
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Type, Dict, Any, Optional
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session
 
 from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Errors import ActionNotExistError
@@ -46,7 +46,7 @@ class ResourceAbc(ABC):
         return actions[0]
 
     @classmethod
-    def validate_request(cls, session: Session, action_id: str, params: Dict[str, str]) -> Dict[str, Any]:
+    def validate_request(cls, session: scoped_session, action_id: str, params: Dict[str, str]) -> Dict[str, Any]:
         """
         validate the params and returns the parsed params
         """
@@ -54,7 +54,7 @@ class ResourceAbc(ABC):
         return action_cls.get_action_spec().validate_request(session, params)
 
     @classmethod
-    def create_action(cls, session: Session, action_id: str, params: Dict[str, str]) -> ActionAbc:
+    def create_action(cls, session: scoped_session, action_id: str, params: Dict[str, str]) -> ActionAbc:
         parsed_params = cls.validate_request(session, action_id, params)
         return cls.get_action_cls(action_id).create_action_from_params(session, parsed_params)
 
@@ -74,7 +74,7 @@ class ResourceAbc(ABC):
 
     @classmethod
     @abc.abstractmethod
-    def get_messages(cls, session: Session) -> List[ResourceMessage]:
+    def get_messages(cls, session: scoped_session) -> List[ResourceMessage]:
         """
         Get messages describing the status of the resource
         message has title(translateable), text(translateable) and status
@@ -95,7 +95,7 @@ class ResourceAbc(ABC):
         """
 
     @classmethod
-    def get_last_updated(cls, session: Session) -> Optional[datetime.date]:
+    def get_last_updated(cls, session: scoped_session) -> Optional[datetime.date]:
         stmt = (
             select(Resource.LastUpdated).
             where(Resource.ResourceId == cls.get_id())

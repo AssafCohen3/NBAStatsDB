@@ -2,93 +2,85 @@
 	<div>
 		<!-- resources list -->
 		<div
-			class="resources_grid_wrapper flex flex-col justify-center bg-[#1d1548] rounded-lg items-center">
+			class="flex justify-center">
 			<div
-				class="text-[#d4e1ff] text-[30px] font-bold pb-[20px]">
-				{{ $t('generic.resources') }}
-			</div>
-			<div
-				class="resources_grid">
+				class="resources_grid_wrapper app-section flex flex-col justify-center items-center">
 				<div
-					v-ripple="{class: 'white--text'}"
-					class="rounded-[20px] bg-[#ffffff10]
+					class="text-primary-light text-[30px] font-bold pb-[20px]">
+					{{ $t('generic.resources') }}
+				</div>
+				<div
+					class="resources_grid">
+					<div
+						v-ripple="{class: 'white--text'}"
+						class="resource_tile rounded-[20px] bg-[#ffffff10]
 					h-[150px] min-w-[150px] 
 					flex items-center justify-center flex-col
-					text-[#a8adc9]
+					text-dimmed-white select-none
 					cursor-pointer"
-					v-for="resource, index in resources"
-					:key="index">
-					<div
-						class="text-[20px] font-bold p-[20px]">
-						{{ resource.name }}
-					</div>
-					<div
-						class="text-[16px] p-[10px]">
-						<div>
-							{{ $t('generic.last_updated') }}
+						v-for="resource, index in repeated"
+						:key="index">
+						<div
+							class="text-[20px] font-bold p-[20px]">
+							{{ resource.resource_name }}
 						</div>
-						<div>
-							{{ resource.last_updated }}
+						<div
+							class="text-[16px] p-[10px]">
+							<div>
+								{{ $t('generic.last_updated') + ':' }}
+							</div>
+							<div
+								class="text-center">
+								{{ resource.last_updated || $t('common.never') }}
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-
 		</div>
 	</div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 export default {
 	data(){
 		return {
-			resources: [
-				{
-					'name': 'PlayerBoxScore',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'TeamBoxScore',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'Player',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'Transactions',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'Event',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'Awards',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'Honours',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'BREFPlayer',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'PlayerMapping',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'PlayoffSeries',
-					'last_updated': '2022-08-30'
-				},
-				{
-					'name': 'Odds',
-					'last_updated': '2022-08-30'
-				},
-			]
+
 		};
+	},
+	computed: {
+		...mapGetters({
+			resources: 'resources/resources',
+			fetchingResources: 'resources/fetchingResources'
+		}),
+		repeated(){
+			if(this.resources && this.resources[0]){
+				return [
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+					this.resources[0],
+				];
+			}
+			return [];
+		}
+	},
+	methods: {
+		...mapActions({
+			fetchResources: 'resources/fetchResources',
+		}),
+	},
+	mounted(){
+		this.fetchResources();
 	}
 };
 </script>
@@ -112,7 +104,8 @@ export default {
 	--grid-width: calc(var(--grid-item-width) * var(--grid-column-count) + var(--total-gap-width));
 	--grid--padding: calc((100% - var(--grid-width) - 2*var(--wrapper-padding)) / 2);
 	padding: var(--wrapper-padding);
-	margin-inline: calc(max(0px, var(--grid--padding)));
+	width: calc(min(var(--grid-width) + var(--wrapper-padding)*2, 100%));
+	/* margin-inline: calc(max(0px, var(--grid--padding))); */
 }
 
 .resources_grid{

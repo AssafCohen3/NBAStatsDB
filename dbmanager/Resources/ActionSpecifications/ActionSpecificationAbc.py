@@ -2,7 +2,7 @@ import datetime
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session
 
 from dbmanager.Errors import RequiredParameterMissingError, UnknownParameterTypeError, IncorrectParameterTypeError, \
     UnexpectedParameterError
@@ -36,7 +36,7 @@ class ActionSpecificationAbc(ABC):
         """
 
     @classmethod
-    def parse_params(cls, session: Session, params: Dict[str, str]) -> Dict[str, Any]:
+    def parse_params(cls, session: scoped_session, params: Dict[str, str]) -> Dict[str, Any]:
         parsed_params = {}
         for param in cls.get_action_params(session):
             parsed_params[param.parameter_name] = None
@@ -60,31 +60,31 @@ class ActionSpecificationAbc(ABC):
         return parsed_params
 
     @classmethod
-    def validate_request(cls, session: Session, params: Dict[str, str]) -> Dict[str, Any]:
+    def validate_request(cls, session: scoped_session, params: Dict[str, str]) -> Dict[str, Any]:
         parsed_params = cls.parse_params(session, params)
         cls.validate_request_abs(session, parsed_params)
         return parsed_params
 
     @classmethod
     @abstractmethod
-    def validate_request_abs(cls, session: Session, params: Dict[str, Any]):
+    def validate_request_abs(cls, session: scoped_session, params: Dict[str, Any]):
         """
         validate the request params
         """
 
     @classmethod
     @abstractmethod
-    def get_action_inputs(cls, session: Session) -> List[ActionInput]:
+    def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:
         """
         get the action inputs
         """
 
     @classmethod
-    def get_action_params(cls, session: Session) -> List[ActionParameter]:
+    def get_action_params(cls, session: scoped_session) -> List[ActionParameter]:
         return [action_parameter for action_input in cls.get_action_inputs(session) for action_parameter in action_input.expected_params]
 
     @classmethod
-    def to_dict(cls, session: Session):
+    def to_dict(cls, session: scoped_session):
         return {
             'action_id': cls.get_action_id(),
             'action_title': cls.get_action_title(),

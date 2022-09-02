@@ -4,6 +4,7 @@ import { app, protocol, BrowserWindow, ipcMain } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import { autoUpdater } from 'electron-updater';
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
+import net from 'net';
 
 const log = require('electron-log');
 log.info('starting log');
@@ -22,11 +23,19 @@ protocol.registerSchemesAsPrivileged([
 
 // const PY_DIST_FOLDER = "pyflaskdist";
 const PY_MODULE = 'api';
-
+async function getFreePort(){
+	return new Promise( res => {
+		const srv = net.createServer();
+		srv.listen(0, () => {
+			const port = srv.address().port;
+			srv.close((err) => res(port));
+		});
+	});	
+}
 let win;
 
 let pyProc = null;
-const pyPort = '5000'; // Flask default port
+// const pyPort = await getFreePort(); // Flask default port
 
 const guessPackaged = () => {
 	const unixPath = path.join(process.resourcesPath, PY_MODULE);
@@ -54,7 +63,7 @@ const getScriptPath = () => {
 };
 
 // create the python process
-const createPyProc = () => {
+const createPyProc = (pyPort) => {
 	let script = getScriptPath();
 
 	console.log(`Starting python process at ${script}`);
@@ -84,13 +93,12 @@ const createPyProc = () => {
 	}
 };
 
-async function createWindow() {
+async function createWindow(pyPort) {
 	console.log(
 		`nodeIntegration: ${
 			process.env.ELECTRON_NODE_INTEGRATION
 		}, contextIsolation: ${!process.env.ELECTRON_NODE_INTEGRATION}`
 	);
-
 	// Create the browser window.
 	win = new BrowserWindow({
 		width: 800,
@@ -102,6 +110,7 @@ async function createWindow() {
 			// nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
 			// contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
 			// enableRemoteModule: true,
+			additionalArguments: ['pyPort=' + pyPort],
 			preload: path.join(__dirname, 'preload.js'),
 		},
 	});
@@ -112,10 +121,11 @@ async function createWindow() {
 	if (process.env.WEBPACK_DEV_SERVER_URL) {
 		// Load the url of the dev server if in development mode
 		await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
-		// if (!process.env.IS_TEST) win.webContents.openDevTools();
+		if (!process.env.IS_TEST) win.webContents.openDevTools();
 	} else {
 		createProtocol('app');
 		// Load the index.html when not in development
+
 		win.loadURL('app://./index.html');
 
 		// exitPyProc();
@@ -196,8 +206,9 @@ app.on('ready', async () => {
 			console.error('Vue Devtools failed to install:', e.toString());
 		}
 	}
-	createPyProc();
-	createWindow();
+	let pyPort = await getFreePort();
+	createPyProc(pyPort);
+	createWindow(pyPort);
 });
 
 autoUpdater.on('update-available', () => {

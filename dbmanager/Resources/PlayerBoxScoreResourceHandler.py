@@ -1,7 +1,7 @@
 from typing import List, Type
 
 from sqlalchemy import select, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session
 
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
@@ -32,7 +32,7 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
         return 'PlayerBoxScore'
 
     @classmethod
-    def get_messages(cls, session: Session) -> List[ResourceMessage]:
+    def get_messages(cls, session: scoped_session) -> List[ResourceMessage]:
         to_ret = []
         stmt = (
             select(BoxScoreP.SeasonType, func.count(BoxScoreP.Season.distinct()), func.count(BoxScoreP.GameId.distinct())).
@@ -41,7 +41,7 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
         results = session.execute(stmt).fetchall()
         for season_type in SEASON_TYPES:
             res = [r for r in results if r[0] == season_type.code]
-            seasons_count, games_count = res[0][1:] if len(res) > 0 else 0, 0
+            seasons_count, games_count = res[0][1:] if len(res) > 0 else (0, 0)
             seasons_message = ResourceMessage(
                 gettext('resources.playerboxscore.messages.seasons_message.title', season_type=season_type.name),
                 gettext('resources.playerboxscore.messages.seasons_message.text', seasons_count=seasons_count),

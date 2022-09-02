@@ -1,9 +1,16 @@
 {
-	"message": "hello i18n !!",
+	"common": {
+		"actions": "Actions",
+		"last_updated": "Last updated",
+		"messages": "Messages",
+		"never": "Never",
+		"status": "Status"
+	},
 	"generic": {
 		"home": "Home",
+		"last_updated": "Last updated",
 		"nbastatsdb": "NBAStatsDB",
-		"resources": "Resources",
-		"last_updated": "Last updated"
-	}
+		"resources": "Resources"
+	},
+	"message": "Message"
 }

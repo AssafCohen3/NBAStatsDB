@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+let pyPort = window.process.argv.map(arg => arg.split('=')).filter(arg => arg[0] == 'pyPort')[0][1];
+
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -21,4 +23,5 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 			console.log(`Invalid channel: ${channel}`);
 		}
 	},
+	pyPort: pyPort
 });

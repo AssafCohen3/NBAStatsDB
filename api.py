@@ -1,11 +1,11 @@
 from __future__ import print_function
 import sys
 from threading import Thread
-from flask import Flask, session
+from flask import Flask
 from flask_cors import CORS
 import json
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+
+from flask_sqlalchemy import SQLAlchemy
 from dbmanager.TaskManager import run_tasks_loop
 from dbmanager.blueprints.resources import resources_bp
 from dbmanager.constants import DATABASE_PATH, DATABASE_NAME_NEW
@@ -15,13 +15,16 @@ API_VERSION = "1.1.0"
 
 app = Flask(__name__)
 app.config.from_file("flask.config.json", load=json.load)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dbmanager/' + DATABASE_PATH + DATABASE_NAME_NEW + '.sqlite'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json_encoder = CustomJSONEncoder
 CORS(app)
-engine = create_engine('sqlite:///dbmanager/' + DATABASE_PATH + DATABASE_NAME_NEW + '.sqlite')
-session_factory = sessionmaker(bind=engine)
-ScopedSession = scoped_session(session_factory)
-app_session = ScopedSession()
-db_manager.init(engine, app_session)
+db = SQLAlchemy(app)
+# engine = create_engine()
+# session_factory = sessionmaker(bind=engine)
+# app_session = scoped_session(session_factory)
+# app_session = ScopedSession()
+db_manager.init(db.engine, db.session)
 tasks_thread = Thread(target=run_tasks_loop, daemon=True)
 tasks_thread.start()
 

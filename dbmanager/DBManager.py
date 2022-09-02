@@ -2,7 +2,7 @@ from typing import Dict, Type, List, Any, Optional
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from dbmanager.Database.Models.Resource import Resource
@@ -27,13 +27,13 @@ import dbmanager.RequestsLogger
 class DbManager:
     def __init__(self):
         self.engine: Optional[Engine] = None
-        self.session: Optional[Session] = None
+        self.session: Optional[scoped_session] = None
         self.available_resources: List[Type[ResourceAbc]] = [PlayerBoxScoreResourceHandler]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources
         }
 
-    def init(self, engine: Engine, session: Session):
+    def init(self, engine: Engine, session: scoped_session):
         self.engine = engine
         self.session = session
         Base.metadata.create_all(self.engine)

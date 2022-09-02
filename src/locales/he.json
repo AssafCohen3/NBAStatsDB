@@ -5,5 +5,12 @@
 		"resources": "משאבים",
 		"last_updated": "עודכן לאחרונה בתאריך"
 	},
-	"message": "היי"
+	"message": "היי",
+	"common": {
+		"never": "אף פעם",
+		"last_updated": "עודכן לאחרונה",
+		"messages": "הודעות",
+		"status": "סטאטוס",
+		"actions": "פעולות"
+	}
 }

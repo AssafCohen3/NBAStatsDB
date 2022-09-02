@@ -22,9 +22,8 @@ export default {
 };
 </script>
 
-<style>
-
-
+<style
+	lang="postcss">
 .v-main{
 	/* background-image: linear-gradient(135deg, #242b52, #150d45); */
 	background: 
@@ -65,4 +64,7 @@ export default {
 	right: 0 !important;
 }
 
+.app-section{
+	@apply bg-section-bg rounded-lg	
+}
 </style>

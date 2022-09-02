@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Optional, Type, Union, Dict, Any
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session
 
 from dbmanager.AppI18n import gettext
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
@@ -22,12 +22,12 @@ class ThreadSafeEvent(asyncio.Event):
 
 
 class ActionAbc(ABC):
-    def __init__(self, session: Session, **kwargs):
+    def __init__(self, session: scoped_session, **kwargs):
         self._task_id: int = -1
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
-        self.session: Session = session
+        self.session: scoped_session = session
 
     @classmethod
     @abstractmethod
@@ -37,7 +37,7 @@ class ActionAbc(ABC):
         """
 
     @classmethod
-    def create_action_from_params(cls, session: Session, params: Dict[str, Any]) -> 'ActionAbc':
+    def create_action_from_params(cls, session: scoped_session, params: Dict[str, Any]) -> 'ActionAbc':
         return cls(session, **params)
 
     def get_task_id(self) -> int:

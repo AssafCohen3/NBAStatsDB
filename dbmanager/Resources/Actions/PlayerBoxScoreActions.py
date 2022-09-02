@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import Union, Optional, List, Any, Dict, Type
 
 from sqlalchemy import select, insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreDownloader
@@ -38,7 +38,7 @@ def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, A
         to_ret = dict(zip(headers, row))
         to_ret['IsHome'] = 0 if '@' in to_ret['Matchup'] else 1
         season_and_type = re.findall(r'(\d)(\d*)', to_ret["SEASON_ID"])[0]
-        to_ret["SeasonType"] = int(season_and_type[0])
+        to_ret["SeasonType"] = season_and_type[0]
         to_ret["Season"] = int(season_and_type[1])
         to_ret['GameDate'] = datetime.date.fromisoformat(to_ret['GameDate'])
         to_ret.pop('SEASON_ID')
@@ -62,14 +62,14 @@ def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, A
 
 
 # returns the last saved date of some box score type plus 1 day(empty string if none found)
-def get_last_game_date(session: Session, season_type: SeasonType) -> Optional[datetime.date]:
+def get_last_game_date(session: scoped_session, season_type: SeasonType) -> Optional[datetime.date]:
     stmt = select(BoxScoreP.GameDate).where(BoxScoreP.SeasonType == season_type.code).order_by(
         BoxScoreP.GameDate.desc()).limit(1)
     res = session.execute(stmt).fetchall()
     return res[0][0] if res else None
 
 
-def insert_boxscores(session: Session, boxscores: List[Dict[str, Any]], replace: bool):
+def insert_boxscores(session: scoped_session, boxscores: List[Dict[str, Any]], replace: bool):
     if not boxscores:
         return
     stmt = insert(BoxScoreP)
@@ -84,8 +84,8 @@ def insert_boxscores(session: Session, boxscores: List[Dict[str, Any]], replace:
 
 
 class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
-    def __init__(self, session: Session,
-                 season_type_code: int,
+    def __init__(self, session: scoped_session,
+                 season_type_code: str,
                  start_date: datetime.date = None,
                  end_date: datetime.date = None,
                  replace: bool = False,
@@ -159,8 +159,8 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
 
 
 class UpdatePlayerBoxScoresAction(GeneralResetPlayerBoxScoresAction):
-    def __init__(self, session: Session,
-                 season_type_code: int):
+    def __init__(self, session: scoped_session,
+                 season_type_code: str):
         super().__init__(session, season_type_code, None, None, False, True)
 
     @classmethod
@@ -169,8 +169,8 @@ class UpdatePlayerBoxScoresAction(GeneralResetPlayerBoxScoresAction):
 
 
 class ResetPlayerBoxScoresAction(GeneralResetPlayerBoxScoresAction):
-    def __init__(self, session: Session,
-                 season_type_code: int):
+    def __init__(self, session: scoped_session,
+                 season_type_code: str):
         super().__init__(session, season_type_code, None, None, True, False)
 
     @classmethod
@@ -179,8 +179,8 @@ class ResetPlayerBoxScoresAction(GeneralResetPlayerBoxScoresAction):
 
 
 class UpdatePlayerBoxScoresInDateRangeAction(GeneralResetPlayerBoxScoresAction):
-    def __init__(self, session: Session,
-                 season_type_code: int,
+    def __init__(self, session: scoped_session,
+                 season_type_code: str,
                  start_date: datetime.date = None, end_date: datetime.date = None):
         super().__init__(session, season_type_code, start_date, end_date, True, False)
 
