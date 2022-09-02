@@ -26,12 +26,14 @@ axiosRetry(axios, {
 	retryDelay: exponentialDelay,
 	retryCondition: customIsNetworkErrorCheck
 });
-
-createApp(App)
-	.use(router)
-	.use(store)
-	.use(vuetify)
-	.use(i18n)
-	.use(LanguagueReloadPlugin)
-	.component('country-flag', CountryFlag)
-	.mount('#app');
+// wait for server to initiate
+setTimeout(() => {
+	createApp(App)
+		.use(router)
+		.use(store)
+		.use(vuetify)
+		.use(i18n)
+		.use(LanguagueReloadPlugin)
+		.component('country-flag', CountryFlag)
+		.mount('#app');
+}, 2000);
