@@ -1,6 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Optional, Type, Union, Dict, Any
+from typing import Optional, Type, Union, Dict, Any, Callable
 
 from sqlalchemy.orm import scoped_session
 
@@ -27,7 +27,12 @@ class ActionAbc(ABC):
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
-        self.emit_func = None
+        self.start_callback: Optional[Callable[[str], None]] = None
+        self.finish_callback: Optional[Callable[[str], None]] = None
+        self.exception_callback: Optional[Callable[[str, Exception], None]] = None
+        self.mini_finish_callback: Optional[Callable[[str], None]] = None
+        self.pause_callback: Optional[Callable[[str], None]] = None
+        self.resume_callback: Optional[Callable[[str], None]] = None
         self.session: scoped_session = session
 
     @classmethod
@@ -38,6 +43,10 @@ class ActionAbc(ABC):
         """
 
     @classmethod
+    def get_action_id(cls) -> str:
+        return cls.get_action_spec().get_action_id()
+
+    @classmethod
     def create_action_from_params(cls, session: scoped_session, params: Dict[str, Any]) -> 'ActionAbc':
         return cls(session, **params)
 
@@ -46,9 +55,30 @@ class ActionAbc(ABC):
 
     def set_task_id(self, task_id: int):
         self._task_id = task_id
+        # self.start_callback = None
+        # self.finish_callback = None
+        # self.exception_callback = None
+        # self.mini_finish_callback = None
+        # self.pause_callback = None
+        # self.resume_callback = None
 
-    def set_emit_func(self, emit_func):
-        self.emit_func = emit_func
+    def set_start_callback(self, start_callback):
+        self.start_callback = start_callback
+
+    def set_finish_callback(self, finish_callback):
+        self.finish_callback = finish_callback
+
+    def set_mini_finish_callback(self, mini_finish_callback):
+        self.mini_finish_callback = mini_finish_callback
+
+    def set_exception_callback(self, exception_callback):
+        self.exception_callback = exception_callback
+
+    def set_pause_callback(self, pause_callback):
+        self.pause_callback = pause_callback
+
+    def set_resume_callback(self, resume_callback):
+        self.resume_callback = resume_callback
 
     def cancel_task(self):
         if self.is_finished():
@@ -77,17 +107,17 @@ class ActionAbc(ABC):
             try:
                 signal = send(message)
             except StopIteration as err:
+                if self.finish_callback:
+                    self.finish_callback(self.get_action_id())
                 return err.value
             except Exception as gen_err:
-                if self.emit_func:
-                    self.emit_func('action-exception', gen_err)
+                if self.exception_callback:
+                    self.exception_callback(self.get_action_id(), gen_err)
                 return None
-                # logging.error(str(gen_err))
-                # return None
             else:
                 send = iter_send
-            if self.emit_func:
-                self.emit_func('mini-task-finished')
+            if self.mini_finish_callback:
+                self.mini_finish_callback(self.get_action_id())
             try:
                 message = yield signal
             except BaseException as err:
@@ -100,6 +130,8 @@ class ActionAbc(ABC):
             self.pre_active = False
         else:
             self.active.clear()
+        if self.pause_callback:
+            self.pause_callback(self.get_action_id())
 
     def resume(self):
         if self.is_finished():
@@ -108,6 +140,8 @@ class ActionAbc(ABC):
             self.pre_active = True
         else:
             self.active.set()
+        if self.resume_callback:
+            self.resume_callback(self.get_action_id())
 
     def current_status(self) -> str:
         if self.cancelled:
@@ -122,6 +156,8 @@ class ActionAbc(ABC):
         self.active = ThreadSafeEvent()
         if self.pre_active:
             self.active.set()
+        if self.start_callback:
+            self.start_callback(self.get_action_id())
         await self.action()
 
     @abstractmethod

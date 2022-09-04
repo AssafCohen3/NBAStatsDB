@@ -73,8 +73,11 @@ export default {
 				this.firstInitialTry();
 				socket.emit('first-connect','A user has connected');
 			});
-			socket.on('refresh-data', function(data){
-				// console.log('recieved ' + data);
+			socket.on('refresh-data', function(){
+				console.log('to refresh data');
+			});
+			socket.on('add-message', function(msg){
+				console.log('request to add message', msg);
 			});
 		},
 		firstInitialTry(){

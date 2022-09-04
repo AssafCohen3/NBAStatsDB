@@ -5,7 +5,8 @@ from abc import ABC
 from collections import defaultdict
 from typing import Union, Optional, List, Any, Dict, Type
 
-from sqlalchemy import select, insert
+from sqlalchemy import select
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
