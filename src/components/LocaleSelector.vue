@@ -60,7 +60,7 @@ export default {
 	scoped
 	lang="postcss">
 
-.v-select >>> .v-field__append-inner{
+.v-select :deep(.v-field__append-inner){
 	align-items: center !important;
 	color: white;
 }

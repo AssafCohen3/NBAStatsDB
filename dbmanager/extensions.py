@@ -35,7 +35,9 @@ class SocketIOFilter(logging.Filter):
 
 
 def init_socket(app):
-    socketio.init_app(app, async_mode='threading', cors_allowed_origins="*")
+    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+    # socketio.init_app(app, async_mode='threading', cors_allowed_origins="*")
     # logging.getLogger('socketio').setLevel(logging.ERROR)
     # logging.getLogger('engineio').setLevel(logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
     logging.getLogger("werkzeug").addFilter(SocketIOFilter())

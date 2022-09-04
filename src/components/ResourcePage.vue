@@ -93,7 +93,8 @@
 							<div
 								class="p-[20px]">
 								<action-form
-									:actionSpec="actionSpec" />
+									:actionSpec="actionSpec"
+									@postAction="runAction" />
 							</div>
 						</v-expansion-panel-text>
 					</v-expansion-panel>
@@ -120,7 +121,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions('resources', ['fetchResource']),
+		...mapActions('resources', ['fetchResource', 'postAction']),
 		refreshPage(){
 			if(this.resourceId !== undefined){
 				this.fetchResource([this.resourceId])
@@ -128,6 +129,9 @@ export default {
 						this.currentResource = resource;
 					});
 			}
+		},
+		runAction(actionId, actionParams){
+			this.postAction([this.resourceId, actionId, actionParams]);
 		},
 	},
 	watch: {
@@ -148,7 +152,7 @@ export default {
 	lang="postcss"
 	scoped>
 
-.v-expansion-panel.action_panel >>> .v-expansion-panel-title{
+.v-expansion-panel.action_panel :deep(.v-expansion-panel-title){
 	@apply text-[20px]
 }
 

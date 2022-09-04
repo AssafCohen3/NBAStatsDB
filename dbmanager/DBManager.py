@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
+
+from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from dbmanager.Database.Models.Resource import Resource
@@ -13,7 +15,6 @@ import dbmanager.MainRequestsSession
 from dbmanager.Errors import ResourceNotExistError
 # noinspection PyUnresolvedReferences
 from dbmanager.MainRequestsSession import requests_session as requests
-from dbmanager.TaskManager import enqueue_action
 # noinspection PyUnresolvedReferences
 from dbmanager.base import Base
 # noinspection PyUnresolvedReferences
@@ -50,10 +51,11 @@ class DbManager:
             raise ResourceNotExistError(resource_id)
         return self.resources[resource_id]
 
-    def dispatch_action(self, resource_id: str, action_id: str, params: Dict[str, str]):
+    def dispatch_action(self, resource_id: str, action_id: str, params: Dict[str, str]) -> ActionAbc:
         resource = self.get_resource(resource_id)
         action_to_run = resource.create_action(self.session, action_id, params)
-        enqueue_action(action_to_run)
+        return action_to_run
+        # enqueue_action(action_to_run)
 
     def get_resources_list_compact(self) -> List[Dict[str, Any]]:
         available_ids = [res.get_id() for res in self.available_resources]

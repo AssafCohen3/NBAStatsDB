@@ -1,12 +1,17 @@
 {
 	"common": {
+		"database_not_initialized": "The Database could not be initialized ",
+		"create_db": "Create the database",
+		"init_db": "Init the database",
 		"actions": "Actions",
 		"last_updated": "Last updated",
 		"messages": "Messages",
 		"never": "Never",
 		"status": "Status",
 		"season_type": "Season type",
-		"submit": "Submit"
+		"submit": "Submit",
+		"try_again": "Try again",
+		"try_again_with_another_settings": "Try again with another settings:"
 	},
 	"generic": {
 		"home": "Home",
@@ -14,12 +19,12 @@
 		"nbastatsdb": "NBAStatsDB",
 		"resources": "Resources"
 	},
-	"message": "Message",
-	"validations": {
-		"required": "The field is required"
-	},
 	"langs": {
 		"he": "Hebrew",
 		"en": "English"
+	},
+	"message": "Message",
+	"validations": {
+		"required": "The field is required"
 	}
 }

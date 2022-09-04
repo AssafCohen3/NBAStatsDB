@@ -53,6 +53,12 @@ export default {
 	methods: {
 		submitAction(){
 			this.v$.$touch();
+			if(this.v$.$error){
+				return;
+			}
+			let actionForm = Object.assign({},
+				...Object.keys(this.form).map(key => this.form[key]));
+			this.$emit('postAction', this.actionSpec.action_id, actionForm);
 		}
 	}
 };

@@ -1,14 +1,36 @@
 <template>
 	<v-app>
-		<side-menu  />
-		<app-header />
-		<v-main>
-			<v-container
-				fluid
-				class="!p-[24px]">
-				<router-view />
-			</v-container>
-		</v-main>
+		<template
+			v-if="!connectedToServer || !dbStatus || !dbStatus.status">
+			<div
+				class="flex h-full w-full justify-center items-center">
+				<v-progress-circular
+					class="text-primary-light"
+					indeterminate />
+			</div>
+		</template>
+		<template
+			v-else-if="connectedToServer && dbStatus && dbStatus.status && dbStatus.status == 'ok'">
+			<side-menu  />
+			<app-header />
+			<v-main>
+				<v-container
+					fluid
+					class="!p-[24px]">
+					<router-view />
+				</v-container>
+			</v-main>
+		</template>
+		<template
+			v-else>
+			<v-dialog
+				v-model="initDialogOpen"
+				persistent>
+				<init-db-dialog
+					@initDB="initDatabase" />
+			</v-dialog>
+			<!-- refresh db modal -->
+		</template>
 	</v-app>
 
 </template>
@@ -18,27 +40,60 @@ import AppHeader from './AppHeader.vue';
 import SideMenu from './SideMenu.vue';
 import io from 'socket.io-client';
 import axios from 'axios';
+import { mapActions, mapGetters } from 'vuex';
+import InitDbDialog from './InitDBDialog.vue';
 
 export default {
-	components: { SideMenu, AppHeader },
-	mounted(){
-		let appUrl = axios.defaults.baseURL;
-		console.log('initiating');
-		var socket = io.connect(appUrl);
-		socket.on('connect',function(){
-			console.log('connected');
-			socket.emit('first-connect','A user has connected');
-		});
-		socket.on('refresh-data', function(data){
-			console.log('recieved ' + data);
-		});
+	components: { SideMenu, AppHeader, InitDbDialog },
+	data(){
+		return {
+			connectedToServer: false,
+			initDialogOpen: true,
+		};
 	},
+	computed: {
+		...mapGetters('db', {
+			dbStatus: 'dbStatus',
+			initializingDB: 'initializingDB',
+		}),
+	},
+	mounted(){
+		this.connectToServer();
+	},
+	methods: {
+		...mapActions('db', {
+			initDB: 'initDB',
+		}),
+		connectToServer(){
+			let appUrl = axios.defaults.baseURL;
+			var socket = io.connect(appUrl);
+			socket.on('connect', () => {
+				console.log('connected to server!');
+				this.connectedToServer = true; 
+				this.firstInitialTry();
+				socket.emit('first-connect','A user has connected');
+			});
+			socket.on('refresh-data', function(data){
+				// console.log('recieved ' + data);
+			});
+		},
+		firstInitialTry(){
+			this.initDatabase(null, false);
+		},
+		initDatabase(dbName, createDB){
+			let currentDBName = dbName;
+			if(dbName === null){
+				currentDBName = localStorage.getItem('dbName') || 'NBAStatsDB.db';
+			}
+			this.initDB([currentDBName, createDB]);
+		}
+	}
 };
 </script>
 
 <style
 	lang="postcss">
-.v-main{
+.v-application{
 	/* background-image: linear-gradient(135deg, #242b52, #150d45); */
 	background: 
 		repeating-linear-gradient(

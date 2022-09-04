@@ -13,7 +13,12 @@
 		"status": "סטטוס",
 		"actions": "פעולות",
 		"season_type": "סוג עונה",
-		"submit": "אישור"
+		"submit": "אישור",
+		"init_db": "אתחל את בסיס הנתונים",
+		"create_db": "צור את בסיס הנתונים",
+		"database_not_initialized": "אתחול בסיס הנתונים נכשל",
+		"try_again": "נסה שוב",
+		"try_again_with_another_settings": "נסה שוב עם הגדרות שונות:"
 	},
 	"validations": {
 		"required": "השדה נדרש"

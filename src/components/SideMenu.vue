@@ -79,31 +79,31 @@ export default {
 
 <style scoped>
 
-.v-list-item--active >>> .v-list-item-title{
+.v-list-item--active :deep(.v-list-item-title){
 	font-weight: 500;
 	z-index: 1000;
 }
 
-.v-list-item >>> .v-list-item__overlay{
+.v-list-item :deep(.v-list-item__overlay){
 	background-color: #120d3a !important;
 	z-index: 0;
 }
 
-.v-list-item >>> .v-list-item__content {
+.v-list-item :deep(.v-list-item__content) {
 	z-index: 1;
 }
 
-.v-list-item--active >>> .v-list-item__overlay{
+.v-list-item--active :deep(.v-list-item__overlay){
 	opacity: 1.0 !important;
 }
 
-.v-list-item:hover >>> .v-list-item__overlay{
+.v-list-item:hover :deep(.v-list-item__overlay){
 	opacity: 0.8 !important;
 }
 
 
-.v-list-item:not(.v-list-item--active) >>> .v-list-item-icon, 
-.v-list-item:not(.v-list-item--active) >>> .v-list-item-title{
+.v-list-item:not(.v-list-item--active) :deep(.v-list-item-icon), 
+.v-list-item:not(.v-list-item--active) :deep(.v-list-item-title){
 	opacity: 0.35 !important;
 }
 

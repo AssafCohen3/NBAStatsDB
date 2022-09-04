@@ -27,6 +27,7 @@ class ActionAbc(ABC):
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
+        self.emit_func = None
         self.session: scoped_session = session
 
     @classmethod
@@ -45,6 +46,9 @@ class ActionAbc(ABC):
 
     def set_task_id(self, task_id: int):
         self._task_id = task_id
+
+    def set_emit_func(self, emit_func):
+        self.emit_func = emit_func
 
     def cancel_task(self):
         if self.is_finished():
@@ -74,8 +78,16 @@ class ActionAbc(ABC):
                 signal = send(message)
             except StopIteration as err:
                 return err.value
+            except Exception as gen_err:
+                if self.emit_func:
+                    self.emit_func('action-exception', gen_err)
+                return None
+                # logging.error(str(gen_err))
+                # return None
             else:
                 send = iter_send
+            if self.emit_func:
+                self.emit_func('mini-task-finished')
             try:
                 message = yield signal
             except BaseException as err:

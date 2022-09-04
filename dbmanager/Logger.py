@@ -1,4 +1,5 @@
+import logging
 
 
 def log_message(msg):
-    print(msg)
+    logging.info(msg)

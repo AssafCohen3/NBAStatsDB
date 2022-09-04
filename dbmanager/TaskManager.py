@@ -1,12 +1,15 @@
 import asyncio
 import itertools
+import logging
 from typing import Dict, List, Any
 
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
+from dbmanager.extensions import socketio
 
 
 def run_tasks_loop():
     asyncio.set_event_loop(actions_loop)
+    socketio.emit('action-exception')
     actions_loop.run_forever()
 
 
@@ -17,6 +20,7 @@ actions_dictionary: Dict[int, ActionAbc] = {}
 
 def enqueue_action(action: ActionAbc, done_callback=None):
     async def adder_coro():
+        logging.debug('enqueuing task async...')
         task_id = next(current_task_id)
         action.set_task_id(task_id)
         actions_dictionary[task_id] = action

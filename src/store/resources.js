@@ -9,6 +9,9 @@ const state = {
 
 	// resource
 	fetchingResource: false,
+
+	// action
+	postingAction: false,
 };
 
 
@@ -19,6 +22,9 @@ const getters = {
 
 	// resource
 	fetchingResource: (state) => state.fetchingResource,
+
+	// action
+	postingAction: (state) => state.postingAction,
 };
 
 const actions = {
@@ -47,6 +53,18 @@ const actions = {
 			// catch?
 		});
 	},
+	postAction({commit}, [resourceId, actionId, actionParams]){
+		return new Promise((resolve, reject) => {
+			commit('postActionStart');
+			axios.post(`/resources/${resourceId}/actions/${actionId}`,
+				actionParams).
+				then(resp => {
+					commit('postActionSuccess');
+					resolve(resp.data);
+				});
+			// catch?
+		});
+	},
 };
 
 const mutations = {
@@ -66,7 +84,14 @@ const mutations = {
 	fetchResourceSuccess(state, resp){
 		state.fetchingResource = false;
 	},
-
+	
+	// actions
+	postActionStart(state){
+		state.postingAction = true;
+	},
+	postActionSuccess(state){
+		state.postingAction = false;
+	},
 };
 
 
