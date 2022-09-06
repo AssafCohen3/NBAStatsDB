@@ -3,8 +3,8 @@
 		<input-picker
 			v-for="actionInput, index in actionSpec.action_inputs"
 			:key="index"
-			:actionInput="actionInput"
-			v-model:inputData="form[actionInput.input_name]" />
+			v-model:inputData="form[actionInput.input_name]"
+			:action-input="actionInput" />
 		<v-btn 
 			class="mt-[20px]"
 			color="success"
@@ -26,16 +26,19 @@ function createFormFromInputs(actionInputs){
 }
 
 export default {
-	setup(){
-		const v$ = useVuelidate();
-		return { v$ };
-	},
 	components: { InputPicker },
 	props: {
 		actionSpec: {
 			type: Object,
 			required: true
 		},
+	},
+	emits: [
+		'postAction',
+	],
+	setup(){
+		const v$ = useVuelidate();
+		return { v$ };
 	},
 	data(){
 		return {

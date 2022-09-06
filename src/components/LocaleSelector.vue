@@ -1,18 +1,18 @@
 <template>
 	<div class="locale-changer">
 		<v-select 
-			variant="plain"
 			v-model="currentLocale"
+			variant="plain"
 			:menu-props="{
 				contentClass: 'local-changer-select-menu'
 			}"
 			:items="$i18n.availableLocales">
 			<template
-				#item=item>
+				#item="item">
 				<div
-					@click="item.props.onClick"
-					class="flex flex-row items-center cursor-pointer p-[10px]">
-					<country-flag :country="langToCountry[item.item.value]"/>
+					class="flex flex-row items-center cursor-pointer p-[10px]"
+					@click="item.props.onClick">
+					<country-flag :country="langToCountry[item.item.value]" />
 					<div
 						class="text-primary-light font-bold">
 						{{ $t('langs.' + item.item.value) }}
@@ -20,10 +20,10 @@
 				</div>
 			</template>
 			<template
-				#selection={item}>
+				#selection="{item}">
 				<div
 					class="flex flex-row items-center cursor-pointer">
-					<country-flag :country="langToCountry[item.value]"/>
+					<country-flag :country="langToCountry[item.value]" />
 					<div
 						class="text-primary-light font-bold">
 						{{ $t('langs.' + item.value) }}

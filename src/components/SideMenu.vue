@@ -15,9 +15,9 @@
 			exact
 			:to="{name: 'home'}"
 			prepend-icon="mdi-home"
-			:title="$t('generic.home')">
-		</v-list-item>
-		<v-list v-model:opened="open"
+			:title="$t('generic.home')" />
+		<v-list
+			v-model:opened="open"
 			bg-color="transparent">
 			<v-list-group
 				value="resources">
@@ -25,8 +25,7 @@
 					<v-list-item
 						v-bind="props"
 						prepend-icon="mdi-database-cog"
-						:title="$t('generic.resources')">
-					</v-list-item>
+						:title="$t('generic.resources')" />
 				</template>
 				<v-list-item
 					v-for="resource, index in resources"
@@ -36,8 +35,7 @@
 					:to="{name: 'resource-page', params: {
 						resourceId: resource.resource_id
 					}}"
-					link>
-				</v-list-item>
+					link />
 			</v-list-group>
 		</v-list>
 	</v-navigation-drawer>
@@ -56,6 +54,9 @@ export default {
 			fetchingResources: 'resources/fetchingResources'
 		}),
 	},
+	mounted(){
+		this.fetchResources();
+	},
 	methods: {
 		...mapActions('resources', ['fetchResources']),
 		resourceClicked(resource){
@@ -67,9 +68,6 @@ export default {
 				},
 			});
 		},
-	},
-	mounted(){
-		this.fetchResources();
 	},
 	onLocaleChange(){
 		this.fetchResources();

@@ -11,7 +11,8 @@
 		"season_type": "Season type",
 		"submit": "Submit",
 		"try_again": "Try again",
-		"try_again_with_another_settings": "Try again with another settings:"
+		"try_again_with_another_settings": "Try again with another settings:",
+		"tasks": "Tasks"
 	},
 	"generic": {
 		"home": "Home",
@@ -26,5 +27,12 @@
 	"message": "Message",
 	"validations": {
 		"required": "The field is required"
+	},
+	"tasks": {
+		"error_occurred": "An error occurred",
+		"task_cancelled": "The task has been cancelled",
+		"task_finished": "The task finished successfully",
+		"progress_line": "{completed} out of {to_finish}",
+		"progress_line_no_to_finish": "{completed} completed"
 	}
 }

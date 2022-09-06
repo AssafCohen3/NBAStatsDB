@@ -12,14 +12,14 @@
 				<div
 					class="resources_grid">
 					<div
+						v-for="resource, index in repeated"
+						:key="index"
 						v-ripple="{class: 'white--text'}"
 						class="resource_tile rounded-[20px] bg-[#ffffff10]
 					h-[150px] min-w-[150px] 
 					flex items-center justify-center flex-col
 					text-dimmed-white select-none
-					cursor-pointer"
-						v-for="resource, index in repeated"
-						:key="index">
+					cursor-pointer">
 						<div
 							class="text-[20px] font-bold p-[20px]">
 							{{ resource.resource_name }}
@@ -74,14 +74,14 @@ export default {
 			return [];
 		}
 	},
+	mounted(){
+		this.fetchResources();
+	},
 	methods: {
 		...mapActions({
 			fetchResources: 'resources/fetchResources',
 		}),
 	},
-	mounted(){
-		this.fetchResources();
-	}
 };
 </script>
 

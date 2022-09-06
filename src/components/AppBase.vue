@@ -11,7 +11,7 @@
 		</template>
 		<template
 			v-else-if="connectedToServer && dbStatus && dbStatus.status && dbStatus.status == 'ok'">
-			<side-menu  />
+			<side-menu />
 			<app-header />
 			<v-main>
 				<v-container
@@ -27,20 +27,18 @@
 				v-model="initDialogOpen"
 				persistent>
 				<init-db-dialog
-					@initDB="initDatabase" />
+					@init-db="initDatabase" />
 			</v-dialog>
 			<!-- refresh db modal -->
 		</template>
 	</v-app>
-
 </template>
 
 <script>
 import AppHeader from './AppHeader.vue';
 import SideMenu from './SideMenu.vue';
-import io from 'socket.io-client';
 import axios from 'axios';
-import { mapActions, mapGetters } from 'vuex';
+import { mapActions, mapGetters, mapMutations } from 'vuex';
 import InitDbDialog from './InitDBDialog.vue';
 
 export default {
@@ -64,20 +62,42 @@ export default {
 		...mapActions('db', {
 			initDB: 'initDB',
 		}),
+		...mapMutations('tasks', ['updateTask']),
 		connectToServer(){
 			let appUrl = axios.defaults.baseURL;
-			var socket = io.connect(appUrl);
-			socket.on('connect', () => {
+			let source = new EventSource(appUrl + '/tasks/listen');
+			source.addEventListener('open', () => {
 				console.log('connected to server!');
 				this.connectedToServer = true; 
 				this.firstInitialTry();
-				socket.emit('first-connect','A user has connected');
 			});
-			socket.on('refresh-data', function(){
-				console.log('to refresh data');
+			source.addEventListener('task-update-start', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
 			});
-			socket.on('add-message', function(msg){
-				console.log('request to add message', msg);
+			source.addEventListener('task-update-finish', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
+			});
+			source.addEventListener('task-update-sub-finish', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
+			});
+			source.addEventListener('task-update-paused', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
+			});
+			source.addEventListener('task-update-resume', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
+			});
+			source.addEventListener('task-update-error', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
+			});
+			source.addEventListener('task-update-cancel', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask(taskData);
 			});
 		},
 		firstInitialTry(){

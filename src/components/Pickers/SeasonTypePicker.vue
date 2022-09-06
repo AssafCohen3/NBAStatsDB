@@ -21,15 +21,16 @@ import { useVuelidate } from '@vuelidate/core';
 import { required } from '@/utils/i18n-validators';
 
 export default {
-	setup(){
-		const v$ = useVuelidate();
-		return { v$ };
-	},
 	props: {
 		inputData: {
 			type: Object,
 			required: true,
 		},
+	},
+	emits: ['update:inputData'],
+	setup(){
+		const v$ = useVuelidate();
+		return { v$ };
 	},
 	data(){
 		return {

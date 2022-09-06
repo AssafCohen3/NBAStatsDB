@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Dict, List
 
 from dbmanager.AppI18n import gettext
@@ -64,3 +65,25 @@ class UnexpectedParameterError(Exception):
         self.action_id = action_id
         self.unexpected_params = unexpected_params
         super().__init__(gettext('errors.unexpected_parameter', action_id=action_id, unexpected_params=', '.join(unexpected_params)))
+
+
+class TaskError(Exception, ABC):
+    pass
+
+
+class TaskNotExist(TaskError):
+    def __init__(self, task_id: int):
+        self.task_id = task_id
+        super().__init__(f'task with id {task_id} not exist')
+
+
+class TaskAlreadyFinished(TaskError):
+    def __init__(self, task_id: int):
+        self.task_id = task_id
+        super().__init__(f'task with id {task_id} already finished')
+
+
+class TaskNotFinished(TaskError):
+    def __init__(self, task_id: int):
+        self.task_id = task_id
+        super().__init__(f'task with id {task_id} not finished')

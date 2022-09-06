@@ -1,11 +1,11 @@
 <template>
 	<div>
 		<div
-			class="app-section p-[30px] w-[fit-content]"
-			v-if="fetchingResource || currentResource == null">
+			v-if="fetchingResource || currentResource == null"
+			class="app-section p-[30px] w-[fit-content]">
 			<v-progress-circular
-				class="text-primary-light"
 				v-if="fetchingResource || currentResource == null"
+				class="text-primary-light"
 				indeterminate />
 		</div>
 		<!-- content wrappe -->
@@ -86,15 +86,15 @@
 					variant="inset">
 					<v-expansion-panel
 						v-for="actionSpec, index in currentResource.actions_specs"
+						:key="index"
 						:title="actionSpec.action_title"
-						class="action_panel !bg-section-bg !text-dimmed-white font-bold"
-						:key="index">
+						class="action_panel !bg-section-bg !text-dimmed-white font-bold">
 						<v-expansion-panel-text>
 							<div
 								class="p-[20px]">
 								<action-form
-									:actionSpec="actionSpec"
-									@postAction="runAction" />
+									:action-spec="actionSpec"
+									@post-action="runAction" />
 							</div>
 						</v-expansion-panel-text>
 					</v-expansion-panel>
@@ -120,6 +120,14 @@ export default {
 			return this.$route.params.resourceId;
 		}
 	},
+	watch: {
+		resourceId: {
+			handler(newVal){
+				this.refreshPage();
+			},
+			immediate: true
+		},
+	},
 	methods: {
 		...mapActions('resources', ['fetchResource', 'postAction']),
 		refreshPage(){
@@ -132,14 +140,6 @@ export default {
 		},
 		runAction(actionId, actionParams){
 			this.postAction([this.resourceId, actionId, actionParams]);
-		},
-	},
-	watch: {
-		resourceId: {
-			handler(newVal){
-				this.refreshPage();
-			},
-			immediate: true
 		},
 	},
 	onLocaleChange(){

@@ -15,19 +15,18 @@
 			<div
 				class="pt-[10px]">
 				<v-checkbox
+					v-model="createDB"
 					:label="$t('common.create_db')"
 					class="text-dimmed-white"
-					v-model="createDB"
 					hide-details="auto" />
 				<v-btn
 					:loading="initializingDB"
-					@click="submit"
-					color="green">
+					color="green"
+					@click="submit">
 					<span>
 						{{ $t('common.try_again') }}
 					</span>
 				</v-btn>
-
 			</div>
 		</v-card-text>
 	</v-card>
@@ -36,6 +35,7 @@
 <script>
 import { mapGetters } from 'vuex';
 export default {
+	emits: ['initDB'],
 	data(){
 		return {
 			createDB: false

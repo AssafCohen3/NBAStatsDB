@@ -121,7 +121,7 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
                 last_date = results[-1][game_date_index]
                 while results[-1][game_date_index] == last_date:
                     results.pop()
-                self.last_fetched_date = last_date
+                self.last_fetched_date = datetime.date.fromisoformat(last_date)
             else:
                 continue_loop = False
             # take only boxscores that occured in the past(5 days should be enough i guess) or finished(WL is not null)

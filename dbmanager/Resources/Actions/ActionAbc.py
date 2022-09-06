@@ -1,11 +1,13 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Optional, Type, Union, Dict, Any, Callable
+from typing import Optional, Type, Union, Dict, Any
 
 from sqlalchemy.orm import scoped_session
 
 from dbmanager.AppI18n import gettext
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
+from dbmanager.tasks.TaskMessage import TaskMessage
 
 
 class ThreadSafeEvent(asyncio.Event):
@@ -27,12 +29,16 @@ class ActionAbc(ABC):
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
-        self.start_callback: Optional[Callable[[str], None]] = None
-        self.finish_callback: Optional[Callable[[str], None]] = None
-        self.exception_callback: Optional[Callable[[str, Exception], None]] = None
-        self.mini_finish_callback: Optional[Callable[[str], None]] = None
-        self.pause_callback: Optional[Callable[[str], None]] = None
-        self.resume_callback: Optional[Callable[[str], None]] = None
+        self.error_msg: Optional[Exception] = None
+        self.finished = False
+        self.started = False
+        self.announcer: Optional[AnnouncerAbc] = None
+        # self.start_callback: Optional[Callable[[str], None]] = None
+        # self.finish_callback: Optional[Callable[[str], None]] = None
+        # self.exception_callback: Optional[Callable[[str, Exception], None]] = None
+        # self.mini_finish_callback: Optional[Callable[[str], None]] = None
+        # self.pause_callback: Optional[Callable[[str], None]] = None
+        # self.resume_callback: Optional[Callable[[str], None]] = None
         self.session: scoped_session = session
 
     @classmethod
@@ -55,30 +61,9 @@ class ActionAbc(ABC):
 
     def set_task_id(self, task_id: int):
         self._task_id = task_id
-        # self.start_callback = None
-        # self.finish_callback = None
-        # self.exception_callback = None
-        # self.mini_finish_callback = None
-        # self.pause_callback = None
-        # self.resume_callback = None
 
-    def set_start_callback(self, start_callback):
-        self.start_callback = start_callback
-
-    def set_finish_callback(self, finish_callback):
-        self.finish_callback = finish_callback
-
-    def set_mini_finish_callback(self, mini_finish_callback):
-        self.mini_finish_callback = mini_finish_callback
-
-    def set_exception_callback(self, exception_callback):
-        self.exception_callback = exception_callback
-
-    def set_pause_callback(self, pause_callback):
-        self.pause_callback = pause_callback
-
-    def set_resume_callback(self, resume_callback):
-        self.resume_callback = resume_callback
+    def set_announcer(self, announcer: AnnouncerAbc):
+        self.announcer = announcer
 
     def cancel_task(self):
         if self.is_finished():
@@ -86,6 +71,7 @@ class ActionAbc(ABC):
         self.cancelled = True
         if self.active:
             self.active.set()
+        # TODO why at end
         self.pre_active = True
 
     def __await__(self):
@@ -95,29 +81,39 @@ class ActionAbc(ABC):
         # This "while" emulates yield from.
         while True:
             # wait for can_run before resuming execution of self._target
+            paused = False
             try:
                 while self.active is not None and not self.active.is_set():
+                    if not paused:
+                        self.announce_update('paused')
+                    paused = True
                     yield from self.active.wait().__await__()
             except BaseException as err:
                 send, message = iter_throw, err
+            if paused and not self.cancelled:
+                self.announce_update('resume')
 
             if self.cancelled:
+                self.announce_update('cancel')
                 return None
             # continue with our regular program
             try:
                 signal = send(message)
             except StopIteration as err:
-                if self.finish_callback:
-                    self.finish_callback(self.get_action_id())
+                # finished successfully
+                self.finished = True
+                self.announce_update('finish')
                 return err.value
             except Exception as gen_err:
-                if self.exception_callback:
-                    self.exception_callback(self.get_action_id(), gen_err)
+                # error
+                self.error_msg = gen_err
+                self.announce_update('error')
                 return None
             else:
                 send = iter_send
-            if self.mini_finish_callback:
-                self.mini_finish_callback(self.get_action_id())
+            # sub finish
+            if self.started:
+                self.announce_update('sub-finish')
             try:
                 message = yield signal
             except BaseException as err:
@@ -130,8 +126,6 @@ class ActionAbc(ABC):
             self.pre_active = False
         else:
             self.active.clear()
-        if self.pause_callback:
-            self.pause_callback(self.get_action_id())
 
     def resume(self):
         if self.is_finished():
@@ -140,10 +134,10 @@ class ActionAbc(ABC):
             self.pre_active = True
         else:
             self.active.set()
-        if self.resume_callback:
-            self.resume_callback(self.get_action_id())
 
     def current_status(self) -> str:
+        if self.error_msg:
+            return 'error'
         if self.cancelled:
             return 'cancelled'
         if self.is_finished():
@@ -156,8 +150,9 @@ class ActionAbc(ABC):
         self.active = ThreadSafeEvent()
         if self.pre_active:
             self.active.set()
-        if self.start_callback:
-            self.start_callback(self.get_action_id())
+        await asyncio.sleep(0)
+        self.announce_update('start')
+        self.started = True
         await self.action()
 
     @abstractmethod
@@ -180,6 +175,8 @@ class ActionAbc(ABC):
         """
 
     def get_current_subtask_text(self) -> str:
+        if self.error_msg:
+            return str(self.error_msg)
         if self.cancelled:
             return gettext('common.cancelled')
         if self.is_finished():
@@ -193,7 +190,25 @@ class ActionAbc(ABC):
         """
 
     def is_finished(self) -> bool:
-        return self.cancelled
+        return self.cancelled or self.error_msg or self.finished
 
     def is_active(self) -> bool:
-        return not self.cancelled and not self.is_finished() and ((self.active is not None and self.active.is_set()) or (self.active is None and self.pre_active))
+        return not self.is_finished() and ((self.active is not None and self.active.is_set()) or (self.active is None and self.pre_active))
+
+    def to_task_message(self):
+        return TaskMessage(
+            self.get_task_id(),
+            self.get_action_id(),
+            self.get_action_spec().get_action_title(),
+            self.get_current_subtask_text(),
+            self.subtasks_completed(),
+            self.subtasks_count(),
+            self.current_status()
+        )
+
+    def announce_update(self, event_type: str):
+        try:
+            if self.announcer:
+                self.announcer.announce(f'task-update-{event_type}', self.to_task_message())
+        except Exception as e:
+            self.error_msg = e

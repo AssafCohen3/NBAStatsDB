@@ -1,3 +1,4 @@
+# noinspection PyPackageRequirements
 import i18n
 
 i18n.set('file_format', 'json')

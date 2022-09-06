@@ -1,16 +1,14 @@
 import datetime
-import json
 import logging
 from logging import LogRecord
 from typing import Optional
-
 from flask.json import JSONEncoder
-from flask_socketio import SocketIO
-
 from dbmanager.DBManager import DbManager
+from dbmanager.tasks.TaskAnnouncer import TaskAnnouncer
 
 db_manager: Optional[DbManager] = DbManager()
-socketio = SocketIO()
+announcer = TaskAnnouncer()
+logging.basicConfig(level=logging.INFO)
 
 
 class CustomJSONEncoder(JSONEncoder):
@@ -32,12 +30,3 @@ class SocketIOFilter(logging.Filter):
         return not \
             (message.startswith('GET /socket.io') or
              message.startswith('POST /socket.io'))
-
-
-def init_socket(app):
-    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
-    # socketio.init_app(app, async_mode='threading', cors_allowed_origins="*")
-    # logging.getLogger('socketio').setLevel(logging.ERROR)
-    # logging.getLogger('engineio').setLevel(logging.ERROR)
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger("werkzeug").addFilter(SocketIOFilter())

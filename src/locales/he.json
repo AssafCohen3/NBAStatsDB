@@ -18,7 +18,8 @@
 		"create_db": "צור את בסיס הנתונים",
 		"database_not_initialized": "אתחול בסיס הנתונים נכשל",
 		"try_again": "נסה שוב",
-		"try_again_with_another_settings": "נסה שוב עם הגדרות שונות:"
+		"try_again_with_another_settings": "נסה שוב עם הגדרות שונות:",
+		"tasks": "משימות"
 	},
 	"validations": {
 		"required": "השדה נדרש"
@@ -26,5 +27,12 @@
 	"langs": {
 		"he": "עברית",
 		"en": "אנגלית"
+	},
+	"tasks": {
+		"error_occurred": "שגיאה התרחשה",
+		"task_cancelled": "המשימה בוטלה",
+		"task_finished": "המשימה התבצעה בהצלחה",
+		"progress_line": "{completed} מתוך {to_finish}",
+		"progress_line_no_to_finish": "{completed} הסתיימו"
 	}
 }

@@ -9,10 +9,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from dbmanager.FlaskLanguage import Language
-from dbmanager.TaskManager import run_tasks_loop
+from dbmanager.blueprints.tasks import tasks_bp
+from dbmanager.tasks.TaskManager import run_tasks_loop
 from dbmanager.blueprints.resources import resources_bp
-from dbmanager.extensions import db_manager, CustomJSONEncoder, init_socket, socketio
-from dbmanager.test2 import test_socket
+from dbmanager.extensions import db_manager, CustomJSONEncoder
 
 API_VERSION = "1.1.0"
 
@@ -21,11 +21,10 @@ app.config.from_file("flask.config.json", load=json.load)
 app.json_encoder = CustomJSONEncoder
 CORS(app)
 Language(app)
-init_socket(app)
 tasks_thread = Thread(target=run_tasks_loop, daemon=True)
 tasks_thread.start()
 app.register_blueprint(resources_bp)
-app.config['firstConnect'] = True
+app.register_blueprint(tasks_bp)
 
 
 def init_sqlalchemy(db_name: str):
@@ -53,13 +52,6 @@ def init_db():
     }
 
 
-@socketio.on('first-connect')
-def handle_connection(_):
-    if app.config['firstConnect']:
-        # socketio.start_background_task(test_socket)
-        app.config['firstConnect'] = False
-
-
 if __name__ == "__main__":
     port = 5000
     debug = True
@@ -67,4 +59,4 @@ if __name__ == "__main__":
         port = int(sys.argv[1])
     if len(sys.argv) > 2:
         debug = sys.argv[2] == 'true'
-    socketio.run(app, '127.0.0.1', port=port, debug=debug, allow_unsafe_werkzeug=True)
+    app.run('127.0.0.1', port=port, debug=debug, threaded=True)
