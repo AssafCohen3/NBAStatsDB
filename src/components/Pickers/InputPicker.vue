@@ -1,13 +1,23 @@
 <template>
-	<season-type-picker
-		v-if="actionInput.input_name == 'SeasonTypeSelector'"
-		v-model:inputData="inputDataModel" />
+	<div
+		class="py-[10px]">
+		<season-type-picker
+			v-if="actionInput.input_name == 'SeasonTypeSelector'"
+			v-model:inputData="inputDataModel" />
+		<date-range-picker
+			v-if="actionInput.input_name == 'DateRangeSelector'"
+			v-model:inputData="inputDataModel"
+			:default-date="actionInput.default_date"
+			:min-date="actionInput.min_date"
+			:max-date="actionInput.max_date" />
+	</div>
 </template>
 
 <script>
+import DateRangePicker from './DateRangePicker.vue';
 import SeasonTypePicker from './SeasonTypePicker.vue';
 export default {
-	components: { SeasonTypePicker },
+	components: { SeasonTypePicker, DateRangePicker, },
 	props: {
 		actionInput: {
 			type: Object,

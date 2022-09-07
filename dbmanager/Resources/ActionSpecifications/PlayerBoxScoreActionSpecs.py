@@ -78,6 +78,7 @@ class UpdatePlayerBoxScoresInDateRange(ActionSpecificationAbc):
     def get_action_inputs(cls, session) -> List[ActionInput]:
         return [
             SeasonTypeSelector(),
+            # TODO maybe dont use constant
             DateRangeSelector(datetime.date(FIRST_NBA_SEASON, 1, 1),
                               datetime.date.today(),
                               datetime.date.today())

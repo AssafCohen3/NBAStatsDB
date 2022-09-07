@@ -33,12 +33,7 @@ class ActionAbc(ABC):
         self.finished = False
         self.started = False
         self.announcer: Optional[AnnouncerAbc] = None
-        # self.start_callback: Optional[Callable[[str], None]] = None
-        # self.finish_callback: Optional[Callable[[str], None]] = None
-        # self.exception_callback: Optional[Callable[[str, Exception], None]] = None
-        # self.mini_finish_callback: Optional[Callable[[str], None]] = None
-        # self.pause_callback: Optional[Callable[[str], None]] = None
-        # self.resume_callback: Optional[Callable[[str], None]] = None
+        self.subtask_finished = False
         self.session: scoped_session = session
 
     @classmethod
@@ -75,12 +70,13 @@ class ActionAbc(ABC):
         self.pre_active = True
 
     def __await__(self):
+        # we want to run run_action
         target_iter = self.run_action().__await__()
         iter_send, iter_throw = target_iter.send, target_iter.throw
         send, message = iter_send, None
         # This "while" emulates yield from.
         while True:
-            # wait for can_run before resuming execution of self._target
+            # check if paused. if yes wait for resume
             paused = False
             try:
                 while self.active is not None and not self.active.is_set():
@@ -90,13 +86,18 @@ class ActionAbc(ABC):
                     yield from self.active.wait().__await__()
             except BaseException as err:
                 send, message = iter_throw, err
+            # if actually paused and woke up because of resume(and not because cancelling)
             if paused and not self.cancelled:
                 self.announce_update('resume')
 
+            # if cancelled finish
             if self.cancelled:
                 self.announce_update('cancel')
                 return None
             # continue with our regular program
+            # clear the subtask finished flag
+            # after the execution the flag will be up only if the execution finished with self.finish_subtask()
+            self.subtask_finished = False
             try:
                 signal = send(message)
             except StopIteration as err:
@@ -112,7 +113,8 @@ class ActionAbc(ABC):
             else:
                 send = iter_send
             # sub finish
-            if self.started:
+            # if already started and finished with finish_subtask()
+            if self.started and self.subtask_finished:
                 self.announce_update('sub-finish')
             try:
                 message = yield signal
@@ -212,3 +214,7 @@ class ActionAbc(ABC):
                 self.announcer.announce(f'task-update-{event_type}', self.to_task_message())
         except Exception as e:
             self.error_msg = e
+
+    async def finish_subtask(self):
+        self.subtask_finished = True
+        await asyncio.sleep(0)

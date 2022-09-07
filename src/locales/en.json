@@ -12,7 +12,8 @@
 		"submit": "Submit",
 		"try_again": "Try again",
 		"try_again_with_another_settings": "Try again with another settings:",
-		"tasks": "Tasks"
+		"tasks": "Tasks",
+		"date_range": "Date Range"
 	},
 	"generic": {
 		"home": "Home",

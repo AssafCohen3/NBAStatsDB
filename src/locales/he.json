@@ -19,7 +19,8 @@
 		"database_not_initialized": "אתחול בסיס הנתונים נכשל",
 		"try_again": "נסה שוב",
 		"try_again_with_another_settings": "נסה שוב עם הגדרות שונות:",
-		"tasks": "משימות"
+		"tasks": "משימות",
+		"date_range": "טווח תאריכים"
 	},
 	"validations": {
 		"required": "השדה נדרש"

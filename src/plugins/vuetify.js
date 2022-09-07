@@ -61,11 +61,12 @@ export function createVueI18nAdapter ({ i18n, useI18n, ...rest }){
 	};
 }
 
-
 export default createVuetify({
+	// locale: currentLocale
 	// for testing hebrew
 	// locale: {
-	// 	defaultLocale: 'he'
+	// 	defaultLocale: currentLocale
 	// }
+	
 	locale: createVueI18nAdapter({ i18n, useI18n })
 });

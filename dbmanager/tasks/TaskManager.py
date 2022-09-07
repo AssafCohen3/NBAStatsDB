@@ -3,12 +3,15 @@ import itertools
 from typing import Dict, List
 
 from dbmanager.Errors import TaskNotExist, TaskAlreadyFinished, TaskNotFinished
+from dbmanager.RequestHandlers.Limiter import stats_limiter
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
 
 
 def run_tasks_loop():
     asyncio.set_event_loop(actions_loop)
+    # TODO check this
+    stats_limiter.init_async()
     actions_loop.run_forever()
 
 

@@ -10,6 +10,8 @@ import axios from 'axios';
 // import axiosRetry, { exponentialDelay } from 'axios-retry';
 import CountryFlag from 'vue-country-flag-next';
 import LanguagueReloadPlugin from './plugins/language_reload_plugin';
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 loadFonts();
 // var aaa = window.process;
@@ -34,4 +36,5 @@ createApp(App)
 	.use(i18n)
 	.use(LanguagueReloadPlugin)
 	.component('country-flag', CountryFlag)
+	.component('date-picker', Datepicker)
 	.mount('#app');

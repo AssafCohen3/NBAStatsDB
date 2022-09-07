@@ -4,7 +4,6 @@ import re
 from abc import ABC
 from collections import defaultdict
 from typing import Union, Optional, List, Any, Dict, Type
-
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
@@ -12,12 +11,13 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreDownloader
 from dbmanager.Logger import log_message
+from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.PlayerBoxScoreActionSpecs import UpdatePlayerBoxScores, \
     ResetPlayerBoxScores, UpdatePlayerBoxScoresInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
-from dbmanager.constants import API_COUNT_THRESHOLD, STATS_DELAY_SECONDS
+from dbmanager.constants import API_COUNT_THRESHOLD
 
 
 def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, Any]]:
@@ -104,10 +104,12 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
     async def fetch_season_type_boxscores(self, season_type: SeasonType):
         continue_loop = True
         while continue_loop:
-            data = BoxScoreDownloader(
+            downloader = BoxScoreDownloader(
                 self.last_fetched_date,
                 self.end_date,
-                season_type, 'P').download()
+                season_type, 'P'
+            )
+            data = await call_async_with_retry(downloader.download)
             if not data:
                 break
             data = data["resultSets"][0]
@@ -130,7 +132,7 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
             transformed = transform_boxscores(results, headers)
             insert_boxscores(self.session, transformed, self.replace)
             self.count += 1
-            await asyncio.sleep(STATS_DELAY_SECONDS)
+            await self.finish_subtask()
 
     async def action(self):
         for i, season_type in enumerate(self.season_types):

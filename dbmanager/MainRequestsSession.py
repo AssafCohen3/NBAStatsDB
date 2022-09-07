@@ -34,10 +34,6 @@ requests_session.mount('https://', adapter)
 requests_session.mount('http://', adapter)
 
 
-def foo():
-    return 8
-
-
 def call_with_retry(func_to_call, retries_number=1):
     for i in range(0, retries_number + 1):
         try:
