@@ -1,14 +1,13 @@
-from sqlalchemy import Column, Computed
+from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Date
 from dbmanager.base import Base
 
 
-class Player(Base):
-    __tablename__ = 'Player'
+class NBAPlayer(Base):
+    __tablename__ = 'NBAPlayer'
     PlayerId = Column(Integer, primary_key=True)
     FirstName = Column(Text)
     LastName = Column(Text)
-    FullName = Column(Text, Computed("FirstName || ' ' || LastName", persisted=False))
     PlayerSlug = Column(Text)
     Active = Column(Integer)
     Position = Column(Text)
@@ -20,4 +19,3 @@ class Player(Base):
     DraftRound = Column(Integer)
     DraftNumber = Column(Integer)
     BirthDate = Column(Date)
-    UpdatedAtSeason = Column(Integer)

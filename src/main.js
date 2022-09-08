@@ -12,6 +12,7 @@ import CountryFlag from 'vue-country-flag-next';
 import LanguagueReloadPlugin from './plugins/language_reload_plugin';
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import moment from 'moment';
 
 loadFonts();
 // var aaa = window.process;
@@ -29,12 +30,13 @@ axios.defaults.headers.common['Accept-Language'] = currentLocal;
 // 	retryCondition: customIsNetworkErrorCheck
 // });
 // wait for server to initiate
-createApp(App)
+let app = createApp(App)
 	.use(router)
 	.use(store)
 	.use(vuetify)
 	.use(i18n)
 	.use(LanguagueReloadPlugin)
 	.component('country-flag', CountryFlag)
-	.component('date-picker', Datepicker)
-	.mount('#app');
+	.component('date-picker', Datepicker);
+app.config.globalProperties.$moment = moment;
+app.mount('#app');

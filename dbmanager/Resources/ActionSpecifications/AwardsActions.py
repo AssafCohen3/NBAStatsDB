@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from dbmanager.AppI18n import gettext
-from dbmanager.Database.Models.Player import Player
+from dbmanager.Database.Models.NBAPlayer import Player
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 
 

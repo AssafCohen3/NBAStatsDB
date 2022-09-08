@@ -27,7 +27,7 @@
 					<div>
 						<div
 							class="text-dimmed-white font-bold text-[25px]">
-							{{ currentResource.last_updated || $t('common.never') }}
+							{{ currentResource.last_updated && $moment(currentResource.last_updated).format('YYYY-MM-DD') || $t('common.never') }}
 						</div>
 						<div
 							class="text-dimmed-white text-[12px]">

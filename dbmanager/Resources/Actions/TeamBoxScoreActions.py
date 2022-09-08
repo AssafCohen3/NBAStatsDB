@@ -7,13 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
-from dbmanager.Database.Models.BoxScoreP import BoxScoreP
+from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreDownloader
 from dbmanager.Logger import log_message
 from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
-from dbmanager.Resources.ActionSpecifications.PlayerBoxScoreActionSpecs import UpdatePlayerBoxScores, \
-    ResetPlayerBoxScores, UpdatePlayerBoxScoresInDateRange
+from dbmanager.Resources.ActionSpecifications.TeamBoxScoreActionSpecs import UpdateTeamBoxScores, \
+    ResetTeamBoxScores, UpdateTeamBoxScoresInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.constants import STATS_API_COUNT_THRESHOLD
@@ -21,8 +21,6 @@ from dbmanager.constants import STATS_API_COUNT_THRESHOLD
 
 def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, Any]]:
     renames = {
-        'PLAYER_ID': 'PlayerId',
-        'PLAYER_NAME': 'PlayerName',
         'TEAM_ID': 'TeamId',
         'TEAM_ABBREVIATION': 'TeamAbbreviation',
         'TEAM_NAME': 'TeamName',
@@ -64,13 +62,13 @@ def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, A
 
 # returns the last saved date of some box score type plus 1 day(empty string if none found)
 def get_last_game_date(session: scoped_session, season_type: SeasonType) -> Optional[datetime.date]:
-    stmt = select(BoxScoreP.GameDate).where(BoxScoreP.SeasonType == season_type.code).order_by(
-        BoxScoreP.GameDate.desc()).limit(1)
+    stmt = select(BoxScoreT.GameDate).where(BoxScoreT.SeasonType == season_type.code).order_by(
+        BoxScoreT.GameDate.desc()).limit(1)
     res = session.execute(stmt).fetchall()
     return res[0][0] if res else None
 
 
-class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
+class GeneralResetTeamBoxScoresAction(ActionAbc, ABC):
     def __init__(self, session: scoped_session,
                  season_type_code: str,
                  start_date: datetime.date = None,
@@ -89,7 +87,7 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
     def insert_boxscores(self, session: scoped_session, boxscores: List[Dict[str, Any]], replace: bool):
         if not boxscores:
             return
-        stmt = insert(BoxScoreP)
+        stmt = insert(BoxScoreT)
         if replace:
             stmt = stmt.on_conflict_do_update(set_={
                 c.name: c for c in stmt.excluded
@@ -106,7 +104,7 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
             downloader = BoxScoreDownloader(
                 self.last_fetched_date,
                 self.end_date,
-                season_type, 'P'
+                season_type, 'T'
             )
             data = await call_async_with_retry(downloader.download)
             if not data:
@@ -115,7 +113,7 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
             headers = data["headers"]
             results = data["rowSet"]
             log_message(
-                f"found {len(results)} players boxscores in {season_type.name} from date {self.last_fetched_date}")
+                f"found {len(results)} teams boxscores in {season_type.name} from date {self.last_fetched_date}")
             game_date_index = headers.index("GAME_DATE")
             wl_index = headers.index('WL')
             if len(results) >= STATS_API_COUNT_THRESHOLD:
@@ -146,37 +144,37 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
     def get_current_subtask_text_abs(self) -> str:
         # fetching boxscores of type Regular Season between 1976-01-01 and 1976-01-02
         if self.end_date is None:
-            return gettext('resources.playerboxscore.actions.update_player_boxscores.fetching_boxscores_of_type_since_date',
+            return gettext('resources.teamboxscore.actions.update_team_boxscores.fetching_boxscores_of_type_since_date',
                            season_type=self.season_types[self.current_season_type_index].name,
                            start_date=self.last_fetched_date.isoformat() if self.last_fetched_date else '')
         else:
-            return gettext('resources.playerboxscore.actions.update_player_boxscores.fetching_boxscores_of_type_in_date_range',
+            return gettext('resources.teamboxscore.actions.update_team_boxscores.fetching_boxscores_of_type_in_date_range',
                            season_type=self.season_types[self.current_season_type_index].name,
                            start_date=self.last_fetched_date.isoformat() if self.last_fetched_date else '',
                            end_date=self.end_date.isoformat())
 
 
-class UpdatePlayerBoxScoresAction(GeneralResetPlayerBoxScoresAction):
+class UpdateTeamBoxScoresAction(GeneralResetTeamBoxScoresAction):
     def __init__(self, session: scoped_session,
                  season_type_code: str):
         super().__init__(session, season_type_code, None, None, False, True)
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return UpdatePlayerBoxScores
+        return UpdateTeamBoxScores
 
 
-class ResetPlayerBoxScoresAction(GeneralResetPlayerBoxScoresAction):
+class ResetTeamBoxScoresAction(GeneralResetTeamBoxScoresAction):
     def __init__(self, session: scoped_session,
                  season_type_code: str):
         super().__init__(session, season_type_code, None, None, True, False)
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return ResetPlayerBoxScores
+        return ResetTeamBoxScores
 
 
-class UpdatePlayerBoxScoresInDateRangeAction(GeneralResetPlayerBoxScoresAction):
+class UpdateTeamBoxScoresInDateRangeAction(GeneralResetTeamBoxScoresAction):
     def __init__(self, session: scoped_session,
                  season_type_code: str,
                  start_date: datetime.date = None, end_date: datetime.date = None):
@@ -184,4 +182,4 @@ class UpdatePlayerBoxScoresInDateRangeAction(GeneralResetPlayerBoxScoresAction):
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return UpdatePlayerBoxScoresInDateRange
+        return UpdateTeamBoxScoresInDateRange

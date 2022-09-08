@@ -1,6 +1,7 @@
+# noinspection PyUnresolvedReferences
+import dbmanager.pbp.PatchTimeout
 from pbpstats.resources.enhanced_pbp.rebound import EventOrderError
 from pbpstats.resources.enhanced_pbp.stats_nba import StatsViolation
-import dbmanager.pbp.PatchTimeout
 from dbmanager.MainRequestsSession import requests_session as requests
 from pbpstats import HEADERS, REQUEST_TIMEOUT
 from pbpstats.resources.enhanced_pbp import (
@@ -17,10 +18,6 @@ from pbpstats.resources.enhanced_pbp.stats_nba.rebound import StatsRebound
 import pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item as pbpItemClass
 from pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item import StatsEnhancedPbpItem
 from pbpstats.resources.enhanced_pbp.stats_nba.start_of_period import StatsStartOfPeriod
-
-
-class Object(object):
-    pass
 
 
 pbpItemClass.KEY_ATTR_MAPPER['WCTIMESTRING'] = 'real_time'
@@ -175,7 +172,7 @@ def new_rebound_missed_shot_property(self):
             prev_event = getattr(prev_event, 'previous_event')
         if isinstance(prev_event, (FieldGoal, FreeThrow)):
             return prev_event
-    to_ret = Object()
+    to_ret = object()
     setattr(to_ret, 'seconds_remaining', 20)
     setattr(to_ret, 'team_id', None)
     return to_ret
@@ -218,7 +215,3 @@ def missed_shot(self):
 setattr(StatsRebound, 'missed_shot', new_rebound_missed_shot_property)
 setattr(StatsEnhancedPbpItem, 'get_offense_team_id', get_offense_team_id)
 setattr(StatsStartOfPeriod, '_get_starters_from_boxscore_request', _get_starters_from_boxscore_request)
-
-
-def foo():
-    return dbmanager.pbp.PatchTimeout.foo()

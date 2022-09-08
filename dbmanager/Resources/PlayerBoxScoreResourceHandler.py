@@ -8,11 +8,17 @@ from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.PlayerBoxScoreActions import UpdatePlayerBoxScoresAction, ResetPlayerBoxScoresAction, \
     UpdatePlayerBoxScoresInDateRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, RelatedTable, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceSpecifications.PlayerBoxScoreResourceSpecification import \
+    PlayerBoxScoreResourceSpecification
+from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SeasonType import SEASON_TYPES
 
 
 class PlayerBoxScoreResourceHandler(ResourceAbc):
+    @classmethod
+    def get_resource_spec(cls) -> Type[ResourceSpecificationAbc]:
+        return PlayerBoxScoreResourceSpecification
 
     @classmethod
     def get_actions(cls) -> List[Type[ActionAbc]]:
@@ -21,15 +27,6 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
             ResetPlayerBoxScoresAction,
             UpdatePlayerBoxScoresInDateRangeAction
         ]
-
-    @classmethod
-    def get_id(cls) -> str:
-        return 'playerboxscore'
-
-    @classmethod
-    def get_name(cls) -> str:
-        # TODO translate?
-        return 'PlayerBoxScore'
 
     @classmethod
     def get_messages(cls, session: scoped_session) -> List[ResourceMessage]:
@@ -55,13 +52,3 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
             to_ret.append(seasons_message)
             to_ret.append(games_message)
         return to_ret
-
-    @classmethod
-    def get_related_tables(cls) -> List[RelatedTable]:
-        return [
-            RelatedTable('BoxScoreP')
-        ]
-
-    @classmethod
-    def get_dependencies(cls) -> List[Type['ResourceAbc']]:
-        return []

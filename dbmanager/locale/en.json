@@ -18,9 +18,34 @@
 				"update_player_boxscores": {
 					"fetching_boxscores_of_type_in_date_range": "fetching boxscores of type %{season_type} between %{start_date} and %{end_date}",
 					"fetching_boxscores_of_type_since_date": "fetching boxscores of type %{season_type} since %{start_date}",
-					"title": "update boxscores"
+					"title": "Update boxscores"
 				},
 				"update_player_boxscores_in_date_range": {
+					"title": "Redownload boxscores in date range"
+				}
+			}
+		},
+		"teamboxscore": {
+			"messages": {
+				"seasons_message": {
+					"text": "%{seasons_count} Seasons",
+					"title": "Seasons with boxscores of type %{season_type}: "
+				},
+				"games_message": {
+					"title": "Games with boxscores of type %{season_type}: ",
+					"text": "%{games_count} Games"
+				}
+			},
+			"actions": {
+				"reset_team_boxscores": {
+					"title": "Redownload boxscores"
+				},
+				"update_team_boxscores": {
+					"fetching_boxscores_of_type_in_date_range": "fetching boxscores of type %{season_type} between %{start_date} and %{end_date}",
+					"fetching_boxscores_of_type_since_date": "fetching boxscores of type %{season_type} since %{start_date}",
+					"title": "Update boxscores"
+				},
+				"update_team_boxscores_in_date_range": {
 					"title": "Redownload boxscores in date range"
 				}
 			}
@@ -28,6 +53,24 @@
 		"common": {
 			"errors": {
 				"season_type_ilegal": "season type code not exist"
+			}
+		},
+		"nba_players": {
+			"actions": {
+				"update_nba_players": {
+					"title": "Update players index",
+					"fetching_players": "Fetching players..."
+				}
+			},
+			"messages": {
+				"players": {
+					"title": "Players count:",
+					"text": "%{players_count} Players"
+				},
+				"active_players": {
+					"title": "Active players count:",
+					"text": "%{active_players_count} Active players"
+				}
 			}
 		}
 	},

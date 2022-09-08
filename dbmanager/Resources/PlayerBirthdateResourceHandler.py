@@ -8,7 +8,7 @@ from sqlalchemy import update, bindparam, func, and_
 from sqlalchemy.sql import select
 
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
-from dbmanager.Database.Models.Player import Player
+from dbmanager.Database.Models.NBAPlayer import Player
 from dbmanager.Downloaders.PlayerProfileHandler import PlayerProfileHandler
 from dbmanager.Downloaders.TeamRosterHandler import TeamRosterHandler
 from dbmanager.MainRequestsSession import call_with_retry

@@ -7,6 +7,8 @@ class TaskMessage:
     task_id: int
     action_id: str
     action_title: str
+    resource_id: str
+    resource_name: str
     mini_title: str
     completed: int
     to_finish: Optional[int]

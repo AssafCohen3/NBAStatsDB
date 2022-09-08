@@ -3,6 +3,10 @@
 
 export const SeasonTypes = [
 	{
+		code: '0',
+		name: 'All',
+	},
+	{
 		code: '2', 
 		name: 'Regular Season',
 	},

@@ -18,6 +18,10 @@
 				class="px-[20px] w-full">
 				<div
 					class="text-dimmed-white font-bold">
+					{{ task.resource_name }}
+				</div>
+				<div
+					class="text-dimmed-white font-bold">
 					{{ task.action_title }}
 				</div>
 				<div

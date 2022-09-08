@@ -5,31 +5,28 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
 
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
+from dbmanager.Resources.NBAPlayersResourceHandler import NBAPlayersResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from dbmanager.Database.Models.Resource import Resource
-
-
-# noinspection PyUnresolvedReferences
-import dbmanager.MainRequestsSession
 from dbmanager.Errors import ResourceNotExistError
-# noinspection PyUnresolvedReferences
-from dbmanager.MainRequestsSession import requests_session as requests
-# noinspection PyUnresolvedReferences
+from dbmanager.Resources.TeamBoxScoreResourceHandler import TeamBoxScoreResourceHandler
 from dbmanager.base import Base
 # noinspection PyUnresolvedReferences
 import dbmanager.Database.Models
 # noinspection PyUnresolvedReferences
 import dbmanager.pbp.Patcher
-# noinspection PyUnresolvedReferences
-import dbmanager.RequestsLogger
 
 
 class DbManager:
     def __init__(self):
         self.engine: Optional[Engine] = None
         self.session: Optional[scoped_session] = None
-        self.available_resources: List[Type[ResourceAbc]] = [PlayerBoxScoreResourceHandler]
+        self.available_resources: List[Type[ResourceAbc]] = [
+            PlayerBoxScoreResourceHandler,
+            TeamBoxScoreResourceHandler,
+            NBAPlayersResourceHandler
+        ]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources
         }
@@ -55,7 +52,6 @@ class DbManager:
         resource = self.get_resource(resource_id)
         action_to_run = resource.create_action(self.session, action_id, params)
         return action_to_run
-        # enqueue_action(action_to_run)
 
     def get_resources_list_compact(self) -> List[Dict[str, Any]]:
         available_ids = [res.get_id() for res in self.available_resources]

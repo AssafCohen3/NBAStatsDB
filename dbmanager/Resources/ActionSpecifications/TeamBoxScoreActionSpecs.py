@@ -4,17 +4,17 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Errors import IlegalParameterValueError
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput
 from dbmanager.Resources.ActionSpecifications.ActionInput import SeasonTypeSelector, DateRangeSelector
-from dbmanager.Resources.ResourceSpecifications.PlayerBoxScoreResourceSpecification import \
-    PlayerBoxScoreResourceSpecification
+from dbmanager.Resources.ResourceSpecifications.TeamBoxScoreResourceSpecification import \
+    TeamBoxScoreResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SeasonType import get_season_types
 from dbmanager.constants import FIRST_NBA_SEASON
 
 
-class UpdatePlayerBoxScores(ActionSpecificationAbc):
+class UpdateTeamBoxScores(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return PlayerBoxScoreResourceSpecification
+        return TeamBoxScoreResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):
@@ -26,11 +26,11 @@ class UpdatePlayerBoxScores(ActionSpecificationAbc):
 
     @classmethod
     def get_action_id(cls) -> str:
-        return 'update_player_boxscores'
+        return 'update_team_boxscores'
 
     @classmethod
     def get_action_title(cls) -> str:
-        return gettext('resources.playerboxscore.actions.update_player_boxscores.title')
+        return gettext('resources.teamboxscore.actions.update_team_boxscores.title')
 
     @classmethod
     def get_action_inputs(cls, session) -> List[ActionInput]:
@@ -39,10 +39,10 @@ class UpdatePlayerBoxScores(ActionSpecificationAbc):
         ]
 
 
-class ResetPlayerBoxScores(ActionSpecificationAbc):
+class ResetTeamBoxScores(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return PlayerBoxScoreResourceSpecification
+        return TeamBoxScoreResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):
@@ -54,11 +54,11 @@ class ResetPlayerBoxScores(ActionSpecificationAbc):
 
     @classmethod
     def get_action_id(cls) -> str:
-        return 'reset_player_boxscores'
+        return 'reset_team_boxscores'
 
     @classmethod
     def get_action_title(cls) -> str:
-        return gettext('resources.playerboxscore.actions.reset_player_boxscores.title')
+        return gettext('resources.teamboxscore.actions.reset_team_boxscores.title')
 
     @classmethod
     def get_action_inputs(cls, session) -> List[ActionInput]:
@@ -67,10 +67,10 @@ class ResetPlayerBoxScores(ActionSpecificationAbc):
         ]
 
 
-class UpdatePlayerBoxScoresInDateRange(ActionSpecificationAbc):
+class UpdateTeamBoxScoresInDateRange(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return PlayerBoxScoreResourceSpecification
+        return TeamBoxScoreResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):
@@ -82,11 +82,11 @@ class UpdatePlayerBoxScoresInDateRange(ActionSpecificationAbc):
 
     @classmethod
     def get_action_id(cls) -> str:
-        return 'update_player_boxscores_in_date_range'
+        return 'update_team_boxscores_in_date_range'
 
     @classmethod
     def get_action_title(cls) -> str:
-        return gettext('resources.playerboxscore.actions.update_player_boxscores_in_date_range.title')
+        return gettext('resources.teamboxscore.actions.update_team_boxscores_in_date_range.title')
 
     @classmethod
     def get_action_inputs(cls, session) -> List[ActionInput]:

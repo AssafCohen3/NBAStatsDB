@@ -6,7 +6,7 @@ from sqlalchemy.sql import select
 from dbmanager.Database.Models.Awards import Awards
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
-from dbmanager.Database.Models.Player import Player
+from dbmanager.Database.Models.NBAPlayer import Player
 from dbmanager.Downloaders.PlayerAwardsHandler import PlayerAwardsHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert

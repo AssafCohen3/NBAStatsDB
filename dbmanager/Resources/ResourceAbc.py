@@ -3,14 +3,13 @@ import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Type, Dict, Any, Optional
-
 from sqlalchemy import select
 from sqlalchemy.orm import scoped_session
-
 from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Errors import ActionNotExistError
-from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
 
 @dataclass
@@ -20,12 +19,29 @@ class ResourceMessage:
     status: str
 
 
-@dataclass
-class RelatedTable:
-    name: str
-
-
 class ResourceAbc(ABC):
+
+    # disgusting extraction of the resource details to a class to allow to reference it from action to prevent circular import
+    @classmethod
+    @abstractmethod
+    def get_resource_spec(cls) -> Type[ResourceSpecificationAbc]:
+        pass
+
+    @classmethod
+    def get_id(cls):
+        return cls.get_resource_spec().get_id()
+
+    @classmethod
+    def get_name(cls):
+        return cls.get_resource_spec().get_name()
+
+    @classmethod
+    def get_dependencies(cls):
+        return cls.get_resource_spec().get_dependencies()
+
+    @classmethod
+    def get_related_tables(cls):
+        return cls.get_resource_spec().get_related_tables()
 
     @classmethod
     @abstractmethod
@@ -59,39 +75,11 @@ class ResourceAbc(ABC):
         return cls.get_action_cls(action_id).create_action_from_params(session, parsed_params)
 
     @classmethod
-    @abstractmethod
-    def get_id(cls) -> str:
-        """
-        get the resource id
-        """
-
-    @classmethod
-    @abc.abstractmethod
-    def get_name(cls) -> str:
-        """
-        get the resource name
-        """
-
-    @classmethod
     @abc.abstractmethod
     def get_messages(cls, session: scoped_session) -> List[ResourceMessage]:
         """
         Get messages describing the status of the resource
         message has title(translateable), text(translateable) and status
-        """
-
-    @classmethod
-    @abc.abstractmethod
-    def get_related_tables(cls) -> List[RelatedTable]:
-        """
-        Get related tables.
-        """
-
-    @classmethod
-    @abstractmethod
-    def get_dependencies(cls) -> List[Type['ResourceAbc']]:
-        """
-        Get resources that the resource depends on.
         """
 
     @classmethod

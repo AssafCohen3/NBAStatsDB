@@ -157,7 +157,7 @@ const actions = {
 const mutations = {
 	updateTask(state, taskToUpdate){
 		let currentTask = state.currentTasks.find(t => t.task_id === taskToUpdate.task_id);
-		console.log(currentTask);
+		console.log(taskToUpdate);
 		if(currentTask === undefined){
 			state.currentTasks.push(taskToUpdate);
 		}

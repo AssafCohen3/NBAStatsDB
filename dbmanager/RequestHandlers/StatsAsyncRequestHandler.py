@@ -6,6 +6,7 @@ from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
 from dbmanager.RequestHandlers.Limiter import stats_limiter
+from dbmanager.constants import STATS_API_SESSION_MAX_REQUESTS
 
 
 class ThreadSafeCounter:
@@ -40,14 +41,13 @@ adapter = TimeoutHTTPAdapter(max_retries=retries, timeout=10)
 stats_session.mount('https://', adapter)
 stats_session.mount('http://', adapter)
 requests_count = ThreadSafeCounter()
-STATS_API_MAX_SESSION_REQUESTS = 550
 
 
 async def call_async_with_retry(func_to_call, retries_number=1):
     await stats_limiter.acquire()
     for i in range(0, retries_number + 1):
         current_request_count = requests_count.inc_and_get()
-        if current_request_count >= STATS_API_MAX_SESSION_REQUESTS:
+        if current_request_count >= STATS_API_SESSION_MAX_REQUESTS:
             logging.info('Stats requests handler: reached session max requests limit. clearing cookies...')
             stats_session.cookies.clear()
             requests_count.reset_counter()

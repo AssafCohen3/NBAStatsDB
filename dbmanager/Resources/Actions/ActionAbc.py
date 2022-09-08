@@ -1,10 +1,12 @@
 import asyncio
+import datetime
 from abc import ABC, abstractmethod
 from typing import Optional, Type, Union, Dict, Any
 
+from sqlalchemy import update
 from sqlalchemy.orm import scoped_session
-
 from dbmanager.AppI18n import gettext
+from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
@@ -30,6 +32,7 @@ class ActionAbc(ABC):
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
         self.error_msg: Optional[Exception] = None
+        self.completed_subtasks_count = 0
         self.finished = False
         self.started = False
         self.announcer: Optional[AnnouncerAbc] = None
@@ -164,17 +167,13 @@ class ActionAbc(ABC):
         """
 
     # None means not known
-    @abstractmethod
     def subtasks_count(self) -> Union[int, None]:
         """
         get subtasks count
         """
 
-    @abstractmethod
-    def subtasks_completed(self) -> int:
-        """
-        get subtasks completed
-        """
+    def completed_subtasks(self):
+        return self.completed_subtasks_count
 
     def get_current_subtask_text(self) -> str:
         if self.error_msg:
@@ -202,8 +201,10 @@ class ActionAbc(ABC):
             self.get_task_id(),
             self.get_action_id(),
             self.get_action_spec().get_action_title(),
+            self.get_action_spec().get_resource().get_id(),
+            self.get_action_spec().get_resource().get_name(),
             self.get_current_subtask_text(),
-            self.subtasks_completed(),
+            self.completed_subtasks(),
             self.subtasks_count(),
             self.current_status()
         )
@@ -216,5 +217,15 @@ class ActionAbc(ABC):
             self.error_msg = e
 
     async def finish_subtask(self):
+        self.completed_subtasks_count += 1
         self.subtask_finished = True
         await asyncio.sleep(0)
+
+    def update_resource(self):
+        stmt = (
+            update(Resource)
+            .where(Resource.ResourceId == self.get_action_spec().get_resource().get_id())
+            .values(LastUpdated=datetime.datetime.now())
+        )
+        self.session.execute(stmt)
+        self.session.commit()

@@ -29,9 +29,52 @@
 				}
 			}
 		},
+		"teamboxscore": {
+			"actions": {
+				"update_team_boxscores": {
+					"fetching_boxscores_of_type_since_date": "מוריד בוקססקורס מסוג %{season_type} החל מ- %{start_date}",
+					"fetching_boxscores_of_type_in_date_range": "מוריד בוקססקורס מסוג %{season_type} בין %{start_date} ל- %{end_date}",
+					"title": "עדכן בוקססקורס"
+				},
+				"reset_team_boxscores": {
+					"title": "הורד מחדש בוקססקורס"
+				},
+				"update_team_boxscores_in_date_range": {
+					"title": "הורד מחדש בוקססקורס בין תאריכים"
+				}
+			},
+			"messages": {
+				"seasons_message": {
+					"title": "עונות עם בוקססקורס מסוג %{season_type}: ",
+					"text": "%{seasons_count} עונות"
+				},
+				"games_message": {
+					"title": "משחקים עם בוקססקורס מסוג %{season_type}: ",
+					"text": "%{games_count} משחקים"
+				}
+			}
+		},
 		"common": {
 			"errors": {
 				"season_type_ilegal": "קוד סוג עונה לא קיים"
+			}
+		},
+		"nba_players": {
+			"actions": {
+				"update_nba_players": {
+					"title": "עדכן את מאגר השחקנים",
+					"fetching_players": "מוריד שחקנים..."
+				}
+			},
+			"messages": {
+				"players": {
+					"title": "מספר השחקנים הקיימים:",
+					"text": "%{players_count} שחקנים"
+				},
+				"active_players": {
+					"title": "מספר השחקנים הפעילים הקיימים:",
+					"text": "%{active_players_count} שחקנים פעילים"
+				}
 			}
 		}
 	},

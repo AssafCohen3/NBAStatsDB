@@ -9,7 +9,7 @@ from sqlalchemy import union, func, literal_column
 from sqlalchemy.sql import select
 from unidecode import unidecode
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
-from dbmanager.Database.Models.Player import Player
+from dbmanager.Database.Models.NBAPlayer import Player
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from sqlalchemy.dialects.sqlite import insert

@@ -1,12 +1,13 @@
 import datetime
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Type
 
 from sqlalchemy.orm import scoped_session
 
 from dbmanager.Errors import RequiredParameterMissingError, UnknownParameterTypeError, IncorrectParameterTypeError, \
     UnexpectedParameterError
 from dbmanager.Resources.ActionSpecifications.ActionInput import ActionInput, ActionParameter
+from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
 
 def param_parser(param_value: str, param_type: str):
@@ -20,6 +21,11 @@ def param_parser(param_value: str, param_type: str):
 
 
 class ActionSpecificationAbc(ABC):
+
+    @classmethod
+    @abstractmethod
+    def get_resource(cls) -> Type[ResourceSpecificationAbc]:
+        pass
 
     @classmethod
     @abstractmethod

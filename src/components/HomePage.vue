@@ -12,14 +12,15 @@
 				<div
 					class="resources_grid">
 					<div
-						v-for="resource, index in repeated"
+						v-for="resource, index in resources"
 						:key="index"
 						v-ripple="{class: 'white--text'}"
 						class="resource_tile rounded-[20px] bg-[#ffffff10]
 					h-[150px] min-w-[150px] 
 					flex items-center justify-center flex-col
 					text-dimmed-white select-none
-					cursor-pointer">
+					cursor-pointer"
+						@click="resourceClicked(resource)">
 						<div
 							class="text-[20px] font-bold p-[20px]">
 							{{ resource.resource_name }}
@@ -31,7 +32,7 @@
 							</div>
 							<div
 								class="text-center">
-								{{ resource.last_updated || $t('common.never') }}
+								{{ resource.last_updated && $moment(resource.last_updated).format('YYYY-MM-DD') || $t('common.never') }}
 							</div>
 						</div>
 					</div>
@@ -81,6 +82,14 @@ export default {
 		...mapActions({
 			fetchResources: 'resources/fetchResources',
 		}),
+		resourceClicked(resource){
+			this.$router.push({
+				name: 'resource-page',
+				params: {
+					resourceId: resource.resource_id
+				},
+			});
+		},
 	},
 };
 </script>

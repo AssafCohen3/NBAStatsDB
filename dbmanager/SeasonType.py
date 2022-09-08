@@ -24,4 +24,3 @@ def get_season_types(season_type_code: str) -> List[SeasonType]:
     :return: season types according to the code
     """
     return [season_type for season_type in SEASON_TYPES if season_type.code == season_type_code or season_type_code == '0']
-

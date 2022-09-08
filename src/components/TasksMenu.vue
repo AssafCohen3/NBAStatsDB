@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="task_menu_container bg-[#0e0730] rounded-[20px] min-w-[500px] shadow-2xl drop-shadow"
+		class="task_menu_container bg-[#0e0730] rounded-[20px] min-w-[500px] shadow-2xl drop-shadow border-radius-[20px] border-[1px] border-solid border-primary-light"
 		elevation="20">
 		<div
 			class="text-primary-light font-bold text-[20px] text-center p-[20px]">

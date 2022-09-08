@@ -33,15 +33,7 @@ def enqueue_action(action: ActionAbc, done_callback=None):
 
 
 def get_tasks_messages() -> List[TaskMessage]:
-    tasks_statuses = [TaskMessage(
-        task.get_task_id(),
-        task.get_action_id(),
-        task.get_action_spec().get_action_title(),
-        task.get_current_subtask_text(),
-        task.subtasks_completed(),
-        task.subtasks_count(),
-        task.current_status()
-    ) for task_id, task in actions_dictionary.items()]
+    tasks_statuses = [task.to_task_message() for task_id, task in actions_dictionary.items()]
     return tasks_statuses
 
 
@@ -49,15 +41,7 @@ def get_task_message(task_id: int) -> TaskMessage:
     if task_id not in actions_dictionary:
         raise TaskNotExist(task_id)
     task = actions_dictionary[task_id]
-    return TaskMessage(
-        task.get_task_id(),
-        task.get_action_id(),
-        task.get_action_spec().get_action_title(),
-        task.get_current_subtask_text(),
-        task.subtasks_completed(),
-        task.subtasks_count(),
-        task.current_status()
-    )
+    return task.to_task_message()
 
 
 def pause_task(task_id: int):

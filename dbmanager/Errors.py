@@ -1,7 +1,13 @@
+from __future__ import annotations
+
+import typing
 from abc import ABC
-from typing import Dict, List
+from typing import Dict, List, Type
 
 from dbmanager.AppI18n import gettext
+
+if typing.TYPE_CHECKING:
+    from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 
 
 class ActionNotExistError(Exception):
@@ -18,6 +24,11 @@ class InvalidActionCallError(Exception):
         self.params = params
         self.error_msg = error_msg
         super().__init__(gettext('errors.invalid_action', resource_id=resource_id, action_id=action_id, params=params, error_msg=error_msg))
+
+
+class ActionFailedError(Exception):
+    def __init__(self, action_spec: Type[ActionSpecificationAbc], msg: str):
+        super().__init__(f'could not complete the action {action_spec.get_action_title()} of resource {action_spec.get_resource().get_name()}.\n{msg}')
 
 
 class ResourceNotExistError(Exception):
