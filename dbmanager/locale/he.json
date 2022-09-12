@@ -131,6 +131,23 @@
 					"text": "%{mappings_count} מתוך %{possible_mappings_count} שחקנים שזקוקים למיפוי"
 				}
 			}
+		},
+		"bref_players": {
+			"actions": {
+				"redownload_bref_players": {
+					"title": "הורד מחדש את כל השחקנים"
+				},
+				"update_bref_players": {
+					"title": "עדכן שחקנים חסרים",
+					"fetching_players": "מוריד שחקנים שמתחילים באות %{letter}"
+				}
+			},
+			"messages": {
+				"players": {
+					"title": "שחקנים שהורדו:",
+					"text": "%{players_count} מתוך %{possible_players_count} שחקנים שמופו"
+				}
+			}
 		}
 	},
 	"errors": {

@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
 from unidecode import unidecode
-
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Logger import log_message

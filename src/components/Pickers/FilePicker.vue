@@ -61,9 +61,11 @@ export default {
 		},
 		onFileChanged(e){
 			let selectedFile = e.target.files[0];
-			this.$emit('update:inputData', {
-				'file_path': selectedFile.path
-			});
+			if(selectedFile){
+				this.$emit('update:inputData', {
+					'file_path': selectedFile.path
+				});
+			}
 		},
 		clearFile(){
 			this.$emit('update:inputData', {

@@ -8,6 +8,8 @@ from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 from dbmanager.SharedData.TodayConfig import today_config
 from dbmanager.constants import STATS_HEADERS, PLAYERS_INDEX_ENDPOINT
 
+# TODO consider add bobby watson since he missing from the player index
+
 
 @dataclass
 class PlayerDetails:
@@ -53,6 +55,13 @@ class PlayersIndex(SharedDataResourceAbc):
             p.player_id: p for p in players
         }
         return to_ret
+
+    def get_player_details(self, player_nba_id: int) -> Optional[PlayerDetails]:
+        return self.get_data().get(player_nba_id)
+
+    def is_player_played_games(self, player_nba_id: int) -> bool:
+        player_details = self.get_player_details(player_nba_id)
+        return player_details and player_details.played_games_flag
 
 
 players_index = PlayersIndex()

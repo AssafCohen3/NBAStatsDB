@@ -126,6 +126,23 @@
 					"text": "%{mappings_count} out of %{possible_mappings_count} players that needs mapping"
 				}
 			}
+		},
+		"bref_players": {
+			"actions": {
+				"redownload_bref_players": {
+					"title": "Redownload all players"
+				},
+				"update_bref_players": {
+					"title": "Update missing players",
+					"fetching_players": "Fetching players starting with letter %{letter}"
+				}
+			},
+			"messages": {
+				"players": {
+					"title": "Collected Players:",
+					"text": "%{players_count} out of %{possible_players_count} mapped players"
+				}
+			}
 		}
 	},
 	"common": {

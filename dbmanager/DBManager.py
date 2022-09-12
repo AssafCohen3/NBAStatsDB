@@ -5,6 +5,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
 
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
+from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.NBAPlayersResourceHandler import NBAPlayersResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
@@ -30,6 +31,7 @@ class DbManager:
             NBAPlayersResourceHandler,
             BREFPlayoffSeriesResourceHandler,
             PlayersMappingsResourceHandler,
+            BREFPlayersResourceHandler,
         ]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources
@@ -82,6 +84,9 @@ class DbManager:
             'messages': resource.get_messages(self.session),
             'actions_specs': list(map(lambda spec: spec.to_dict(self.session), resource.get_actions_specs())),
             'related_tables': resource.get_related_tables(),
-            'depend_on_resources': resource.get_dependencies()
+            'depend_on_resources': list(map(lambda d: {
+                'resource_id': d.get_id(),
+                'resource_name': d.get_name()
+            }, resource.get_dependencies()))
         }
         return to_ret
