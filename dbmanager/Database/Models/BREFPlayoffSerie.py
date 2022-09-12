@@ -1,10 +1,10 @@
-from sqlalchemy import Column, PrimaryKeyConstraint
+from sqlalchemy import Column, PrimaryKeyConstraint, Date
 from sqlalchemy import Integer, Text
 from dbmanager.base import Base
 
 
-class PlayoffSerieSummary(Base):
-    __tablename__ = 'PlayoffSerieSummary'
+class BREFPlayoffSerie(Base):
+    __tablename__ = 'BREFPlayoffSerie'
     Season = Column(Integer)
     TeamAId = Column(Integer)
     TeamAName = Column(Text)
@@ -18,6 +18,9 @@ class PlayoffSerieSummary(Base):
     LoserName = Column(Text)
     SerieOrder = Column(Integer)
     LevelTitle = Column(Text)
+    SerieStartDate = Column(Date)
+    SerieEndDate = Column(Date)
+    IsOver = Column(Integer)
     __table_args__ = (
         PrimaryKeyConstraint('Season', 'TeamAId', 'TeamBId'),
     )

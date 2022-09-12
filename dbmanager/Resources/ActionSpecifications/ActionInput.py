@@ -28,7 +28,6 @@ class SeasonTypeSelector(ActionInput):
 
 @dataclass
 class DateRangeSelector(ActionInput):
-    # TODO how send this as string
     min_date: datetime.date
     max_date: datetime.date
     default_date: datetime.date
@@ -38,4 +37,18 @@ class DateRangeSelector(ActionInput):
         self.expected_params = [
             ActionParameter('start_date', 'isodate', True),
             ActionParameter('end_date', 'isodate', True)
+        ]
+
+
+@dataclass
+class SeasonRangeSelector(ActionInput):
+    min_season: int
+    max_season: int
+    default_season: int
+
+    def __post_init__(self):
+        self.input_name = 'SeasonRangeSelector'
+        self.expected_params = [
+            ActionParameter('start_season', 'int', True),
+            ActionParameter('end_season', 'int', True)
         ]

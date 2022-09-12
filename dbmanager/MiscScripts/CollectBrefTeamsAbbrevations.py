@@ -6,7 +6,7 @@ from collections import defaultdict
 import requests
 from bs4 import BeautifulSoup
 
-from dbmanager.constants import BREF_TEAM_NAME_TO_NBA_ID, BREF_DEFUNCT_TEAM_NAME_NBA_ID
+from dbmanager.constants import BREF_TEAM_NAME_TO_NBA_ID, BREF_DEFUNCT_TEAM_NAME_NBA_ID, TEAM_NBA_ID_TO_NBA_NAME
 
 
 def abbrevation_to_team_id():
@@ -23,9 +23,10 @@ def abbrevation_to_team_id():
             team_links.insert(0, [franch_name[0], True])
     team_links = [[tl.get_text().strip(), 'https://www.basketball-reference.com' + tl['href'], is_defunct] for tl, is_defunct in team_links]
     abbrevations_list = []
-    for franchise_name, team_link, is_defunct in team_links:
-        franchise_id = BREF_TEAM_NAME_TO_NBA_ID[franchise_name] if not is_defunct else BREF_DEFUNCT_TEAM_NAME_NBA_ID[franchise_name]
-        print(f'fetching {franchise_name}...')
+    for franchise_bref_name, team_link, is_defunct in team_links:
+        franchise_nba_id = BREF_TEAM_NAME_TO_NBA_ID[franchise_bref_name] if not is_defunct else BREF_DEFUNCT_TEAM_NAME_NBA_ID[franchise_bref_name]
+        franchise_nba_name = TEAM_NBA_ID_TO_NBA_NAME[franchise_nba_id]
+        print(f'fetching {franchise_bref_name}...')
         team_seasons_resp = requests.get(team_link).text
         team_seasons_soup = BeautifulSoup(team_seasons_resp, 'html.parser')
         seasons_rows = team_seasons_soup.select('table.stats_table tbody tr', {'class': ''})
@@ -39,9 +40,9 @@ def abbrevation_to_team_id():
         prev_abbr_to_insert = None
         sorted_seasons = sorted(seasons, key=lambda s: s[0])
         # start end team_id abbr
-        for i, (season, abbr) in enumerate(sorted_seasons):
-            if prev_abbr_to_insert is None or abbr != prev_abbr_to_insert[3]:
-                prev_abbr_to_insert = [season, None, franchise_id, abbr]
+        for i, (season, bref_abbr) in enumerate(sorted_seasons):
+            if prev_abbr_to_insert is None or bref_abbr != prev_abbr_to_insert[4]:
+                prev_abbr_to_insert = [season, None, franchise_nba_id, franchise_nba_name, bref_abbr]
                 abbrevations_list.append(prev_abbr_to_insert)
             if prev_abbr_to_insert is not None:
                 prev_abbr_to_insert[1] = season
@@ -49,12 +50,12 @@ def abbrevation_to_team_id():
             prev_abbr_to_insert[1] = 3000 - 1
     abbrevations_changes = defaultdict(list)
     abbrevations_list = sorted(abbrevations_list)
-    for start_season, end_season, team_id, abbr in abbrevations_list:
-        if abbr in abbrevations_changes:
-            last_occurence = abbrevations_changes[abbr][-1][1]
+    for start_season, end_season, team_nba_id, team_nba_name, team_bref_abbr in abbrevations_list:
+        if team_bref_abbr in abbrevations_changes:
+            last_occurence = abbrevations_changes[team_bref_abbr][-1][1]
             if start_season <= last_occurence:
                 raise Exception('ffff')
-        abbrevations_changes[abbr].append([start_season, end_season, team_id])
+        abbrevations_changes[team_bref_abbr].append([start_season, end_season, team_nba_id, team_nba_name])
     print(dict(abbrevations_changes))
 
 

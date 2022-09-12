@@ -1,7 +1,8 @@
 {
 	"common": {
 		"cancelled": "בוטל",
-		"finished": "הסתיים"
+		"finished": "הסתיים",
+		"none": "לא קיים"
 	},
 	"resources": {
 		"playerboxscore": {
@@ -74,6 +75,42 @@
 				"active_players": {
 					"title": "מספר השחקנים הפעילים הקיימים:",
 					"text": "%{active_players_count} שחקנים פעילים"
+				}
+			}
+		},
+		"bref_playoff_series": {
+			"messages": {
+				"collected_seasons": {
+					"title": "עונות עם סדרת פלייאוף:",
+					"text": "%{seasons_count} מתוך %{possible_seasons_count} עונות אפשריות"
+				},
+				"collected_full_seasons": {
+					"title": "עונות עם כל סדרת הפלייאוף:",
+					"text": "%{seasons_count} מתוך %{possible_seasons_count} עונות אפשריות"
+				},
+				"collected_series": {
+					"title": "סדרות פלייאוף קיימות:",
+					"text": "%{series_count} מתוך %{possible_series_count} סדרות אפשריות"
+				},
+				"first_season": {
+					"title": "העונה הראשונה עם סדרת פלייאוף:",
+					"text": "%{season}"
+				},
+				"last_season": {
+					"title": "העונה האחרונה עם סדרת פלייאוף:",
+					"text": "%{season}"
+				}
+			},
+			"actions": {
+				"update_bref_playoff_series": {
+					"title": "עדכן סדרות פלייאוף חסרות",
+					"fetching_season_series": "מוריד את סדרות הפלייאוף של עונת %{season}"
+				},
+				"redownload_bref_playoff_series": {
+					"title": "הורד מחדש את כל סדרות הפלייאוף"
+				},
+				"redownload_bref_playoff_series_in_season_range": {
+					"title": "הורד מחדש סדרות פלייאוף בטווח של עונות"
 				}
 			}
 		}

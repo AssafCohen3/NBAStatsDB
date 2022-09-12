@@ -5,6 +5,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
 
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
+from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.NBAPlayersResourceHandler import NBAPlayersResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
@@ -25,7 +26,8 @@ class DbManager:
         self.available_resources: List[Type[ResourceAbc]] = [
             PlayerBoxScoreResourceHandler,
             TeamBoxScoreResourceHandler,
-            NBAPlayersResourceHandler
+            NBAPlayersResourceHandler,
+            BREFPlayoffSeriesResourceHandler,
         ]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources

@@ -22,7 +22,7 @@
 					cursor-pointer"
 						@click="resourceClicked(resource)">
 						<div
-							class="text-[20px] font-bold p-[20px]">
+							class="text-[20px] text-center font-bold p-[20px]">
 							{{ resource.resource_name }}
 						</div>
 						<div

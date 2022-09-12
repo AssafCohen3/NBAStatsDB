@@ -72,11 +72,48 @@
 					"text": "%{active_players_count} Active players"
 				}
 			}
+		},
+		"bref_playoff_series": {
+			"messages": {
+				"collected_seasons": {
+					"title": "Seasons with playoff series:",
+					"text": "%{seasons_count} out of %{possible_seasons_count} possible seasons"
+				},
+				"collected_full_seasons": {
+					"title": "Seasons with all playoff series:",
+					"text": "%{seasons_count} out of %{possible_seasons_count} possible seasons"
+				},
+				"collected_series": {
+					"title": "Existing playoff series:",
+					"text": "%{series_count} out of %{possible_series_count} Possible series"
+				},
+				"first_season": {
+					"title": "First season with a playoff serie:",
+					"text": "%{season}"
+				},
+				"last_season": {
+					"title": "Last season with a playoff serie:",
+					"text": "%{season}"
+				}
+			},
+			"actions": {
+				"update_bref_playoff_series": {
+					"title": "Update missing playoff series",
+					"fetching_season_series": "Fetching playoff series of season %{season}"
+				},
+				"redownload_bref_playoff_series": {
+					"title": "Redownload all playoff series"
+				},
+				"redownload_bref_playoff_series_in_season_range": {
+					"title": "Redownload playoff series in seasons range"
+				}
+			}
 		}
 	},
 	"common": {
 		"cancelled": "Cancelled",
-		"finished": "Finished"
+		"finished": "Finished",
+		"none": "None"
 	},
 	"errors": {
 		"action_not_exist": "action %{action_id} does not exist in resource %{resource_id}",

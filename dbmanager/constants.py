@@ -1,4 +1,5 @@
 BOXSCORES_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
+BOXSCORES_FINDER_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
 PBP_ENDPOINT = 'https://stats.nba.com/stats/playbyplayv2?GameId=%s&StartPeriod=0&EndPeriod=14'
 ODDS_ENDPOINT = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
 PLAYERS_INDEX_ENDPOINT = 'https://stats.nba.com/stats/playerindex?Historical=1&LeagueID=00&Season=%s&SeasonType=Regular+Season'
@@ -6,11 +7,14 @@ TEAM_ROSTER_ENDPOINT = 'https://stats.nba.com/stats/commonteamroster?LeagueID=00
 PLAYER_PROFILE_ENDPOINT = 'https://stats.nba.com/stats/commonplayerinfo/?playerId=%s'
 PLAYER_AWARDS_ENDPOINT = 'https://stats.nba.com/stats/playerawards?PlayerID=%s'
 TEAM_DETAILS_ENDPOINT = 'https://stats.nba.com/stats/teamdetails/?teamId=%s'
+FRANCHISE_HISTORY_ENDPOINT = 'https://stats.nba.com/stats/franchisehistory/?leagueId=00'
 BREF_SEASON_STATS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_per_game.html'
 BREF_PLAYERS_ENDPOINT = 'https://www.basketball-reference.com/players/%s'
 BREF_DRAFT_ENDPOINT = 'https://www.basketball-reference.com/draft/%s_%s.html'
 BREF_STARTERS_ENDPOINT = 'https://www.basketball-reference.com/teams/%s/%s_start.html'
 BREF_TRANSACTIONS_ENDPOINT = 'https://www.basketball-reference.com/leagues/%s_%s_transactions.html'
+BREF_SEASONS_INDEX_URL = 'https://www.basketball-reference.com/leagues/'
+BREF_PLAYOFFS_URL = 'https://www.basketball-reference.com/playoffs/%s_%s.html'
 DATA_PROD_TODAY_FILE = 'https://data.nba.net/prod/v3/today.json'
 
 STATS_API_DELAY_SECONDS = 0.5
@@ -36,30 +40,8 @@ STATS_HEADERS = {
 #     "Finals"
 # ]
 
-# DATABASE_PATH = 'Database/'
-# CACHE_PATH = 'quick_cache/'
-# DATABASE_NAME = "boxscores_full_database"
-# DATABASE_NAME_NEW = "boxscores_full_database_new"
 FIRST_NBA_SEASON = 1946
-# LAST_SEASON = 2021
 FIRST_ODDS_SEASON = 1972
-
-BOXSCORE_FILE_TEMPLATE = "boxscore_%s_%s_%s.json"
-PBP_FILE_TEMPLATE = "pbp_%s.json"
-ODDS_FILE_TEMPLATE = "odds_%s.html"
-PLAYOFF_PAGE_FILE_TEMPLATE = "playoff_summery_%s.html"
-PLAYERS_INDEX_FILE_TEMPLATE = "players_index_%s.json"
-TEAM_ROSTER_FILE_TEMPLATE = 'team_roster_%s_%s.json'
-PLAYER_PROFILE_FILE_TEMPLATE = 'player_profile_%s.json'
-PLAYER_AWARDS_FILE_TEMPLATE = 'player_awards_%s.json'
-TEAM_DETAILS_FILE_TEMPLATE = 'team_details_%s.json'
-BREF_SEASON_STATS_FILE_TEMPLATE = 'bref_stats_%s_%s.html'
-BREF_PLAYERS_FILE_TEMPLATE = 'bref_players_%s.html'
-BREF_DRAFT_FILE_TEMPLATE = 'bref_draft_%s_%s.html'
-BREF_STARTERS_FILE_TEMPLATE = "bref_starters_%s_%s.html"
-BREF_TRANSACTIONS_FILE_TEMPLATE = 'bref_transactions_%s_%s.html'
-MISSING_FILES_FILE = "missing_files.txt"
-
 PBP_FIRST_SEASON = 1996
 
 BR_ABBR_TO_NBA_ABBR = {
@@ -251,3 +233,7 @@ TEAM_NBA_ID_TO_NBA_NAME = {
 }
 
 SQLITE_MIN_VERSION = (3, 31, 0)
+
+NBA_GAME_IDS_GAME_DATE_CORRECTION = {
+    '0044900212': '1950-03-24'
+}

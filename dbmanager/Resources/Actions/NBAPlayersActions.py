@@ -10,7 +10,7 @@ from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_r
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAPlayersActionSpecs import UpdateNBAPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
-from dbmanager.SharedData import today_config
+from dbmanager.SharedData.TodayConfig import today_config
 
 
 class UpdateNBAPlayersAction(ActionAbc):

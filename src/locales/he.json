@@ -20,7 +20,8 @@
 		"try_again": "נסה שוב",
 		"try_again_with_another_settings": "נסה שוב עם הגדרות שונות:",
 		"tasks": "משימות",
-		"date_range": "טווח תאריכים"
+		"date_range": "טווח תאריכים",
+		"seasons_range": "טווח עונות"
 	},
 	"validations": {
 		"required": "השדה נדרש"

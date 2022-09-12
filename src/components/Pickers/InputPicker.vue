@@ -10,14 +10,21 @@
 			:default-date="actionInput.default_date"
 			:min-date="actionInput.min_date"
 			:max-date="actionInput.max_date" />
+		<season-range-picker
+			v-if="actionInput.input_name == 'SeasonRangeSelector'"
+			v-model:inputData="inputDataModel"
+			:default-season="actionInput.default_season"
+			:min-season="actionInput.min_season"
+			:max-season="actionInput.max_season" />
 	</div>
 </template>
 
 <script>
 import DateRangePicker from './DateRangePicker.vue';
+import SeasonRangePicker from './SeasonRangePicker.vue';
 import SeasonTypePicker from './SeasonTypePicker.vue';
 export default {
-	components: { SeasonTypePicker, DateRangePicker, },
+	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, },
 	props: {
 		actionInput: {
 			type: Object,

@@ -13,7 +13,8 @@
 		"try_again": "Try again",
 		"try_again_with_another_settings": "Try again with another settings:",
 		"tasks": "Tasks",
-		"date_range": "Date Range"
+		"date_range": "Date Range",
+		"seasons_range": "Seasons range"
 	},
 	"generic": {
 		"home": "Home",

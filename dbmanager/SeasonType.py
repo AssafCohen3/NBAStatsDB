@@ -9,11 +9,16 @@ class SeasonType:
     api_name: str
 
 
+REGULAR_SEASON_TYPE = SeasonType('2', 'Regular Season', 'Regular+Season')
+ALLSTARS_SEASON_TYPE = SeasonType('3', 'All Star', 'All+Star')
+PLAYOFFS_SEASON_TYPE = SeasonType('4', 'Playoffs', 'Playoffs')
+PLAYIN_SEASON_TYPE = SeasonType('5', 'PlayIn', 'PlayIn')
+
 SEASON_TYPES = [
-    SeasonType('2', 'Regular Season', 'Regular+Season'),
-    SeasonType('3', 'All Star', 'All+Star'),
-    SeasonType('4', 'Playoffs', 'Playoffs'),
-    SeasonType('5', 'PlayIn', 'PlayIn')
+    REGULAR_SEASON_TYPE,
+    ALLSTARS_SEASON_TYPE,
+    PLAYOFFS_SEASON_TYPE,
+    PLAYIN_SEASON_TYPE
 ]
 
 

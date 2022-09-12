@@ -16,7 +16,7 @@ from dbmanager.Resources.ActionSpecifications.PlayerBoxScoreActionSpecs import U
     ResetPlayerBoxScores, UpdatePlayerBoxScoresInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
-from dbmanager.constants import STATS_API_COUNT_THRESHOLD
+from dbmanager.constants import STATS_API_COUNT_THRESHOLD, NBA_GAME_IDS_GAME_DATE_CORRECTION
 
 
 def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, Any]]:
@@ -41,7 +41,8 @@ def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, A
         season_and_type = re.findall(r'(\d)(\d*)', season_id)[0]
         to_ret["SeasonType"] = season_and_type[0]
         to_ret["Season"] = int(season_and_type[1])
-        to_ret['GameDate'] = datetime.date.fromisoformat(to_ret['GameDate'])
+        game_date = NBA_GAME_IDS_GAME_DATE_CORRECTION[to_ret['GameId']] if to_ret['GameId'] in NBA_GAME_IDS_GAME_DATE_CORRECTION else to_ret['GameDate']
+        to_ret['GameDate'] = datetime.date.fromisoformat(game_date)
         to_ret.pop('SEASON_ID')
         return to_ret
 
