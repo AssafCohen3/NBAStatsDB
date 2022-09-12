@@ -113,6 +113,24 @@
 					"title": "הורד מחדש סדרות פלייאוף בטווח של עונות"
 				}
 			}
+		},
+		"players_mappings": {
+			"actions": {
+				"complete_missing_players_mappings": {
+					"title": "השלם מיפויי שחקנים חסרים",
+					"fetching_candidate": "מחפש מיפויים ב- %{type} של עונת %{season}"
+				},
+				"read_players_mappings_from_file": {
+					"title": "טען מיפויי שחקנים מקובץ",
+					"loading_mappings_from_file": "טוען מיפויי שחקנים מקובץ"
+				}
+			},
+			"messages": {
+				"existing_mappings": {
+					"title": "שחקנים עם מיפוי:",
+					"text": "%{mappings_count} מתוך %{possible_mappings_count} שחקנים שזקוקים למיפוי"
+				}
+			}
 		}
 	},
 	"errors": {

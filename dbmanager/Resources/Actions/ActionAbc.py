@@ -166,10 +166,11 @@ class ActionAbc(ABC):
         the action to run
         """
 
-    # None means not known
+    @abstractmethod
     def subtasks_count(self) -> Union[int, None]:
         """
         get subtasks count
+        None means not known
         """
 
     def completed_subtasks(self):

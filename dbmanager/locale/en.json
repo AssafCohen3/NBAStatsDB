@@ -108,6 +108,24 @@
 					"title": "Redownload playoff series in seasons range"
 				}
 			}
+		},
+		"players_mappings": {
+			"actions": {
+				"complete_missing_players_mappings": {
+					"title": "Complete missing players mappings",
+					"fetching_candidate": "Searching targets from the %{type} of season %{season}"
+				},
+				"read_players_mappings_from_file": {
+					"title": "Read players mappings from a file",
+					"loading_mappings_from_file": "Reading players mappings from file "
+				}
+			},
+			"messages": {
+				"existing_mappings": {
+					"title": "Players with mappings:",
+					"text": "%{mappings_count} out of %{possible_mappings_count} players that needs mapping"
+				}
+			}
 		}
 	},
 	"common": {

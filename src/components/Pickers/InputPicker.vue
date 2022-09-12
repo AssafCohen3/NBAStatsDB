@@ -16,15 +16,19 @@
 			:default-season="actionInput.default_season"
 			:min-season="actionInput.min_season"
 			:max-season="actionInput.max_season" />
+		<file-picker
+			v-if="actionInput.input_name == 'FileSelector'"
+			v-model:inputData="inputDataModel" />
 	</div>
 </template>
 
 <script>
 import DateRangePicker from './DateRangePicker.vue';
+import FilePicker from './FilePicker.vue';
 import SeasonRangePicker from './SeasonRangePicker.vue';
 import SeasonTypePicker from './SeasonTypePicker.vue';
 export default {
-	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, },
+	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, FilePicker, },
 	props: {
 		actionInput: {
 			type: Object,

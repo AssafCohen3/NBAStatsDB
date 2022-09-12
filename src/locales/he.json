@@ -21,7 +21,8 @@
 		"try_again_with_another_settings": "נסה שוב עם הגדרות שונות:",
 		"tasks": "משימות",
 		"date_range": "טווח תאריכים",
-		"seasons_range": "טווח עונות"
+		"seasons_range": "טווח עונות",
+		"file_path": "נתיב הקובץ"
 	},
 	"validations": {
 		"required": "השדה נדרש"

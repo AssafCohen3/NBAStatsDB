@@ -52,3 +52,13 @@ class SeasonRangeSelector(ActionInput):
             ActionParameter('start_season', 'int', True),
             ActionParameter('end_season', 'int', True)
         ]
+
+
+@dataclass
+class FileSelector(ActionInput):
+
+    def __post_init__(self):
+        self.input_name = 'FileSelector'
+        self.expected_params = [
+            ActionParameter('file_path', 'str', True)
+        ]

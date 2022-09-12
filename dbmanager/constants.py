@@ -3,6 +3,7 @@ BOXSCORES_FINDER_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1
 PBP_ENDPOINT = 'https://stats.nba.com/stats/playbyplayv2?GameId=%s&StartPeriod=0&EndPeriod=14'
 ODDS_ENDPOINT = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
 PLAYERS_INDEX_ENDPOINT = 'https://stats.nba.com/stats/playerindex?Historical=1&LeagueID=00&Season=%s&SeasonType=Regular+Season'
+PLAYERS_COMMON_ENDPOINT = 'https://stats.nba.com/stats/commonallplayers?IsOnlyCurrentSeason=0&LeagueID=00&Season=%s'
 TEAM_ROSTER_ENDPOINT = 'https://stats.nba.com/stats/commonteamroster?LeagueID=00&Season=%s&TeamID=%s'
 PLAYER_PROFILE_ENDPOINT = 'https://stats.nba.com/stats/commonplayerinfo/?playerId=%s'
 PLAYER_AWARDS_ENDPOINT = 'https://stats.nba.com/stats/playerawards?PlayerID=%s'

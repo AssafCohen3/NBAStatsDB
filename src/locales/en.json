@@ -14,7 +14,8 @@
 		"try_again_with_another_settings": "Try again with another settings:",
 		"tasks": "Tasks",
 		"date_range": "Date Range",
-		"seasons_range": "Seasons range"
+		"seasons_range": "Seasons range",
+		"file_path": "File path"
 	},
 	"generic": {
 		"home": "Home",

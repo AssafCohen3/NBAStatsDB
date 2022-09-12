@@ -8,6 +8,7 @@ from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.NBAPlayersResourceHandler import NBAPlayersResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
+from dbmanager.Resources.PlayerMappingResourceHandler import PlayersMappingsResourceHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
 from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Errors import ResourceNotExistError
@@ -28,6 +29,7 @@ class DbManager:
             TeamBoxScoreResourceHandler,
             NBAPlayersResourceHandler,
             BREFPlayoffSeriesResourceHandler,
+            PlayersMappingsResourceHandler,
         ]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources
@@ -66,7 +68,8 @@ class DbManager:
             'resource_id': resource_id,
             'last_updated': last_updated,
             'resource_name': self.get_resource(resource_id).get_name(),
-            'messages': self.get_resource(resource_id).get_messages(self.session)
+            # TODO add or not
+            # 'messages': self.get_resource(resource_id).get_messages(self.session)
         } for resource_id, last_updated in resources]
         return resources
 
