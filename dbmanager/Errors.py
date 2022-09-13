@@ -78,23 +78,57 @@ class UnexpectedParameterError(Exception):
         super().__init__(gettext('errors.unexpected_parameter', action_id=action_id, unexpected_params=', '.join(unexpected_params)))
 
 
+class PresetNotExistError(Exception):
+    def __init__(self, preset_id: str):
+        self.preset_id = preset_id
+        super().__init__(f'preset with id {preset_id} not exist')
+
+
 class TaskError(Exception, ABC):
     pass
 
 
-class TaskNotExist(TaskError):
+class TaskNotExistError(TaskError):
     def __init__(self, task_id: int):
         self.task_id = task_id
-        super().__init__(f'task with id {task_id} not exist')
+        super().__init__(f'task {task_id} not exist')
 
 
-class TaskAlreadyFinished(TaskError):
+class TaskPathNotExistError(TaskError):
+    def __init__(self, task_id: int, task_path: List[int]):
+        self.task_id = task_id
+        self.task_path = task_path
+        super().__init__(f'task with path {task_path} not exist in task {task_id} not exist')
+
+
+class TaskAlreadyFinishedError(TaskError):
     def __init__(self, task_id: int):
         self.task_id = task_id
-        super().__init__(f'task with id {task_id} already finished')
+        super().__init__(f'task {task_id} already finished')
 
 
-class TaskNotFinished(TaskError):
+class TaskNotFinishedError(TaskError):
     def __init__(self, task_id: int):
         self.task_id = task_id
-        super().__init__(f'task with id {task_id} not finished')
+        super().__init__(f'task {task_id} has not finished')
+
+
+class EmptyTaskPathError(TaskError):
+    def __init__(self):
+        super().__init__(f'recieved an empty task path')
+
+
+class NotTaskGroupError(TaskError):
+    def __init__(self):
+        super().__init__(f'you trying to use tasks group functionallity on non tasks group')
+
+
+class TaskDismissedError(TaskError):
+    def __init__(self, task_id: int):
+        self.task_id = task_id
+        super().__init__(f'you have tried to access task {task_id} which have already been dismissed')
+
+
+class TaskNotInitiatedError(TaskError):
+    def __init__(self):
+        super().__init__('task not initiated')

@@ -158,5 +158,13 @@
 		"incorrect_parameter_type": "the type of the parameter %{par_name} in action %{action_id} is incorrect.\nexpected type: %{par_type}\nrecieved value: %{par_value}",
 		"ilegal_parameter_value": "the value of the parameter %{par_name} in the call to action %{action_id} is ilegal.\nrecieved value: %{par_value}\n%{err_message}",
 		"unexpected_parameter": "unexpected parameters %{unexpected_params} in call to action %{action_id}"
+	},
+	"presets": {
+		"base_update": {
+			"name": "Basic Update"
+		},
+		"update_boxscores": {
+			"name": "Update boxscores"
+		}
 	}
 }

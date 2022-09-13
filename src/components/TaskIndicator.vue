@@ -6,7 +6,7 @@
 			intermediate_task: task.to_finish == null
 		}">
 		<div
-			class="flex flex-row items-center">
+			class="task_body flex flex-row items-center">
 			<!-- task icon -->
 			<v-icon
 				:color="taskIconColor"
@@ -39,23 +39,24 @@
 								color="green"
 								:indeterminate="task.to_finish === null" />
 						</div>
+						<v-spacer />
 						<v-btn
 							v-if="task.status == 'active'"
 							icon="mdi-pause"
 							color="white"
 							size="x-small"
-							@click="$emit('pauseTask')" />
+							@click="pauseTask([])" />
 						<v-btn
 							v-else-if="task.status == 'paused'"
 							icon="mdi-play"
 							color="white"
 							size="x-small"
-							@click="$emit('resumeTask')" />
+							@click="resumeTask([])" />
 						<v-btn
 							icon="mdi-close"
 							color="white"
 							size="x-small"
-							@click="$emit('cancelTask')" />
+							@click="cancelTask([])" />
 					</div>
 					<div
 						class="text-dimmed-white text-[14px]">
@@ -75,18 +76,51 @@
 				v-if="canDismiss"
 				icon="mdi-delete-forever"
 				color="white"
-				@click="$emit('dismissTask')" />
+				@click="dismissTask([])" />
 		</div>
+		<template
+			v-if="task.subtasks_messages.length > 0">
+			<div
+				class="flex justify-center items-center">
+				<v-btn
+					block
+					color="white"
+					@click="expanded=!expanded">
+					<v-icon
+						color="white">
+						{{ expanded ? 'mdi-menu-up' : 'mdi-menu-down' }}
+					</v-icon>
+				</v-btn>
+			</div>
+			<TransitionHeight>
+				<div
+					v-if="expanded">
+					<task-indicator
+						v-for="subTask in task.subtasks_messages"
+						:key="subTask.task_id"
+						:task="subTask"
+						class="child_task"
+						@cancel-task="cancelTask" 
+						@dismiss-task="dismissTask" 
+						@resume-task="resumeTask" 
+						@pause-task="pauseTask" 
+					/>
+				</div>
+			</TransitionHeight>
+		</template>
 	</div>
 </template>
 
 <script>
+import TransitionHeight from './TransitionHeight.vue';
+
 export default {
+	components: {TransitionHeight},
 	props: {
 		task: {
 			type: Object,
 			required: true,
-		}
+		},
 	},
 	emits: [
 		'pauseTask',
@@ -94,6 +128,11 @@ export default {
 		'cancelTask',
 		'dismissTask',
 	],
+	data(){
+		return {
+			expanded: false,
+		};
+	},
 	computed: {
 		taskIcon(){
 			switch(this.task.status){
@@ -150,6 +189,20 @@ export default {
 			return ['error', 'cancelled', 'finished'].includes(this.task.status);
 		}
 	},
+	methods: {
+		pauseTask(taskPath=[]){
+			this.$emit('pauseTask', [this.task.task_id, ...taskPath]);
+		},
+		resumeTask(taskPath=[]){
+			this.$emit('resumeTask', [this.task.task_id, ...taskPath]);
+		},
+		cancelTask(taskPath=[]){
+			this.$emit('cancelTask', [this.task.task_id, ...taskPath]);
+		},
+		dismissTask(taskPath=[]){
+			this.$emit('dismissTask', [this.task.task_id, ...taskPath]);
+		},
+	}
 };
 </script>
 
@@ -157,30 +210,35 @@ export default {
 	lang="postcss"
 	scoped>
 
-.task_indicator{
+.task_body{
 	padding-inline: 20px;
 	padding-top: 10px;
 	padding-bottom: 5px;
 	cursor: pointer;
 }
-.task_indicator:first-child{
+
+.child_task .task_body{
+	padding-inline: 40px;
+}
+
+.task_indicator:not(.child_task):first-child{
 	border-top-left-radius: inherit;
 	border-top-right-radius: inherit;
 }
 
-.task_indicator:last-child{
+.task_indicator:not(.child_task):last-child{
 	border-bottom-left-radius: inherit;
 	border-bottom-right-radius: inherit;
 }
-.task_indicator:not(:last-child){
+.task_indicator:not(:last-child):not(.child_task){
 	border-bottom-width: 1px;
 	border-bottom-style: solid;
 }
-.task_indicator:hover{
+.task_body:hover{
 	background-color: #21043c;
 }
 
-.task_indicator.active_task:not(.intermediate_task) :deep(.v-progress-linear:after){
+.task_indicator.active_task:not(.intermediate_task) :deep(> .task_body .v-progress-linear:after){
     animation: progress-bar-shine 2s infinite;
     background: linear-gradient(90deg, white 0%, white 5%, transparent 5%, transparent 100%);
 	opacity: 0.5;

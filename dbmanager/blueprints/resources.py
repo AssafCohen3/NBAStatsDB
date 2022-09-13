@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
-from dbmanager.tasks.TaskManager import enqueue_action
-from dbmanager.extensions import db_manager, announcer
+from dbmanager.extensions import db_manager
+from dbmanager.tasks.TaskManager import enqueue_task
+
 resources_bp = Blueprint('resources', __name__, url_prefix='/resources')
 
 
@@ -21,6 +22,5 @@ def get_resource_details(resource_id):
 @resources_bp.route('/<resource_id>/actions/<action_id>', methods=['POST'])
 def dispatch_action(resource_id: str, action_id: str):
     action_to_run = db_manager.dispatch_action(resource_id, action_id, request.json)
-    action_to_run.set_announcer(announcer)
-    enqueue_action(action_to_run)
+    enqueue_task(action_to_run)
     return 'ok'

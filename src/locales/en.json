@@ -21,7 +21,8 @@
 		"home": "Home",
 		"last_updated": "Last updated",
 		"nbastatsdb": "NBAStatsDB",
-		"resources": "Resources"
+		"resources": "Resources",
+		"presets": "Preset Actions"
 	},
 	"langs": {
 		"he": "Hebrew",

@@ -43,26 +43,27 @@ class ActionSpecificationAbc(ABC):
 
     @classmethod
     def parse_params(cls, session: scoped_session, params: Dict[str, str]) -> Dict[str, Any]:
+        to_check: Dict[str, str] = dict(params)
         parsed_params = {}
         for param in cls.get_action_params(session):
             parsed_params[param.parameter_name] = None
-            if param.required and param.parameter_name not in params:
+            if param.required and param.parameter_name not in to_check:
                 raise RequiredParameterMissingError(cls.get_action_id(), param.parameter_name)
-            if param.parameter_name not in params:
+            if param.parameter_name not in to_check:
                 # not required
                 continue
             try:
-                val = param_parser(params[param.parameter_name], param.parameter_type)
+                val = param_parser(to_check[param.parameter_name], param.parameter_type)
             except ValueError:
                 raise IncorrectParameterTypeError(cls.get_action_id(), param.parameter_name,
-                                                  param.parameter_type, params[param.parameter_name])
+                                                  param.parameter_type, to_check[param.parameter_name])
             if val is None:
                 raise UnknownParameterTypeError(cls.get_action_id(),
                                                 param.parameter_name, param.parameter_type)
             parsed_params[param.parameter_name] = val
-            params.pop(param.parameter_name)
-        if len(params.keys()) > 0:
-            raise UnexpectedParameterError(cls.get_action_id(), list(params.keys()))
+            to_check.pop(param.parameter_name)
+        if len(to_check.keys()) > 0:
+            raise UnexpectedParameterError(cls.get_action_id(), list(to_check.keys()))
         return parsed_params
 
     @classmethod

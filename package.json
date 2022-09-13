@@ -30,6 +30,7 @@
     "core-js": "^3.6.5",
     "electron-log": "^4.4.1",
     "electron-updater": "^4.6.5",
+    "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "ps-tree": "^1.2.0",
     "roboto-fontface": "*",

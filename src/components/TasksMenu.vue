@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="task_menu_container bg-[#0e0730] rounded-[20px] min-w-[500px] shadow-2xl drop-shadow border-radius-[20px] border-[1px] border-solid border-primary-light"
+		class="task_menu_container bg-[#0e0730] rounded-[20px] w-[500px] shadow-2xl drop-shadow border-radius-[20px] border-[1px] border-solid border-primary-light"
 		elevation="20">
 		<div
 			class="text-primary-light font-bold text-[20px] text-center p-[20px]">
@@ -12,10 +12,10 @@
 				v-for="task in tasks"
 				:key="task.task_id"
 				:task="task"
-				@cancel-task="$emit('cancelTask', task.task_id)" 
-				@dismiss-task="$emit('dismissTask', task.task_id)" 
-				@resume-task="$emit('resumeTask', task.task_id)" 
-				@pause-task="$emit('pauseTask', task.task_id)" 
+				@cancel-task="cancelTask" 
+				@dismiss-task="dismissTask" 
+				@resume-task="resumeTask" 
+				@pause-task="pauseTask" 
 			/>
 		</template>
 	</div>  
@@ -37,6 +37,20 @@ export default {
 		'cancelTask',
 		'dismissTask',
 	],
+	methods: {
+		pauseTask(taskPath){
+			this.$emit('pauseTask', taskPath);
+		},
+		resumeTask(taskPath){
+			this.$emit('resumeTask', taskPath);
+		},
+		cancelTask(taskPath){
+			this.$emit('cancelTask', taskPath);
+		},
+		dismissTask(taskPath){
+			this.$emit('dismissTask', taskPath);
+		},
+	}
 
 };
 </script>
@@ -45,8 +59,7 @@ export default {
 	scoped
 	lang="postcss">
 
-/* .task_menu_container{
-	position: absolute;
-	align-self: center;
-} */
+.task_menu_container{
+	overflow: auto;
+}
 </style>

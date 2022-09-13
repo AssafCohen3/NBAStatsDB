@@ -158,5 +158,13 @@
 		"incorrect_parameter_type": "הסוג של הפרמטר %{par_name} בקריאה לפעולה %{action_id} שגוי.\nהסוג המצופה: %{par_type}\nהערך שהתקבל: %{par_value}",
 		"ilegal_parameter_value": "הערך של הפרמטר %{par_namr} שהתקבל בקריאה לםעולה %{action_id} לא חוקי.\nהערך שהתקבל: %{par_value}\n%{err_message}",
 		"unexpected_parameter": "פרמטרים לא צפויים %{unexpected_params} התקבלו בקריאה לפעולה %{action_id}"
+	},
+	"presets": {
+		"base_update": {
+			"name": "עדכון בסיסי"
+		},
+		"update_boxscores": {
+			"name": "עדכן בוקססקורס"
+		}
 	}
 }

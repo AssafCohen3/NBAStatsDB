@@ -3,7 +3,8 @@
 		"home": "בית",
 		"nbastatsdb": "NBAStatsDB",
 		"resources": "משאבים",
-		"last_updated": "עודכן לאחרונה בתאריך"
+		"last_updated": "עודכן לאחרונה בתאריך",
+		"presets": "פעולות מוכנות מראש"
 	},
 	"message": "היי",
 	"common": {

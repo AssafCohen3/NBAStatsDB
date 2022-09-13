@@ -99,12 +99,12 @@ const actions = {
 				});
 		});
 	},
-	pauseTask({commit}, [taskId]){
+	pauseTask({commit}, [taskPath]){
 		return new Promise((resolve, reject) => {
 			commit('pauseTaskStart');
 			axios.post('/tasks/pause_task',
 				{
-					task_id: taskId
+					task_path: taskPath
 				})
 				.then(resp => {
 					commit('pauseTaskSuccess', resp);
@@ -112,12 +112,12 @@ const actions = {
 				});
 		});
 	},
-	resumeTask({commit}, [taskId]){
+	resumeTask({commit}, [taskPath]){
 		return new Promise((resolve, reject) => {
 			commit('resumeTaskStart');
 			axios.post('/tasks/resume_task',
 				{
-					task_id: taskId
+					task_path: taskPath
 				})
 				.then(resp => {
 					commit('resumeTaskSuccess', resp);
@@ -125,12 +125,12 @@ const actions = {
 				});
 		});
 	},
-	cancelTask({commit}, [taskId]){
+	cancelTask({commit}, [taskPath]){
 		return new Promise((resolve, reject) => {
 			commit('cancelTaskStart');
 			axios.post('/tasks/cancel_task',
 				{
-					task_id: taskId
+					task_path: taskPath
 				})
 				.then(resp => {
 					commit('cancelTaskSuccess', resp);
@@ -138,15 +138,15 @@ const actions = {
 				});
 		});
 	},
-	dismissTask({commit}, [taskId]){
+	dismissTask({commit}, [taskPath]){
 		return new Promise((resolve, reject) => {
 			commit('dismissTaskStart');
 			axios.post('/tasks/dismiss_task',
 				{
-					task_id: taskId
+					task_path: taskPath
 				})
 				.then(resp => {
-					commit('dismissTaskSuccess', [resp, taskId]);
+					commit('dismissTaskSuccess', [resp, taskPath]);
 					resolve(resp.data);
 				});
 		});
@@ -154,12 +154,45 @@ const actions = {
 
 };
 
+function getTaskWithId(taskId, tasksList){
+	return tasksList.find(t => t.task_id === taskId);
+}
+
+function getTaskIndexWithId(taskId, tasksList){
+	return tasksList.findIndex(t => t.task_id === taskId);
+}
+
+function getTaskParent(initialList, taskPath){
+	let dummy = {
+		subtasks_messages: initialList
+	};
+
+	let taskParent = taskPath.slice(0, -1).reduce(
+		(prev, cur) =>{
+			if(prev === undefined){
+				return undefined;
+			}
+			return getTaskWithId(cur, prev.subtasks_messages);
+		},
+		dummy
+	);
+	return taskParent;
+}
+
 const mutations = {
-	updateTask(state, taskToUpdate){
-		let currentTask = state.currentTasks.find(t => t.task_id === taskToUpdate.task_id);
-		console.log(taskToUpdate);
+	updateTask(state, [taskPath, taskToUpdate]){
+		console.log(taskPath, taskToUpdate);
+		if(!taskPath){
+			throw 'empty task path';
+		}
+		let taskParent = getTaskParent(state.currentTasks, taskPath);
+		if(taskParent === undefined){
+			// TODO maybe throw an error?
+			throw `task Path ${taskPath} parent not exist`;
+		}
+		let currentTask = getTaskWithId(taskPath.at(-1), taskParent.subtasks_messages);
 		if(currentTask === undefined){
-			state.currentTasks.push(taskToUpdate);
+			taskParent.subtasks_messages.push(taskToUpdate);
 		}
 		else{
 			Object.assign(currentTask, taskToUpdate);
@@ -198,10 +231,18 @@ const mutations = {
 	dismissTaskStart(state){
 		state.isDismissingTask = true;
 	},
-	dismissTaskSuccess(state, [resp, taskId]){
-		let taskIndex = state.currentTasks.findIndex(t => t.task_id == taskId);
+	dismissTaskSuccess(state, [resp, taskPath]){
+		if(!taskPath){
+			throw 'empty task path';
+		}
+		let taskParent = getTaskParent(state.currentTasks, taskPath);
+		if(taskParent === undefined){
+			// TODO maybe throw an error?
+			throw `task Path ${taskPath} parent not exist`;
+		}
+		let taskIndex = getTaskIndexWithId(taskPath.at(-1), taskParent.subtasks_messages);
 		if(taskIndex != -1){
-			state.currentTasks.splice(taskIndex,1);
+			taskParent.subtasks_messages.splice(taskIndex,1);
 		}
 		state.isDismissingTask = false;
 	},

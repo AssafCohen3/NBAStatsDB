@@ -71,8 +71,7 @@ class ResourceAbc(ABC):
 
     @classmethod
     def create_action(cls, session: scoped_session, action_id: str, params: Dict[str, str]) -> ActionAbc:
-        parsed_params = cls.validate_request(session, action_id, params)
-        return cls.get_action_cls(action_id).create_action_from_params(session, parsed_params)
+        return cls.get_action_cls(action_id).create_action_from_request(session, params)
 
     @classmethod
     @abc.abstractmethod

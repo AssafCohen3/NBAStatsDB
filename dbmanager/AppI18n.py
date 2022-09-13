@@ -11,5 +11,9 @@ def gettext(path: str, **kwargs) -> str:
     return i18n.t(path, **kwargs)
 
 
+def gettext_marker(path: str):
+    return path
+
+
 def set_locale(new_locale: str):
     i18n.set('locale', new_locale)

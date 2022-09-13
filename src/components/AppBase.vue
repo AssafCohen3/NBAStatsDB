@@ -73,31 +73,32 @@ export default {
 			});
 			source.addEventListener('task-update-start', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-finish', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-sub-finish', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-paused', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-resume', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-error', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				console.error(taskData.task_message.mini_title);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-cancel', (event) => {
 				let taskData = JSON.parse(event.data);
-				this.updateTask(taskData);
+				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 		},
 		firstInitialTry(){
@@ -136,7 +137,6 @@ export default {
 	box-shadow: 0px 0px 20px 1px #3e4795 !important;
 }
 
-/* TODO check when this fixed on update */
 .v-locale--is-rtl .v-main{
 	background: 
 		repeating-linear-gradient(
@@ -151,11 +151,6 @@ export default {
 	background-attachment: fixed;
 }
 
-/* .v-locale--is-rtl .v-navigation-drawer--start{
-	left: auto !important;
-	right: 0 !important;
-} */
-
 .app-section{
 	@apply bg-section-bg rounded-lg	
 }
@@ -166,5 +161,6 @@ export default {
 .normal-flag{
 	margin: 0 !important
 }
+
 
 </style>

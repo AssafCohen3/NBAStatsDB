@@ -20,29 +20,29 @@ def get_tasks_list():
 
 @tasks_bp.route('/pause_task', methods=['POST'])
 def pause_task_route():
-    task_id = request.json['task_id']
-    pause_task(task_id)
+    task_path = request.json['task_path']
+    pause_task(task_path)
     return 'ok'
 
 
 @tasks_bp.route('/resume_task', methods=['POST'])
 def resume_task_route():
-    task_id = request.json['task_id']
-    resume_task(task_id)
+    task_path = request.json['task_path']
+    resume_task(task_path)
     return 'ok'
 
 
 @tasks_bp.route('/cancel_task', methods=['POST'])
 def cancel_task_route():
-    task_id = request.json['task_id']
-    cancel_task(task_id)
+    task_path = request.json['task_path']
+    cancel_task(task_path)
     return 'ok'
 
 
 @tasks_bp.route('/dismiss_task', methods=['POST'])
 def dismiss_task_route():
-    task_id = request.json['task_id']
-    dismiss_task(task_id)
+    task_path = request.json['task_path']
+    dismiss_task(task_path)
     return 'ok'
 
 

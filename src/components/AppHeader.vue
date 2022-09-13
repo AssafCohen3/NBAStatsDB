@@ -66,17 +66,17 @@ export default {
 			dismissTaskAction: 'dismissTask',
 			cancelTaskAction: 'cancelTask',
 		}),
-		pauseTask(taskId){
-			this.pauseTaskAction([taskId]);
+		pauseTask(taskPath){
+			this.pauseTaskAction([taskPath]);
 		},
-		resumeTask(taskId){
-			this.resumeTaskAction([taskId]);
+		resumeTask(taskPath){
+			this.resumeTaskAction([taskPath]);
 		},
-		dismissTask(taskId){
-			this.dismissTaskAction([taskId]);
+		dismissTask(taskPath){
+			this.dismissTaskAction([taskPath]);
 		},
-		cancelTask(taskId){
-			this.cancelTaskAction([taskId]);
+		cancelTask(taskPath){
+			this.cancelTaskAction([taskPath]);
 		},
 	},
 	onLocaleChange(){
