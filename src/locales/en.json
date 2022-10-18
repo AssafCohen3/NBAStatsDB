@@ -15,7 +15,8 @@
 		"tasks": "Tasks",
 		"date_range": "Date Range",
 		"seasons_range": "Seasons range",
-		"file_path": "File path"
+		"file_path": "File path",
+		"player": "Player"
 	},
 	"generic": {
 		"home": "Home",

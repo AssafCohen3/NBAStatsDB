@@ -62,3 +62,12 @@ class FileSelector(ActionInput):
         self.expected_params = [
             ActionParameter('file_path', 'str', True)
         ]
+
+
+@dataclass
+class PlayersAutoComplete(ActionInput):
+    def __post_init__(self):
+        self.input_name = 'PlayersAutoComplete'
+        self.expected_params = [
+            ActionParameter('player_id', 'int', True),
+        ]

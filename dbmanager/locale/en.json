@@ -143,6 +143,35 @@
 					"text": "%{players_count} out of %{possible_players_count} mapped players"
 				}
 			}
+		},
+		"nba_awards": {
+			"actions": {
+				"download_all_players_awards": {
+					"title": "Download Awards of all players"
+				},
+				"download_active_players_awards": {
+					"title": "Download Awards of active players"
+				},
+				"download_rookies_awards_in_seasons_range": {
+					"title": "Download Awards of rookies in seasons range"
+				},
+				"download_player_awards": {
+					"title": "Download Awards of a specific player"
+				},
+				"download_awards": {
+					"fetching_awards_of_player": "Downloading awards of %{player_name}"
+				}
+			},
+			"messages": {
+				"players_with_awards": {
+					"title": "Players with Awards:",
+					"text": "%{players_count} Players"
+				},
+				"awards": {
+					"title": "Downloaded Awards:",
+					"text": "%{awards_count} Awards"
+				}
+			}
 		}
 	},
 	"common": {

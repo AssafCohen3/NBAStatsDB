@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass, field
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 import requests
 
@@ -20,6 +20,7 @@ class PlayerDetails:
     draft_number: Optional[int]
     first_season: int
     last_season: int
+    active: bool
     played_games_flag: bool = field(default=False)
 
 
@@ -48,6 +49,9 @@ class PlayersIndex(SharedDataResourceAbc):
                 int(row[draft_number_index]) if row[draft_number_index] else None,
                 int(row[from_year_index]),
                 int(row[to_year_index]),
+                int(row[to_year_index]) >= current_season,
+                # TODO this may cause bugs because prod last season seems to refer to the year in which the season ended
+                #  while the downloader expects for the year in which the season started. check this when season starts
                 row[pts_index] is not None
             )
             for row in players_rows]
@@ -56,12 +60,21 @@ class PlayersIndex(SharedDataResourceAbc):
         }
         return to_ret
 
+    def get_players(self) -> List[PlayerDetails]:
+        return list(self.get_data().values())
+
     def get_player_details(self, player_nba_id: int) -> Optional[PlayerDetails]:
         return self.get_data().get(player_nba_id)
 
     def is_player_played_games(self, player_nba_id: int) -> bool:
         player_details = self.get_player_details(player_nba_id)
         return player_details and player_details.played_games_flag
+
+    def search_for_players(self, search: str, active: bool = False, limit: int = 10) -> List[PlayerDetails]:
+        search = search.lower()
+        return [p for p in self.get_players() if search in p.player_name.lower()
+                and (not active or p.active)
+                ][:limit]
 
 
 players_index = PlayersIndex()

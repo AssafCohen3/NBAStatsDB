@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from dbmanager.Database.Models.BREFPlayer import BREFPlayer
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
-from dbmanager.Resources.AwardsResourceHandler import AwardsResourceHandler
+from dbmanager.Resources.NBAAwardsResourceHandler import AwardsResourceHandler
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayerResourceHandler
 from dbmanager.Resources.EventResourceHandler import EventResourceHandler
 from dbmanager.Resources.HonoursResourceHandler import HonoursResourceHandler

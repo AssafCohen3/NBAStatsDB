@@ -23,7 +23,8 @@
 		"tasks": "משימות",
 		"date_range": "טווח תאריכים",
 		"seasons_range": "טווח עונות",
-		"file_path": "נתיב הקובץ"
+		"file_path": "נתיב הקובץ",
+		"player": "שחקן"
 	},
 	"validations": {
 		"required": "השדה נדרש"

@@ -162,5 +162,15 @@ export default {
 	margin: 0 !important
 }
 
+.players-autocomplete-select-menu .v-list{
+	background-color: #1c1947 !important;
+}
+.players-autocomplete-select-menu .v-list .v-list-item .v-list-item-title{
+	@apply text-primary-light !font-bold
+}
+
+
+
+
 
 </style>

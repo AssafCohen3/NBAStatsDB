@@ -14,6 +14,7 @@ from dbmanager.Resources.Actions.TeamBoxScoreActions import UpdateTeamBoxScoresA
 from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPreset import ActionsGroupPreset, create_actions_group_preset
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
+from dbmanager.Resources.NBAAwardsResourceHandler import NBAAwardsResourceHandler
 from dbmanager.Resources.NBAPlayersResourceHandler import NBAPlayersResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
 from dbmanager.Resources.PlayerMappingResourceHandler import PlayersMappingsResourceHandler
@@ -40,6 +41,7 @@ class DbManager:
             BREFPlayoffSeriesResourceHandler,
             PlayersMappingsResourceHandler,
             BREFPlayersResourceHandler,
+            NBAAwardsResourceHandler
         ]
         self.available_actions_presets: List[ActionsGroupPreset] = [
             create_actions_group_preset('base_update', gettext_marker('presets.base_update.name'),

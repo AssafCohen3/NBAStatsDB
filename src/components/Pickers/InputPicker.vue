@@ -19,16 +19,20 @@
 		<file-picker
 			v-if="actionInput.input_name == 'FileSelector'"
 			v-model:inputData="inputDataModel" />
+		<players-auto-complete
+			v-if="actionInput.input_name == 'PlayersAutoComplete'"
+			v-model:inputData="inputDataModel" />
 	</div>
 </template>
 
 <script>
 import DateRangePicker from './DateRangePicker.vue';
 import FilePicker from './FilePicker.vue';
+import PlayersAutoComplete from './PlayersAutoComplete.vue';
 import SeasonRangePicker from './SeasonRangePicker.vue';
 import SeasonTypePicker from './SeasonTypePicker.vue';
 export default {
-	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, FilePicker, },
+	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, FilePicker, PlayersAutoComplete, },
 	props: {
 		actionInput: {
 			type: Object,

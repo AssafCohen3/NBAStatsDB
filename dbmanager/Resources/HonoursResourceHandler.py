@@ -4,7 +4,7 @@ from datetime import datetime
 from alive_progress import alive_it
 from sqlalchemy import func
 from sqlalchemy.sql import select
-from dbmanager.Database.Models.Awards import Awards
+from dbmanager.Database.Models.NBAAwards import Awards
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Downloaders.TeamDetailsHandler import TeamDetailsHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc

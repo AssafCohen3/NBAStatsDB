@@ -148,6 +148,35 @@
 					"text": "%{players_count} מתוך %{possible_players_count} שחקנים שמופו"
 				}
 			}
+		},
+		"nba_awards": {
+			"actions": {
+				"download_all_players_awards": {
+					"title": "הורד תארים עבור כל השחקנים"
+				},
+				"download_active_players_awards": {
+					"title": "הורד תארים עבור שחקנים פעילים"
+				},
+				"download_rookies_awards_in_seasons_range": {
+					"title": "הורד תארים עבור רוקיז בטווח עונות"
+				},
+				"download_player_awards": {
+					"title": "הורד תארים עבור שחקן ספציפי"
+				},
+				"download_awards": {
+					"fetching_awards_of_player": "מוריד תארים עבור %{player_name}"
+				}
+			},
+			"messages": {
+				"players_with_awards": {
+					"title": "שחקנים עם תארים:",
+					"text": "%{players_count} שחקנים"
+				},
+				"awards": {
+					"title": "תארים שהורדו:",
+					"text": "%{awards_count} תארים"
+				}
+			}
 		}
 	},
 	"errors": {

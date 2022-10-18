@@ -44,5 +44,12 @@ class FranchisesHistory(SharedDataResourceAbc):
             to_ret.extend(to_append)
         return to_ret
 
+    def get_spans(self) -> List[FranchiseSpan]:
+        return self.get_data()
+
+    def get_spans_in_range(self, team_name: str, season: int) -> List[FranchiseSpan]:
+        return [t for t in self.get_spans() if
+                t.franchise_name == team_name and t.span_start_year <= season <= t.span_end_year]
+
 
 franchises_history = FranchisesHistory()
