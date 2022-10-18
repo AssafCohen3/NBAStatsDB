@@ -3,20 +3,20 @@ from typing import List, Type
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, RelatedTable
 
 
-class NBAAwardsResourceSpecification(ResourceSpecificationAbc):
+class NBAHonoursResourceSpecification(ResourceSpecificationAbc):
     @classmethod
     def get_id(cls) -> str:
-        return 'nba_awards'
+        return 'nba_honours'
 
     @classmethod
     def get_name(cls) -> str:
         # TODO translate?
-        return 'Awards(NBA)'
+        return 'Honours(NBA)'
 
     @classmethod
     def get_related_tables(cls) -> List[RelatedTable]:
         return [
-            RelatedTable('NBAAwards')
+            RelatedTable('NBAHonours')
         ]
 
     @classmethod

@@ -1,5 +1,5 @@
 {
-  "name": "vue-electron-flask",
+  "name": "nba-stats-db",
   "version": "1.0.1",
   "private": true,
   "description": "Simple template for combining Electron with Vue3 and Flask",

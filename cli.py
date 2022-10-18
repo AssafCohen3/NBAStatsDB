@@ -13,7 +13,7 @@ from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Resources.NBAAwardsResourceHandler import AwardsResourceHandler
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayerResourceHandler
 from dbmanager.Resources.EventResourceHandler import EventResourceHandler
-from dbmanager.Resources.HonoursResourceHandler import HonoursResourceHandler
+from dbmanager.Resources.NBAHonoursResourceHandler import HonoursResourceHandler
 from dbmanager.Resources.OddsResourceHandler import OddsResourceHandler
 from dbmanager.Resources.PlayerBirthdateResourceHandler import PlayerBirthdateResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler

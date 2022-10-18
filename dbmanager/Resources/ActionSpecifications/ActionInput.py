@@ -71,3 +71,12 @@ class PlayersAutoComplete(ActionInput):
         self.expected_params = [
             ActionParameter('player_id', 'int', True),
         ]
+
+
+@dataclass
+class TeamsAutoComplete(ActionInput):
+    def __post_init__(self):
+        self.input_name = 'TeamsAutoComplete'
+        self.expected_params = [
+            ActionParameter('team_id', 'int', True),
+        ]

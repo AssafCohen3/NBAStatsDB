@@ -202,6 +202,25 @@
 					"text": "%{games_with_events} מתוך %{games_count} משחקים אפשריים"
 				}
 			}
+		},
+		"nba_honours": {
+			"messages": {
+				"teams_honours": {
+					"title": "קבוצות עם תארי כבוד:",
+					"text": "%{teams_count} קבוצות"
+				}
+			},
+			"actions": {
+				"download_all_honours": {
+					"title": "הורד את כל תארי הכבוד"
+				},
+				"download_team_honours": {
+					"title": "הורד תארי כבוד של קבוצה ספציפית"
+				},
+				"download_honours": {
+					"fetching_honours_of_team": "מוריד תארי כבוד של %{team_name}"
+				}
+			}
 		}
 	},
 	"errors": {

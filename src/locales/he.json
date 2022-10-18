@@ -24,7 +24,8 @@
 		"date_range": "טווח תאריכים",
 		"seasons_range": "טווח עונות",
 		"file_path": "נתיב הקובץ",
-		"player": "שחקן"
+		"player": "שחקן",
+		"team": "קבוצה"
 	},
 	"validations": {
 		"required": "השדה נדרש"

@@ -197,6 +197,25 @@
 					"text": "%{games_with_events} out of %{games_count} possible games"
 				}
 			}
+		},
+		"nba_honours": {
+			"messages": {
+				"teams_honours": {
+					"title": "Teams with Honours:",
+					"text": "%{teams_count} Teams"
+				}
+			},
+			"actions": {
+				"download_all_honours": {
+					"title": "Download all Honours"
+				},
+				"download_team_honours": {
+					"title": "Download specific team Honours"
+				},
+				"download_honours": {
+					"fetching_honours_of_team": "Downloading Honours of %{team_name}"
+				}
+			}
 		}
 	},
 	"common": {

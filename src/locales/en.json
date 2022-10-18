@@ -16,7 +16,8 @@
 		"date_range": "Date Range",
 		"seasons_range": "Seasons range",
 		"file_path": "File path",
-		"player": "Player"
+		"player": "Player",
+		"team": "Team"
 	},
 	"generic": {
 		"home": "Home",

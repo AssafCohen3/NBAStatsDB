@@ -22,6 +22,9 @@
 		<players-auto-complete
 			v-if="actionInput.input_name == 'PlayersAutoComplete'"
 			v-model:inputData="inputDataModel" />
+		<teams-auto-complete
+			v-if="actionInput.input_name == 'TeamsAutoComplete'"
+			v-model:inputData="inputDataModel" />
 	</div>
 </template>
 
@@ -31,8 +34,9 @@ import FilePicker from './FilePicker.vue';
 import PlayersAutoComplete from './PlayersAutoComplete.vue';
 import SeasonRangePicker from './SeasonRangePicker.vue';
 import SeasonTypePicker from './SeasonTypePicker.vue';
+import TeamsAutoComplete from './TeamsAutoComplete.vue';
 export default {
-	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, FilePicker, PlayersAutoComplete, },
+	components: { SeasonTypePicker, DateRangePicker, SeasonRangePicker, FilePicker, PlayersAutoComplete, TeamsAutoComplete, },
 	props: {
 		actionInput: {
 			type: Object,

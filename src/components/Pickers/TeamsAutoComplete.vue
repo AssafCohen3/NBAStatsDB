@@ -2,7 +2,7 @@
 	<div
 		class="w-[400px]">
 		<v-autocomplete
-			v-model="selectedPlayerComp"
+			v-model="selectedTeamComp"
 			v-model:search="search"
 			:items="suggestions"
 			:loading="isLoadingSuggestions"
@@ -10,8 +10,8 @@
 			return-object
 			variant="underlined"
 			prepend-icon="mdi-account-search"
-			:item-title="getPlayerTitle"
-			item-value="player_id"
+			:item-title="getTeamTitle"
+			item-value="team_id"
 			hide-no-data
 			:menu-props="{
 				contentClass: 'autocomplete-select-menu'
@@ -20,7 +20,7 @@
 			hide-selected
 			hide-details="auto"
 			:error-messages="v$.$errors.map(m => m.$message)"
-			:label="$t('common.player')" />
+			:label="$t('common.team')" />
 	</div>
 </template>
 
@@ -46,25 +46,25 @@ export default {
 			search: '',
 			suggestions: [],
 			isLoadingSuggestions: false,
-			selectedPlayer: null,
+			selectedTeam: null,
 		};
 	},
 	validations(){
 		return {
 			inputData: {
-				player_id: { required },
+				team_id: { required },
 			},
 		};
 	},
 	computed: {
-		selectedPlayerComp: {
+		selectedTeamComp: {
 			get(){
-				return this.selectedPlayer;
+				return this.selectedTeam;
 			},
 			set(newVal){
-				this.selectedPlayer = newVal;
+				this.selectedTeam = newVal;
 				this.$emit('update:inputData', {
-					'player_id': newVal ? newVal.player_id : '',
+					'team_id': newVal ? newVal.team_id : '',
 				});
 			}
 		}
@@ -74,7 +74,7 @@ export default {
 			handler(newVal){
 				if(newVal.length >= 3 && !this.isLoadingSuggestions){
 					this.isLoadingSuggestions = true;
-					this.searchPlayers([newVal]).
+					this.searchTeams([newVal]).
 						then(resp => {
 							this.suggestions = resp;
 							this.isLoadingSuggestions = false;
@@ -85,9 +85,9 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions('suggestions', ['searchPlayers']),
-		getPlayerTitle(player){
-			return `${player.player_name}(${player.first_season}-${player.last_season})`;
+		...mapActions('suggestions', ['searchTeams']),
+		getTeamTitle(team){
+			return `${team.team_name}(${team.first_season}-${team.last_season})`;
 		}
 	},
 };

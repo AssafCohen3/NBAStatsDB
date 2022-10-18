@@ -25,6 +25,19 @@ const actions = {
 				});
 		});
 	},
+	searchTeams({commit}, [search]){
+		return new Promise((resolve, reject) => {
+			axios.get('/suggestions/teams', {params: {
+				search: search
+			}})
+				.then(resp => {
+					resolve(resp.data);
+				})
+				.catch(err => {
+					console.log(err.toJSON());
+				});
+		});
+	},
 };
 
 const mutations = {
