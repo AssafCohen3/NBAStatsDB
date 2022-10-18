@@ -2,7 +2,6 @@
 import dbmanager.pbp.PatchTimeout
 from pbpstats.resources.enhanced_pbp.rebound import EventOrderError
 from pbpstats.resources.enhanced_pbp.stats_nba import StatsViolation
-from dbmanager.MainRequestsSession import requests_session as requests
 from pbpstats import HEADERS, REQUEST_TIMEOUT
 from pbpstats.resources.enhanced_pbp import (
     FieldGoal,
@@ -19,6 +18,7 @@ import pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item as pbpItemCla
 from pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item import StatsEnhancedPbpItem
 from pbpstats.resources.enhanced_pbp.stats_nba.start_of_period import StatsStartOfPeriod
 
+from dbmanager.RequestHandlers.StatsAsyncRequestHandler import stats_session
 
 pbpItemClass.KEY_ATTR_MAPPER['WCTIMESTRING'] = 'real_time'
 pbpItemClass.KEY_ATTR_MAPPER['PERSON1TYPE'] = 'person1_type'
@@ -57,7 +57,7 @@ def _get_starters_from_boxscore_request(self):
         "EndRange": end_range,
     }
     starters_by_team = {}
-    response = requests.get(
+    response = stats_session.get(
         base_url, params=params, headers=HEADERS, timeout=REQUEST_TIMEOUT
     )
     if response.status_code == 200:
@@ -147,6 +147,11 @@ def get_offense_team_id(self):
         return getattr(event_to_check, 'get_offense_team_id')()
 
 
+# dummy object for the missed shot mock
+class Object(object):
+    pass
+
+
 @property
 def new_rebound_missed_shot_property(self):
     """
@@ -172,7 +177,7 @@ def new_rebound_missed_shot_property(self):
             prev_event = getattr(prev_event, 'previous_event')
         if isinstance(prev_event, (FieldGoal, FreeThrow)):
             return prev_event
-    to_ret = object()
+    to_ret = Object()
     setattr(to_ret, 'seconds_remaining', 20)
     setattr(to_ret, 'team_id', None)
     return to_ret

@@ -177,6 +177,31 @@
 					"text": "%{awards_count} תארים"
 				}
 			}
+		},
+		"events": {
+			"actions": {
+				"update_events": {
+					"title": "עדכן אירועים חסרים"
+				},
+				"reset_events": {
+					"title": "הורד את כל האירועים מחדש"
+				},
+				"update_events_in_date_range": {
+					"title": "עדכן אירועים חסרים בטווח תאריכים"
+				},
+				"reset_events_in_date_range": {
+					"title": "הורד מחדש את כל האירועים בטווח תאריכים"
+				},
+				"download_events": {
+					"downloading_events": "מוריד אירועים עבור %{team_a} נגד %{team_b} (%{game_date})"
+				}
+			},
+			"messages": {
+				"games_message": {
+					"title": "משחקים מסוג %{season_type} עם אירועים:",
+					"text": "%{games_with_events} מתוך %{games_count} משחקים אפשריים"
+				}
+			}
 		}
 	},
 	"errors": {

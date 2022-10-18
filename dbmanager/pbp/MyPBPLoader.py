@@ -1,10 +1,5 @@
 from pbpstats.data_loader.stats_nba.enhanced_pbp.loader import StatsNbaEnhancedPbpLoader
 from pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_factory import StatsNbaEnhancedPbpFactory
-# from pbpstats.data_loader.data_nba.pbp.loader import DataNbaPbpLoader
-# from pbpstats.data_loader.data_nba.pbp.web import DataNbaPbpWebLoader
-#
-# from requests import HTTPError
-#
 from dbmanager.pbp.MySourceLoader import MySourceLoader
 
 

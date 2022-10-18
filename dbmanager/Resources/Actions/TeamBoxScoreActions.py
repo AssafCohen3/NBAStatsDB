@@ -85,7 +85,7 @@ class GeneralResetTeamBoxScoresAction(ActionAbc, ABC):
         self.replace = replace
         self.update = update
 
-    def insert_boxscores(self, session: scoped_session, boxscores: List[Dict[str, Any]], replace: bool):
+    def insert_boxscores(self, boxscores: List[Dict[str, Any]], replace: bool):
         if not boxscores:
             return
         stmt = insert(BoxScoreT)
@@ -95,8 +95,8 @@ class GeneralResetTeamBoxScoresAction(ActionAbc, ABC):
             })
         else:
             stmt = stmt.on_conflict_do_nothing()
-        session.execute(stmt, boxscores)
-        session.commit()
+        self.session.execute(stmt, boxscores)
+        self.session.commit()
         self.update_resource()
 
     async def fetch_season_type_boxscores(self, season_type: SeasonType):
@@ -128,7 +128,7 @@ class GeneralResetTeamBoxScoresAction(ActionAbc, ABC):
             results = [r for r in results if r[wl_index] is not None or (
                     datetime.date.today() - datetime.date.fromisoformat(r[game_date_index])).days >= 5]
             transformed = transform_boxscores(results, headers)
-            self.insert_boxscores(self.session, transformed, self.replace)
+            self.insert_boxscores(transformed, self.replace)
             await self.finish_subtask()
 
     async def action(self):

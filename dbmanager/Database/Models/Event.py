@@ -6,7 +6,7 @@ from dbmanager.base import Base
 class Event(Base):
     __tablename__ = 'Event'
     Season = Column(Integer)
-    SeasonType = Column(Integer)
+    SeasonType = Column(Text)
     GameId = Column(Text)
     TeamAId = Column(Integer)
     TeamAName = Column(Text)

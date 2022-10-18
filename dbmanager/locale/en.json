@@ -172,6 +172,31 @@
 					"text": "%{awards_count} Awards"
 				}
 			}
+		},
+		"events": {
+			"actions": {
+				"update_events": {
+					"title": "Update missing Events"
+				},
+				"reset_events": {
+					"title": "Redownload all Events"
+				},
+				"update_events_in_date_range": {
+					"title": "Update missing Events in date range"
+				},
+				"reset_events_in_date_range": {
+					"title": "Redownload all Events in date range"
+				},
+				"download_events": {
+					"downloading_events": "Downloading Events of %{team_a} vs %{team_b} (%{game_date})"
+				}
+			},
+			"messages": {
+				"games_message": {
+					"title": "%{season_type} Games with Events:",
+					"text": "%{games_with_events} out of %{games_count} possible games"
+				}
+			}
 		}
 	},
 	"common": {
