@@ -34,15 +34,18 @@ STATS_HEADERS = {
     'Pragma': 'no-cache',
     'Cache-Control': 'no-cache'}
 
-# ODDS_TYPES = [
-#     "Round 1",
-#     "ConfSemis",
-#     "ConfFinals",
-#     "Finals"
-# ]
+ODDS_ROUNDS = {
+    "Round 1": 4,
+    "ConfSemis": 3,
+    "ConfFinals": 2,
+    "Finals": 1
+}
 
 FIRST_NBA_SEASON = 1946
 FIRST_ODDS_SEASON = 1972
+EXCLUDED_ODDS_SEASONS = [
+    1974,
+]
 PBP_FIRST_SEASON = 1996
 
 BR_ABBR_TO_NBA_ABBR = {
@@ -232,6 +235,8 @@ TEAM_NBA_ID_TO_NBA_NAME = {
     1610612764: "Washington Wizards", 1610612765: "Detroit Pistons", 1610612766: "Charlotte Hornets",
     1610616833: "Team Durant", 1610616834: "Team LeBron"
 }
+
+TEAM_NBA_NAME_TO_NBA_ID = {v: k for k, v in TEAM_NBA_ID_TO_NBA_NAME.items()}
 
 SQLITE_MIN_VERSION = (3, 31, 0)
 

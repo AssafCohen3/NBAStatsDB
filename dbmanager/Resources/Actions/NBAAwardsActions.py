@@ -17,6 +17,7 @@ from dbmanager.Resources.ActionSpecifications.NBAAwardsActionSpecs import Downlo
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.FranchisesHistory import franchises_history, FranchiseSpan
 from dbmanager.SharedData.PlayersIndex import PlayerDetails, players_index
+from dbmanager.utils import iterate_with_next
 
 
 def transform_award(award_row):
@@ -74,9 +75,9 @@ class GeneralDownloadAwardsAction(ActionAbc, ABC):
         self.insert_awards(player.player_id, awards)
 
     async def action(self):
-        for player in self.players_to_collect:
-            self.current_player = player
+        for player, next_player in iterate_with_next(self.players_to_collect):
             await self.collect_player_awards(player)
+            self.current_player = player
             await self.finish_subtask()
 
     def subtasks_count(self) -> Union[int, None]:

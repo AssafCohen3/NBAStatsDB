@@ -12,13 +12,15 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.BREFPlayersActionSpecs import UpdateBREFPlayers, RedownloadBREFPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.PlayersIndex import players_index, PlayerDetails
+from dbmanager.utils import iterate_with_next
 
 
 class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
 
     def __init__(self, session: scoped_session, **kwargs):
         super().__init__(session, **kwargs)
-        self.missing_letters: List[str] = []
+        self.missing_letters: List[str] = self.get_letters_to_fetch()
+        self.current_letter = self.missing_letters[0] if self.missing_letters else ''
 
     def insert_bref_players(self, bref_players):
         if not bref_players:
@@ -50,9 +52,9 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
         self.insert_bref_players(data)
 
     async def action(self):
-        self.missing_letters = self.get_letters_to_fetch()
-        for letter in self.missing_letters:
+        for letter, next_letter in iterate_with_next(self.missing_letters, ''):
             self.collect_bref_players_by_letter(letter)
+            self.current_letter = next_letter
             await self.finish_subtask()
 
     @abstractmethod
@@ -65,7 +67,7 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
     def get_current_subtask_text_abs(self) -> str:
         # fetching players starting with letter %{letter}
         return gettext('resources.bref_players.actions.update_bref_players.fetching_players',
-                       letter=self.missing_letters[self.completed_subtasks()] if self.completed_subtasks() < len(self.missing_letters) else '')
+                       letter=self.current_letter)
 
 
 class UpdateBREFPlayersAction(UpdateBREFPlayersGeneralAction):

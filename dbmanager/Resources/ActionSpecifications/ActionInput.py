@@ -45,6 +45,7 @@ class SeasonRangeSelector(ActionInput):
     min_season: int
     max_season: int
     default_season: int
+    excluded_seasons: List[int] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         self.input_name = 'SeasonRangeSelector'

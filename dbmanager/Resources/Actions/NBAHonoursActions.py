@@ -12,6 +12,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.NBAHonoursActionSpecs import DownloadAllHonours, DownloadTeamHonours
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.FranchisesHistory import franchises_history, FranchiseSpan
+from dbmanager.utils import iterate_with_next
 
 
 def transform_hof(team_id, row):
@@ -69,9 +70,9 @@ class GeneralDownloadHonoursAction(ActionAbc, ABC):
         self.insert_honours(team.franchise_id, honours)
 
     async def action(self):
-        for team in self.teams_to_collect:
-            self.current_team = team
+        for team, next_team in iterate_with_next(self.teams_to_collect):
             await self.collect_team_honours(team)
+            self.current_team = next_team
             await self.finish_subtask()
 
     def subtasks_count(self) -> Union[int, None]:

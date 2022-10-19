@@ -28,7 +28,8 @@
 					"title": "משחקים עם בוקססקורס מסוג %{season_type}: ",
 					"text": "%{games_count} משחקים"
 				}
-			}
+			},
+			"description": "הורד בוקססקורס של שחקנים מאתר stats.nba"
 		},
 		"teamboxscore": {
 			"actions": {
@@ -53,7 +54,8 @@
 					"title": "משחקים עם בוקססקורס מסוג %{season_type}: ",
 					"text": "%{games_count} משחקים"
 				}
-			}
+			},
+			"description": "הורד בוקססקורס של קבוצות מאתר stats.nba"
 		},
 		"common": {
 			"errors": {
@@ -76,7 +78,8 @@
 					"title": "מספר השחקנים הפעילים הקיימים:",
 					"text": "%{active_players_count} שחקנים פעילים"
 				}
-			}
+			},
+			"description": "הורד את אינדקס השחקנים מאתר stats.nba. האינדקס כולל את כל השחקנים בהיסטוריה של הליגה ומידע ביוגרפי עליהם"
 		},
 		"bref_playoff_series": {
 			"messages": {
@@ -112,7 +115,8 @@
 				"redownload_bref_playoff_series_in_season_range": {
 					"title": "הורד מחדש סדרות פלייאוף בטווח של עונות"
 				}
-			}
+			},
+			"description": "הורד סדרות פלייאוף מאתר BREF. המידע על הסדרות כולל תוצאות, תאריכי הסדרות ועוד"
 		},
 		"players_mappings": {
 			"actions": {
@@ -130,7 +134,8 @@
 					"title": "שחקנים עם מיפוי:",
 					"text": "%{mappings_count} מתוך %{possible_mappings_count} שחקנים שזקוקים למיפוי"
 				}
-			}
+			},
+			"description": "מיפוי של מזהי השחקנים באתר BREF למזהי השחקנים באתר stats.nba. המיפוי מאפשר לשלב את המידע שנאסף משני האתרים"
 		},
 		"bref_players": {
 			"actions": {
@@ -147,7 +152,8 @@
 					"title": "שחקנים שהורדו:",
 					"text": "%{players_count} מתוך %{possible_players_count} שחקנים שמופו"
 				}
-			}
+			},
+			"description": "הורד את אינדקס השחקנים של BREF. האינדקס כולל את כל השחקנים בהיסטוריה ומידע ביוגרפי עליהם"
 		},
 		"nba_awards": {
 			"actions": {
@@ -176,7 +182,8 @@
 					"title": "תארים שהורדו:",
 					"text": "%{awards_count} תארים"
 				}
-			}
+			},
+			"description": "הורד את כל התארים של כל השחקנים שנבחרו מאתר stats.nba"
 		},
 		"events": {
 			"actions": {
@@ -201,7 +208,8 @@
 					"title": "משחקים מסוג %{season_type} עם אירועים:",
 					"text": "%{games_with_events} מתוך %{games_count} משחקים אפשריים"
 				}
-			}
+			},
+			"description": "הורד את אירועי המשחק מאתר stats.nba. שומר את כל אירועי המשחקים שנבחרו"
 		},
 		"nba_honours": {
 			"messages": {
@@ -219,6 +227,30 @@
 				},
 				"download_honours": {
 					"fetching_honours_of_team": "מוריד תארי כבוד של %{team_name}"
+				}
+			},
+			"description": "הורד את כל תארי הכבוד של כל קבוצה שנבחרה מאתר stats.nba"
+		},
+		"odds": {
+			"actions": {
+				"update_odds": {
+					"title": "עדכן יחסים חסרים"
+				},
+				"redownload_odds": {
+					"title": "הורד מחדש את כל יחסי ההימורים"
+				},
+				"redownload_odds_in_season_range": {
+					"title": "הורד מחדש יחסי הימורים בטווח עונות"
+				},
+				"download_odds": {
+					"downloading_odds_of_season": "מוריד יחסי הימורים של עונת %{season}"
+				}
+			},
+			"description": "הורד יחסי הימורים היסטוריים בפלייאוף מאתר sportsoddshistory",
+			"messages": {
+				"seasons_with_odds": {
+					"title": "עונות עם כל יחסי ההימורים:",
+					"text": "%{odds_seasons_count} עונות מתוך %{seasons_count} עונות אפשריות"
 				}
 			}
 		}

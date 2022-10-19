@@ -18,6 +18,7 @@ from dbmanager.Resources.EventsResourceHandler import EventsResourceHandler
 from dbmanager.Resources.NBAAwardsResourceHandler import NBAAwardsResourceHandler
 from dbmanager.Resources.NBAHonoursResourceHandler import NBAHonoursResourceHandler
 from dbmanager.Resources.NBAPlayersResourceHandler import NBAPlayersResourceHandler
+from dbmanager.Resources.OddsResourceHandler import OddsResourceHandler
 from dbmanager.Resources.PlayerBoxScoreResourceHandler import PlayerBoxScoreResourceHandler
 from dbmanager.Resources.PlayerMappingResourceHandler import PlayersMappingsResourceHandler
 from dbmanager.Resources.ResourceAbc import ResourceAbc
@@ -46,6 +47,7 @@ class DbManager:
             NBAAwardsResourceHandler,
             EventsResourceHandler,
             NBAHonoursResourceHandler,
+            OddsResourceHandler,
         ]
         self.available_actions_presets: List[ActionsGroupPreset] = [
             create_actions_group_preset('base_update', gettext_marker('presets.base_update.name'),

@@ -1,6 +1,8 @@
 from typing import List, Type
 
-from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, RelatedTable
+from dbmanager.AppI18n import gettext
+from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, RelatedTable, \
+    Source
 
 
 class NBAPlayersResourceSpecification(ResourceSpecificationAbc):
@@ -22,3 +24,11 @@ class NBAPlayersResourceSpecification(ResourceSpecificationAbc):
     @classmethod
     def get_dependencies(cls) -> List[Type['ResourceSpecificationAbc']]:
         return []
+
+    @classmethod
+    def get_source(cls) -> Source:
+        return Source('stats.nba', 'https://www.nba.com/players')
+
+    @classmethod
+    def get_description(cls) -> str:
+        return gettext('resources.nba_players.description')

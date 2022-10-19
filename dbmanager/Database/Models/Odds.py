@@ -6,10 +6,11 @@ from dbmanager.base import Base
 
 class Odds(Base):
     __tablename__ = 'Odds'
-    Team = Column(Text)
+    TeamId = Column(Integer)
+    TeamName = Column(Text)
     Odd = Column(Float)
     Round = Column(Integer)
     Season = Column(Integer)
     __table_args__ = (
-        PrimaryKeyConstraint('Season', 'Round', 'Team'),
+        PrimaryKeyConstraint('Season', 'Round', 'TeamId'),
     )

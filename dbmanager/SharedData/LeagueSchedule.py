@@ -95,7 +95,8 @@ class Schedule:
 class LeagueSchedule(SharedDataResourceAbc):
     def __init__(self, season_type: SeasonType):
         self.season_type = season_type
-        self.matchups = None
+        self.matchups: Optional[List[ScheduleMatchup]] = None
+        self.last_season: int = -1
         super().__init__()
 
     def _fetch_data(self):
@@ -144,11 +145,16 @@ class LeagueSchedule(SharedDataResourceAbc):
             self.process_results(to_ret, results, headers)
         return to_ret
 
-    def get_matchups(self):
+    def get_matchups(self) -> List[ScheduleMatchup]:
         if self.matchups is None:
             schedule: Schedule = self.get_data()
             self.matchups = schedule.get_matchups()
         return self.matchups
+
+    def get_last_season(self) -> int:
+        if self.last_season == -1:
+            self.last_season = max(self.matchups, key=lambda matchup: matchup.season).season
+        return self.last_season
 
 
 playoff_schedule = LeagueSchedule(PLAYOFFS_SEASON_TYPE)

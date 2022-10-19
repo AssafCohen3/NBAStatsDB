@@ -23,7 +23,8 @@
 				"update_player_boxscores_in_date_range": {
 					"title": "Redownload boxscores in date range"
 				}
-			}
+			},
+			"description": "Download Players Box Scores from stats.nba"
 		},
 		"teamboxscore": {
 			"messages": {
@@ -48,7 +49,8 @@
 				"update_team_boxscores_in_date_range": {
 					"title": "Redownload boxscores in date range"
 				}
-			}
+			},
+			"description": "Download Teams Box Scores from stats.nba"
 		},
 		"common": {
 			"errors": {
@@ -71,7 +73,8 @@
 					"title": "Active players count:",
 					"text": "%{active_players_count} Active players"
 				}
-			}
+			},
+			"description": "Download the players index from stats.nba, including all players in history and some bio data"
 		},
 		"bref_playoff_series": {
 			"messages": {
@@ -107,7 +110,8 @@
 				"redownload_bref_playoff_series_in_season_range": {
 					"title": "Redownload playoff series in seasons range"
 				}
-			}
+			},
+			"description": "Download Playoff Series Summary from BREF. The summary includes results, serie dates and more"
 		},
 		"players_mappings": {
 			"actions": {
@@ -125,7 +129,8 @@
 					"title": "Players with mappings:",
 					"text": "%{mappings_count} out of %{possible_mappings_count} players that needs mapping"
 				}
-			}
+			},
+			"description": "Map the player ids of BREF to the player ids of stats.nba, allowing to combine the data from both sites"
 		},
 		"bref_players": {
 			"actions": {
@@ -142,7 +147,8 @@
 					"title": "Collected Players:",
 					"text": "%{players_count} out of %{possible_players_count} mapped players"
 				}
-			}
+			},
+			"description": "Download the players index of BREF, including bio data"
 		},
 		"nba_awards": {
 			"actions": {
@@ -171,7 +177,8 @@
 					"title": "Downloaded Awards:",
 					"text": "%{awards_count} Awards"
 				}
-			}
+			},
+			"description": "Download every awards of every selected player from stats.nba"
 		},
 		"events": {
 			"actions": {
@@ -196,7 +203,8 @@
 					"title": "%{season_type} Games with Events:",
 					"text": "%{games_with_events} out of %{games_count} possible games"
 				}
-			}
+			},
+			"description": "Download Play-By-Play data from stats.nba. saves every event of every selected game."
 		},
 		"nba_honours": {
 			"messages": {
@@ -214,6 +222,30 @@
 				},
 				"download_honours": {
 					"fetching_honours_of_team": "Downloading Honours of %{team_name}"
+				}
+			},
+			"description": "Download eveery honour titles of every selected team from stats.nba"
+		},
+		"odds": {
+			"actions": {
+				"update_odds": {
+					"title": "Update missing Odds"
+				},
+				"redownload_odds": {
+					"title": "Redownload All Odds"
+				},
+				"redownload_odds_in_season_range": {
+					"title": "Redownload Odds in Seasons range"
+				},
+				"download_odds": {
+					"downloading_odds_of_season": "Downloading Odds of season %{season}"
+				}
+			},
+			"description": "Download Playoffs Odds data from sportsoddshistory",
+			"messages": {
+				"seasons_with_odds": {
+					"title": "Seasons with all Odds:",
+					"text": "%{odds_seasons_count} Seasons out of %{seasons_count} possible Seasons"
 				}
 			}
 		}

@@ -19,6 +19,7 @@ from dbmanager.Resources.ActionSpecifications.EventsActionSpecs import UpdateEve
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.pbp.MyPBPLoader import MyPBPLoader
+from dbmanager.utils import iterate_with_next
 
 
 @dataclass
@@ -267,9 +268,9 @@ class GeneralEventsAction(ActionAbc, ABC):
         for season_type in self.season_types:
             games_to_add = self.get_games_without_events(season_type) if self.update else self.get_all_games(season_type)
             self.games_to_fetch.extend(games_to_add)
-        for game in self.games_to_fetch:
-            self.current_game = game
+        for game, next_game in iterate_with_next(self.games_to_fetch):
             await self.collect_all_game_events(game)
+            self.current_game = next_game
             await self.finish_subtask()
 
     def subtasks_count(self) -> Union[int, None]:

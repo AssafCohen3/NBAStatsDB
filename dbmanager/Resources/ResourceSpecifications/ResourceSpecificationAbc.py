@@ -8,6 +8,12 @@ class RelatedTable:
     name: str
 
 
+@dataclass
+class Source:
+    site: str
+    example_link: str
+
+
 class ResourceSpecificationAbc(ABC):
     @classmethod
     @abstractmethod
@@ -35,4 +41,18 @@ class ResourceSpecificationAbc(ABC):
     def get_dependencies(cls) -> List[Type['ResourceSpecificationAbc']]:
         """
         Get resources that the resource depends on.
+        """
+
+    @classmethod
+    @abstractmethod
+    def get_source(cls) -> Source:
+        """
+        get the resource source
+        """
+
+    @classmethod
+    @abstractmethod
+    def get_description(cls) -> str:
+        """
+        get the resource description
         """

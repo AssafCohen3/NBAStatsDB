@@ -12,6 +12,7 @@ from dbmanager.Resources.ActionSpecifications.BREFPlayoffSeriesActionSpecs impor
     RedownloadBREFPlayoffSeries, RedownloadBREFPlayoffSeriesInSeasonsRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.BREFSeasonsLinks import BREFSeasonLink, bref_seasons_links
+from dbmanager.utils import iterate_with_next
 
 
 class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
@@ -25,6 +26,7 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
             self.seasons_to_fetch_links = bref_seasons_links.get_nba_seasons_not_in_list(self.get_completed_series())
         else:
             self.seasons_to_fetch_links = bref_seasons_links.get_nba_seasons_in_range(start_season, end_season)
+        self.current_season_link: Optional[BREFSeasonLink] = self.seasons_to_fetch_links[0] if self.seasons_to_fetch_links else None
 
     def get_completed_series(self) -> List[int]:
         stmt = (
@@ -76,9 +78,9 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
         self.insert_series_of_season(season_link, dicts)
 
     async def action(self):
-        log_message('fetching playoff series...')
-        for season_link in self.seasons_to_fetch_links:
+        for season_link, next_season_link in iterate_with_next(self.seasons_to_fetch_links):
             self.update_playoff_summary(season_link)
+            self.current_season_link = season_link
             await self.finish_subtask()
 
     def subtasks_count(self) -> Union[int, None]:
