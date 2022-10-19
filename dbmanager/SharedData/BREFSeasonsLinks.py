@@ -14,7 +14,7 @@ class BREFSeasonLink:
     leagu_id: str
 
 
-class BREFSeasonsLink(SharedDataResourceAbc):
+class BREFSeasonsLink(SharedDataResourceAbc[List[BREFSeasonLink]]):
     def _fetch_data(self):
         resp = requests.get(BREF_SEASONS_INDEX_URL)
         soup = BeautifulSoup(resp.content, 'html.parser')

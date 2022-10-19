@@ -1,5 +1,6 @@
 BOXSCORES_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
 BOXSCORES_FINDER_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
+NBA_STARTERS_ENDPOINT = 'https://stats.nba.com/stats/boxscoretraditionalv2/?gameId=%s&startPeriod=0&endPeriod=14&startRange=0&endRange=2147483647&rangeType=0'
 PBP_ENDPOINT = 'https://stats.nba.com/stats/playbyplayv2?GameId=%s&StartPeriod=0&EndPeriod=14'
 ODDS_ENDPOINT = "https://www.sportsoddshistory.com/nba-main/?y=%s&sa=nba&a=finals&o=r"
 PLAYERS_INDEX_ENDPOINT = 'https://stats.nba.com/stats/playerindex?Historical=1&LeagueID=00&Season=%s&SeasonType=Regular+Season'
@@ -47,7 +48,13 @@ EXCLUDED_ODDS_SEASONS = [
     1974,
 ]
 PBP_FIRST_SEASON = 1996
+BREF_STARTERS_FIRST_SEASON = 1983
 
+START_POSITIONS = [
+    'G',
+    'F',
+    'C'
+]
 BR_ABBR_TO_NBA_ABBR = {
     'AND': 'AND',
     'ATL': 'ATL',

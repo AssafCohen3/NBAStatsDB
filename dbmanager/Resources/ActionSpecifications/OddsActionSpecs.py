@@ -3,13 +3,9 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Errors import IlegalParameterValueError
 from dbmanager.Resources.ActionSpecifications.ActionInput import SeasonRangeSelector
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput
-from dbmanager.Resources.ResourceSpecifications.BREFPlayoffSeriesResourceSpecification import \
-    BREFPlayoffSeriesResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.OddsResourceSpecification import OddsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.SharedData.BREFSeasonsLinks import bref_seasons_links
-from dbmanager.SharedData.LeagueSchedule import playoff_schedule
-from dbmanager.SharedData.SeasonPlayoffs import last_season_playoffs, get_last_season_with_playoffs
+from dbmanager.SharedData.SeasonPlayoffs import get_last_season_with_playoffs
 from dbmanager.constants import FIRST_ODDS_SEASON, EXCLUDED_ODDS_SEASONS
 
 

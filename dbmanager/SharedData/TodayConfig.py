@@ -6,7 +6,7 @@ from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 from dbmanager.constants import DATA_PROD_TODAY_FILE
 
 
-class TodayConfig(SharedDataResourceAbc):
+class TodayConfig(SharedDataResourceAbc[dict]):
     def _fetch_data(self):
         today_resp = requests.get(DATA_PROD_TODAY_FILE)
         return json.loads(today_resp.text)

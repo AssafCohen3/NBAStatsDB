@@ -2,7 +2,7 @@ import csv
 import datetime
 import os.path
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 
 
@@ -26,7 +26,7 @@ class DefaultPlayerMapping:
         ]
 
 
-class DefaultMappings(SharedDataResourceAbc):
+class DefaultMappings(SharedDataResourceAbc[Dict[int, DefaultPlayerMapping]]):
     def _fetch_data(self):
         mappings: List[DefaultPlayerMapping] = []
         file_name = os.path.join(os.path.dirname(__file__), '../players_ids/players.csv')

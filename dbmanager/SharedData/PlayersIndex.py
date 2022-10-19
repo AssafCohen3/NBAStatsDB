@@ -24,7 +24,7 @@ class PlayerDetails:
     played_games_flag: bool = field(default=False)
 
 
-class PlayersIndex(SharedDataResourceAbc):
+class PlayersIndex(SharedDataResourceAbc[Dict[int, PlayerDetails]]):
     def _fetch_data(self):
         current_season = today_config.get_current_season()
         resp = requests.get(PLAYERS_INDEX_ENDPOINT % current_season, headers=STATS_HEADERS)

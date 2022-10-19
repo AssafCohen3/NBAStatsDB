@@ -156,7 +156,7 @@ export default {
 }
 
 .local-changer-select-menu .v-list{
-	@apply !bg-section-bg
+	background-color: #1c1947 !important;
 }
 .normal-flag{
 	margin: 0 !important

@@ -248,6 +248,34 @@
 					"text": "%{odds_seasons_count} Seasons out of %{seasons_count} possible Seasons"
 				}
 			}
+		},
+		"bref_starters": {
+			"messages": {
+				"seasons_with_starters": {
+					"title": "Seasons with Starters data:",
+					"text": "%{seasons_with_starters} Seasons out of %{seasons} possible Seasons"
+				},
+				"boxscores_with_starters": {
+					"title": "Box Scores with Starters data:",
+					"text": "%{boxscores_with_starters} Box Scores out of %{boxscores} possible Box Scores"
+				}
+			},
+			"actions": {
+				"download_starters": {
+					"downloading_season_starters": "Downloading Starters of %{team} in %{season}",
+					"downloading_game_starters": "Downloading Starters of %{matchup} (%{date})"
+				},
+				"update_starters": {
+					"title": "Update missing Starters"
+				},
+				"redownload_starters": {
+					"title": "Redownload all Starters data"
+				},
+				"redownload_starters_in_seasons_range": {
+					"title": "Download Starters data in Seasons range"
+				}
+			},
+			"description": "Add Starters data to your Downloaded Box Scores from BREF"
 		}
 	},
 	"common": {

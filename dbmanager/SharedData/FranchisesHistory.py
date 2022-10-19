@@ -19,7 +19,7 @@ class FranchiseSpan:
     last_span: bool
 
 
-class FranchisesHistory(SharedDataResourceAbc):
+class FranchisesHistory(SharedDataResourceAbc[List[FranchiseSpan]]):
     def _fetch_data(self):
         resp = requests.get(FRANCHISE_HISTORY_ENDPOINT, headers=STATS_HEADERS)
         resp = json.loads(resp.text)
@@ -44,24 +44,21 @@ class FranchisesHistory(SharedDataResourceAbc):
             to_ret.extend(to_append)
         return to_ret
 
-    def get_spans(self) -> List[FranchiseSpan]:
-        return self.get_data()
-
     def get_spans_in_range(self, team_name: str, season: int) -> List[FranchiseSpan]:
-        return [t for t in self.get_spans() if
+        return [t for t in self.get_data() if
                 t.franchise_name == team_name and t.span_start_year <= season <= t.span_end_year]
 
     def search_franchise(self, search: str, limit: int = 10) -> List[FranchiseSpan]:
-        to_ret = [s for s in self.get_spans() if search.lower() in s.franchise_name.lower()]
+        to_ret = [s for s in self.get_data() if search.lower() in s.franchise_name.lower()]
         to_ret = list(set(self.get_last_span_with_id(s.franchise_id) for s in to_ret))[:limit]
         return to_ret
 
     def get_last_span_with_id(self, team_id: int) -> Optional[FranchiseSpan]:
-        to_ret = [s for s in self.get_spans() if s.franchise_id == team_id and s.last_span]
+        to_ret = [s for s in self.get_data() if s.franchise_id == team_id and s.last_span]
         return to_ret[0] if to_ret else None
 
     def get_franchises(self):
-        return [s for s in self.get_spans() if s.last_span]
+        return [s for s in self.get_data() if s.last_span]
 
 
 franchises_history = FranchisesHistory()

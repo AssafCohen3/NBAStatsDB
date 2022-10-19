@@ -1,10 +1,21 @@
+from dataclasses import dataclass
 from typing import List
 from dbmanager.Downloaders.BREFPlayoffSeriesDownloader import BREFPlayoffSeriesDownloader
 from dbmanager.SharedData.BREFSeasonsLinks import BREFSeasonLink, bref_seasons_links
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 
 
-class SeasonPlayoffs(SharedDataResourceAbc):
+@dataclass
+class SerieDetails:
+    season: int
+    team_a_id: int
+    team_a_name: str
+    team_b_id: int
+    team_b_name: str
+    serie_order: int
+
+
+class SeasonPlayoffs(SharedDataResourceAbc[List[SerieDetails]]):
     def __init__(self, season_link: BREFSeasonLink):
         self.season_link = season_link
         super().__init__()
@@ -32,14 +43,20 @@ class SeasonPlayoffs(SharedDataResourceAbc):
             'SerieEndDate',
             'IsOver'
         ]
-        dicts = [dict(zip(headers, serie)) for serie in data]
-        return dicts
-
-    def get_series(self) -> List[dict]:
-        return self.get_data()
+        to_ret = [
+            SerieDetails(s[headers.index('Season')],
+                         s[headers.index('TeamAId')],
+                         s[headers.index('TeamAName')],
+                         s[headers.index('TeamBId')],
+                         s[headers.index('TeamBName')],
+                         s[headers.index('SerieOrder')],
+                         )
+            for s in data
+        ]
+        return to_ret
 
     def get_last_round(self) -> int:
-        return min(self.get_series(), key=lambda s: s['SerieOrder'])['SerieOrder'] if self.get_series() else -1
+        return min(self.get_data(), key=lambda s: s.serie_order).serie_order if self.get_data() else -1
 
 
 last_season_playoffs = SeasonPlayoffs(bref_seasons_links.max_nba_season_link())

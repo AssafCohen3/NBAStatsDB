@@ -92,7 +92,7 @@ class Schedule:
         return to_ret
 
 
-class LeagueSchedule(SharedDataResourceAbc):
+class LeagueSchedule(SharedDataResourceAbc[Schedule]):
     def __init__(self, season_type: SeasonType):
         self.season_type = season_type
         self.matchups: Optional[List[ScheduleMatchup]] = None

@@ -253,6 +253,34 @@
 					"text": "%{odds_seasons_count} עונות מתוך %{seasons_count} עונות אפשריות"
 				}
 			}
+		},
+		"bref_starters": {
+			"messages": {
+				"seasons_with_starters": {
+					"title": "עונות עם נתונים על שחקנים פותחים:",
+					"text": "%{seasons_with_starters} עונות מתוך %{seasons} עונות אפשריות"
+				},
+				"boxscores_with_starters": {
+					"title": "בוקססקורס עם נתונים על שחקנים פותחים:",
+					"text": "%{boxscores_with_starters} בוקססקורס מתוך %{boxscores} בוקססקורס אפשריים"
+				}
+			},
+			"actions": {
+				"download_starters": {
+					"downloading_season_starters": "מוריד שחקנים פותחים של %{team} בעונת %{season}",
+					"downloading_game_starters": "מוריד שחקנים פותחים מהמשחק %{matchup} (%{date})"
+				},
+				"redownload_starters": {
+					"title": "הורד מחדש את כל הנתונים על שחקנים פותחים"
+				},
+				"redownload_starters_in_seasons_range": {
+					"title": "הורד מידע על שחקנים פותחים בטווח עונות"
+				},
+				"update_starters": {
+					"title": "הורד נתונים חסרים על שחקנים פותחים"
+				}
+			},
+			"description": "הוסף נתונים על שחקנים פותחים לבוקססקורס שהורדת מאתר BREF"
 		}
 	},
 	"errors": {

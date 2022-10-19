@@ -18,12 +18,11 @@ class ActionNotExistError(Exception):
 
 
 class InvalidActionCallError(Exception):
-    def __init__(self, resource_id: str, action_id: str, params: Dict[str, str], error_msg: str):
-        self.resource_id = resource_id
-        self.action_id = action_id
+    def __init__(self, action_spec: Type[ActionSpecificationAbc], params: Dict[str, str], error_msg: str):
+        self.action_spec = action_spec
         self.params = params
         self.error_msg = error_msg
-        super().__init__(gettext('errors.invalid_action', resource_id=resource_id, action_id=action_id, params=params, error_msg=error_msg))
+        super().__init__(gettext('errors.invalid_action', resource_id=action_spec.get_resource().get_id(), action_id=action_spec.get_action_id(), params=params, error_msg=error_msg))
 
 
 class ActionFailedError(Exception):
