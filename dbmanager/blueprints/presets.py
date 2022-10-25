@@ -21,6 +21,6 @@ def get_preset_details(preset_id):
 
 @presets_bp.route('/<preset_id>/dispatch', methods=['POST'])
 def dispatch_actions_preset(preset_id: str):
-    preset_to_run = db_manager.dispatch_preset(preset_id)
+    preset_to_run = db_manager.dispatch_preset(int(preset_id))
     enqueue_task(preset_to_run)
     return 'ok'

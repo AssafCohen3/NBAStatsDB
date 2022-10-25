@@ -1,9 +1,9 @@
-from typing import Dict, Type, List, Any, Optional
+from typing import Dict, Type, List, Any, Optional, Tuple
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
-from dbmanager.AppI18n import gettext_marker, gettext
+from dbmanager.AppI18n import create_translatable_from_json, TranslatableField
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFPlayersActions import UpdateBREFPlayersAction
 from dbmanager.Resources.Actions.BREFPlayoffSeriesActions import UpdateBREFPlayoffSeriesAction
@@ -11,7 +11,8 @@ from dbmanager.Resources.Actions.NBAPlayersActions import UpdateNBAPlayersAction
 from dbmanager.Resources.Actions.PlayerBoxScoreActions import UpdatePlayerBoxScoresAction
 from dbmanager.Resources.Actions.PlayersMappingsActions import CompleteMissingPlayersMappingsAction
 from dbmanager.Resources.Actions.TeamBoxScoreActions import UpdateTeamBoxScoresAction
-from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPreset import ActionsGroupPreset, create_actions_group_preset
+from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import ActionsGroupPreset, \
+    create_actions_group_preset, ActionsGroupPresetObject
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.BREFStartersResourceHandler import BREFStartersResourceHandler
@@ -55,28 +56,8 @@ class DbManager:
             NBAPlayersBirthdateResourceHandler,
             BREFTransactionsResourceHandler,
         ]
-        self.available_actions_presets: List[ActionsGroupPreset] = [
-            create_actions_group_preset('base_update', gettext_marker('presets.base_update.name'),
-                                        [
-                                            (UpdateNBAPlayersAction, {}),
-                                            (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
-                                            (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
-                                            (UpdateBREFPlayoffSeriesAction, {}),
-                                            (CompleteMissingPlayersMappingsAction, {}),
-                                            (UpdateBREFPlayersAction, {})
-                                        ]),
-            create_actions_group_preset('update_boxscores', gettext_marker('presets.update_boxscores.name'),
-                                        [
-                                            (UpdateNBAPlayersAction, {}),
-                                            (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
-                                            (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
-                                        ]),
-        ]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources
-        }
-        self.presets_dict: Dict[str, ActionsGroupPreset] = {
-            preset.preset_id: preset for preset in self.available_actions_presets
         }
 
     def init(self, engine: Engine, session: scoped_session):
@@ -90,6 +71,36 @@ class DbManager:
         stmt = insert(Resource).on_conflict_do_nothing()
         self.session.execute(stmt, to_add)
         self.session.commit()
+
+    def load_presets(self) -> Dict[int, ActionsGroupPresetObject]:
+        available_actions_presets: Dict[int, ActionsGroupPresetObject] = {
+            -1: create_actions_group_preset(-1, TranslatableField({'en': 'Basic Update', 'he': 'עדכון בסיסי'}),
+                                            [
+                                                (UpdateNBAPlayersAction, {}),
+                                                (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
+                                                (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
+                                                (UpdateBREFPlayoffSeriesAction, {}),
+                                                (CompleteMissingPlayersMappingsAction, {}),
+                                                (UpdateBREFPlayersAction, {})
+                                            ]),
+            0: create_actions_group_preset(0, TranslatableField({'en': 'Update Boxscores', 'he': 'עדכן בוקססקורס'}),
+                                           [
+                                               (UpdateNBAPlayersAction, {}),
+                                               (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
+                                               (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
+                                           ]),
+        }
+        stmt = select(ActionsGroupPreset)
+        presets: List[Tuple[ActionsGroupPreset]] = self.session.execute(stmt).fetchall()
+        presets_models: List[ActionsGroupPreset] = [p[0] for p in presets]
+        for preset_row in presets_models:
+            preset_actions: List[Tuple[Type[ActionAbc], Dict[str, str]]] = []
+            for action_recipe in preset_row.action_recipets:
+                action_cls = self.get_resource(action_recipe.ResourceId).get_action_cls(action_recipe.ActionId)
+                params = {param.ParamKey: param.ParamValue for param in action_recipe.action_params}
+                preset_actions.append((action_cls, params))
+            available_actions_presets[preset_row.ActionsGroupPresetId] = create_actions_group_preset(preset_row.ActionsGroupPresetId, create_translatable_from_json(preset_row.PresetTranslatableNameJson), preset_actions)
+        return available_actions_presets
 
     def get_resource(self, resource_id: str) -> Type[ResourceAbc]:
         if resource_id not in self.resources:
@@ -137,27 +148,29 @@ class DbManager:
         to_ret = [
             {
                 'preset_id': actions_preset.preset_id,
-                'preset_name': gettext(actions_preset.preset_name_key),
+                'preset_name': actions_preset.preset_name.get_value(),
             }
-            for actions_preset in self.available_actions_presets
+            for actions_preset in self.load_presets().values()
         ]
         return to_ret
 
-    def get_actions_preset_details(self, preset_id: str) -> Dict:
-        if preset_id not in self.presets_dict:
+    def get_actions_preset_details(self, preset_id: int) -> Dict:
+        presets = self.load_presets()
+        if preset_id not in presets:
             raise PresetNotExistError(preset_id)
-        preset = self.presets_dict[preset_id]
+        preset = presets[preset_id]
         to_ret = {
             'preset_id': preset.preset_id,
-            'preset_name': gettext(preset.preset_name_key),
+            'preset_name': preset.preset_name.get_value(),
             'action_recipes': [recipe.to_dict() for recipe in preset.action_recipes]
         }
         return to_ret
 
-    def dispatch_preset(self, preset_id: str) -> TasksGroup:
-        if preset_id not in self.presets_dict:
+    def dispatch_preset(self, preset_id: int) -> TasksGroup:
+        presets = self.load_presets()
+        if preset_id not in presets:
             raise PresetNotExistError(preset_id)
-        preset: ActionsGroupPreset = self.presets_dict[preset_id]
+        preset: ActionsGroupPresetObject = presets[preset_id]
         actions_to_dispatch: List[ActionAbc] = [action_recipe.action_cls.create_action_from_request(self.session, action_recipe.params)
                                                 for action_recipe in sorted(preset.action_recipes, key=lambda p: p.order)]
-        return TasksGroup(preset.preset_id, preset.preset_name_key, actions_to_dispatch)
+        return TasksGroup(f'preset_{preset.preset_id}', preset.preset_name, actions_to_dispatch)

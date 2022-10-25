@@ -4,8 +4,8 @@ from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 
 
 @dataclass
-class ActionRecipe:
-    preset_id: str
+class ActionRecipeObject:
+    preset_id: int
     action_cls: Type[ActionAbc]
     order: int
     params: Dict[str, str]

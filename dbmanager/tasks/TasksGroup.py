@@ -1,6 +1,6 @@
 import itertools
 from typing import List, Union, Dict
-from dbmanager.AppI18n import gettext
+from dbmanager.AppI18n import TranslatableField
 from dbmanager.Errors import TaskPathNotExistError
 from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
@@ -8,19 +8,19 @@ from dbmanager.tasks.TaskMessage import TaskMessage
 
 
 class TasksGroup(TaskAbc, AnnouncerAbc):
-    def __init__(self, group_id: str, group_name_key: str, actions: List[TaskAbc]):
+    def __init__(self, group_id: str, group_translatable_name: TranslatableField, actions: List[TaskAbc]):
         super().__init__()
         self.tasks_to_run: List[TaskAbc] = actions
         self.tasks_dict: Dict[int, TaskAbc] = {}
         self.group_id = group_id
-        self.group_name_key = group_name_key
+        self.group_translatable_name = group_translatable_name
         self.current_task_index = 0
 
     def to_task_message(self) -> TaskMessage:
         return TaskMessage(
             self.get_task_id(),
             self.group_id,
-            gettext(self.group_name_key),
+            self.group_translatable_name.get_value(),
             None,
             None,
             self.get_current_subtask_text(),
@@ -57,4 +57,4 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
         self.announcer.announce(event, [self.get_task_id(), *task_path], task)
 
     def get_task_title(self) -> str:
-        return gettext(self.group_name_key)
+        return self.group_translatable_name.get_value()

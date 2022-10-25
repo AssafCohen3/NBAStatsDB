@@ -78,7 +78,7 @@ class UnexpectedParameterError(Exception):
 
 
 class PresetNotExistError(Exception):
-    def __init__(self, preset_id: str):
+    def __init__(self, preset_id: int):
         self.preset_id = preset_id
         super().__init__(f'preset with id {preset_id} not exist')
 
