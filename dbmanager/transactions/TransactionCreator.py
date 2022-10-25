@@ -80,8 +80,6 @@ class TransactionsCreator:
             'team_b_bref_name': '',
             'player_bref_id': '',
             'player_bref_name': '',
-            'player_nba_id': 0,
-            'player_nba_name': None,
             'person_bref_id': '',
             'person_bref_name': '',
             'person_role': None,
@@ -425,7 +423,7 @@ class TransactionsCreator:
             if not marking_transaction.validate():
                 raise Exception(f'not all keys used in {marking_transaction}.\nnot used keys: {marking_transaction.not_used_keys()}')
             for t in transactions_to_ret:
-                if len(t.keys()) != 32:
+                if len(t.keys()) != 30:
                     raise Exception(f'{t}\nhas incorrect key number: {len(t.keys())}')
         except Exception as e:
             print(f'while creating {analyzed_transaction}\n{transaction}')

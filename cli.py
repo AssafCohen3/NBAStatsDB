@@ -22,7 +22,7 @@ from dbmanager.Resources.PlayerMappingResourceHandler import PlayerMappingResour
 from dbmanager.Resources.NBAPlayersResourceHandler import PlayerResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import PlayoffSerieSummaryResourceHandler
 from dbmanager.Resources.TeamBoxScoreResourceHandler import TeamBoxScoreResourceHandler
-from dbmanager.Resources.TransactionsResourceHandler import TransactionsResourceHandler
+from dbmanager.Resources.BREFTransactionsResourceHandler import TransactionsResourceHandler
 from dbmanager.base import Base
 import dbmanager.Database.Models
 import re

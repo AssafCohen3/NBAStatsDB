@@ -3,12 +3,23 @@ import json
 import string
 from collections import defaultdict
 from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Callable, List
+
 from dbmanager.constants import BREF_ABBREVATION_TO_NBA_TEAM_ID, TEAM_NBA_ID_TO_NBA_NAME
 from dbmanager.transactions.transaction_constants import ROLES, ABA_ABBR, TEAMS_MAPPING, TEAMS_IN_SEASONS_MAPPING
 
 
+@dataclass
+class BREFPlayerMinimal:
+    player_id: str
+    player_name: str
+
+
 class TransactionsAnalyzer:
-    def __init__(self, all_players_with_mapping):
+    def __init__(self,
+                 get_bref_player_by_id_func: Callable[[str], BREFPlayerMinimal],
+                 get_relevant_bref_player_by_name_and_season_func: Callable[[str, int], List[BREFPlayerMinimal]]):
         self.tradees_analyzer = {
             'player': self.get_player_by_id,
             'player_no_id': self.get_player_by_name,
@@ -227,35 +238,24 @@ class TransactionsAnalyzer:
                 'retirement_team': self.get_team_id_from_abbrevation
             }
         }
-        self.bref_players = None
-        self.bref_players_list = all_players_with_mapping
-        self.load_players()
         self.warnings = defaultdict(list)
+        self.get_bref_player_by_id_func: Callable[[str], BREFPlayerMinimal] = get_bref_player_by_id_func
+        self.get_relevant_bref_player_by_name_and_season_func: Callable[[str, int], List[BREFPlayerMinimal]] = get_relevant_bref_player_by_name_and_season_func
 
-    def load_players(self):
-        self.bref_players = {}
-        for p_id, p_name, p_from, p_to, p_nba_id, p_nba_name in self.bref_players_list:
-            self.bref_players[p_id] = [p_name, p_from, p_to, p_nba_id, p_nba_name]
-
-    def get_bref_player_id(self, player_id):
-        if self.bref_players is None:
-            self.load_players()
-        if player_id not in self.bref_players:
+    def get_bref_player_id(self, player_id: str):
+        res = self.get_bref_player_by_id_func(player_id)
+        if not res:
             self.warnings['not_found_id'].append(f'not found player id of {player_id}.')
             return {
                 'player_bref_id_not_found': player_id
             }
         return {
             'player_bref_id': player_id,
-            'player_bref_name': self.bref_players[player_id][0],
-            'player_nba_id': self.bref_players[player_id][3],
-            'player_nba_name': self.bref_players[player_id][4]
+            'player_bref_name': res.player_name,
         }
 
-    def get_bref_player_name(self, season, player_name):
-        if self.bref_players is None:
-            self.load_players()
-        relevants = [p for p in self.bref_players_list if p[1] == player_name and p[2] - 5 <= season <= p[3] + 5]
+    def get_bref_player_name(self, season: int, player_name: str):
+        relevants = self.get_relevant_bref_player_by_name_and_season_func(player_name, season)
         if len(relevants) > 1:
             raise Exception('fffffff')
         if len(relevants) == 0:
@@ -268,10 +268,8 @@ class TransactionsAnalyzer:
             }
         self.warnings['success'].append(f'found {player_name} as {relevants[0]}')
         return {
-            'player_bref_id': relevants[0][0],
-            'player_bref_name': relevants[0][1],
-            'player_nba_id': relevants[0][4],
-            'player_nba_name': relevants[0][5],
+            'player_bref_id': relevants[0].player_id,
+            'player_bref_name': relevants[0].player_name,
         }
 
     @staticmethod
@@ -424,14 +422,10 @@ class TransactionsAnalyzer:
                 found_elements.add((value, 'player'))
                 parent['player_bref_name'] = transaction_to_find[value][1]
                 parent['player_bref_id'] = value
-                parent['player_nba_id'] = 0
-                parent['player_nba_name'] = None
                 parent.pop(key)
             elif key == 'player_bref_name_not_found':
                 parent['player_bref_name'] = value
                 parent['player_bref_id'] = ''
-                parent['player_nba_id'] = 0
-                parent['player_nba_name'] = None
                 parent.pop(key)
             elif key in ('player_bref_id', ):
                 found_elements.add((value, 'player'))

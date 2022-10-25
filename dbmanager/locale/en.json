@@ -300,6 +300,28 @@
 				}
 			},
 			"description": "Download the Birthdates of the players in the NBAPlayer table from stats.nba"
+		},
+		"bref_transactions": {
+			"messages": {
+				"transactions_count": {
+					"title": "Saved Transactions:",
+					"text": "%{transactions} Transactions"
+				},
+				"transactions_seasons_count": {
+					"title": "Seasons with Transactions:",
+					"text": "%{seasons} Seasons"
+				}
+			},
+			"actions": {
+				"download_transactions": {
+					"downloading_transactions": "Downloading Transactions of the %{season} Season",
+					"title": "Download Transactions of all Seasons"
+				},
+				"download_transactions_in_seasons_range": {
+					"title": "Download Transactions in Seasons range"
+				}
+			},
+			"description": "Download Transactions from BREF"
 		}
 	},
 	"common": {

@@ -305,6 +305,28 @@
 				}
 			},
 			"description": "מוריד את תאריכי הלידה של השחקנים השמורים בטבלה NBAPlayer מאתר stats.nba"
+		},
+		"bref_transactions": {
+			"messages": {
+				"transactions_count": {
+					"title": "עסקאות שנשמרו:",
+					"text": "%{transactions} עסקאות"
+				},
+				"transactions_seasons_count": {
+					"title": "עונות עם עסקאות:",
+					"text": "%{seasons} עונות"
+				}
+			},
+			"actions": {
+				"download_transactions": {
+					"downloading_transactions": "מוריד את העסקאות של עונת %{season}",
+					"title": "הורד עסקאות מכל העונות"
+				},
+				"download_transactions_in_seasons_range": {
+					"title": "הורד עסקאות בטווח עונות"
+				}
+			},
+			"description": "הורד עסקאות מאתר BREF"
 		}
 	},
 	"errors": {

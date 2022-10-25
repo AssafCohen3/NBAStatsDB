@@ -1,5 +1,7 @@
 import string
 from pyparsing import *
+from pyparsing import MatchFirst
+
 from dbmanager.transactions.transaction_constants import ROLES
 
 
@@ -30,7 +32,10 @@ person_nt = Word(string.ascii_lowercase + string.digits)
 protections = MatchFirst([
     CaselessLiteral('top') + Opt('-') + number('top_protection')
 ])
-later_selected_part = Suppress('(') + person_or_unknown('player', 'was later selected)')
+later_selected_part = Suppress('(') + MatchFirst([
+    Suppress('cash was later selected)'),
+    person_or_unknown('player', 'was later selected)')
+])
 rounds_phrasing = MatchFirst([Literal('round'), Literal('-rd'), Literal('-round')])
 rounds = MatchFirst([Literal('1st'), Literal('2nd'), Literal('3rd'), Literal('4th'), Literal('5th'), Literal('6th'), Literal('7th'), Literal('8th')])
 draft_pick = Group(Suppress('a') + MatchFirst([number, Literal('future')])('pick_year') + Opt(rounds('pick_round') + Suppress(rounds_phrasing)) + Suppress('draft pick') + Opt(later_selected_part))

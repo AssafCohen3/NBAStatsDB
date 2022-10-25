@@ -3,8 +3,8 @@ from sqlalchemy import Integer, Text
 from dbmanager.base import Base
 
 
-class Transactions(Base):
-    __tablename__ = 'Transactions'
+class BREFTransaction(Base):
+    __tablename__ = 'BREFTransaction'
     Season = Column(Integer, nullable=False)
     Year = Column(Integer, nullable=False)
     Month = Column(Integer, nullable=False)
@@ -18,8 +18,6 @@ class Transactions(Base):
     TeamBNBAName = Column(Text)
     TeamBBREFAbbr = Column(Text, nullable=False)
     TeamBBREFName = Column(Text, nullable=False)
-    PlayerNBAId = Column(Integer, nullable=False)
-    PlayerNBAName = Column(Text)
     PlayerBREFId = Column(Text, nullable=False)
     PlayerBREFName = Column(Text, nullable=False)
     PersonBREFId = Column(Text, nullable=False)

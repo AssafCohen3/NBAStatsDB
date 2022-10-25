@@ -3,6 +3,7 @@ ROLES = [
     'Executive Director of Basketball Operations',
     'President of Business and Basketball Operations',
     'Interim Executive Vice-President of Basketball Ope',
+    'Interim Executive VP of Basketball Operations',
     'Executive VP of Basketball Operations',
     'President of Basketball Operations',
     'Player/Head Coach',

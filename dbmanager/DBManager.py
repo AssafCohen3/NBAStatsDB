@@ -15,6 +15,7 @@ from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPreset import ActionsG
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.BREFStartersResourceHandler import BREFStartersResourceHandler
+from dbmanager.Resources.BREFTransactionsResourceHandler import BREFTransactionsResourceHandler
 from dbmanager.Resources.EventsResourceHandler import EventsResourceHandler
 from dbmanager.Resources.NBAAwardsResourceHandler import NBAAwardsResourceHandler
 from dbmanager.Resources.NBAHonoursResourceHandler import NBAHonoursResourceHandler
@@ -51,7 +52,8 @@ class DbManager:
             NBAHonoursResourceHandler,
             OddsResourceHandler,
             BREFStartersResourceHandler,
-            NBAPlayersBirthdateResourceHandler
+            NBAPlayersBirthdateResourceHandler,
+            BREFTransactionsResourceHandler,
         ]
         self.available_actions_presets: List[ActionsGroupPreset] = [
             create_actions_group_preset('base_update', gettext_marker('presets.base_update.name'),
