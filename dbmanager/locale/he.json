@@ -281,6 +281,30 @@
 				}
 			},
 			"description": "הוסף נתונים על שחקנים פותחים לבוקססקורס שהורדת מאתר BREF"
+		},
+		"nba_players_birthdate": {
+			"messages": {
+				"players_with_birthdate": {
+					"title": "שחקנים עם תאריך לידה:",
+					"text": "%{players_with_birthdates_count} שחקנים מתוך %{players_count} שחקנים קיימים"
+				}
+			},
+			"actions": {
+				"download_birthdates": {
+					"downloading_team_roster_birthdates": "מוריד תאריכי לידה של שחקני %{team} בעונת %{season}",
+					"downloading_player_birthdate": "מוריד את תאריך הלידה של %{player}"
+				},
+				"update_players_birthdate": {
+					"title": "הורד תאריכי לידה חסרים"
+				},
+				"redownload_players_birthdate": {
+					"title": "הורד מחדש את תאריכי הלידה של כל השחקנים"
+				},
+				"download_players_birthdate_in_season_range": {
+					"title": "הורד את תאריכי הלידה של שחקנים שהתחילו את הקריירה שלהם בטווח עונות"
+				}
+			},
+			"description": "מוריד את תאריכי הלידה של השחקנים השמורים בטבלה NBAPlayer מאתר stats.nba"
 		}
 	},
 	"errors": {

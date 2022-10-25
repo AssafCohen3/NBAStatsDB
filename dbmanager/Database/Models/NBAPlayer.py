@@ -18,4 +18,5 @@ class NBAPlayer(Base):
     DraftYear = Column(Integer)
     DraftRound = Column(Integer)
     DraftNumber = Column(Integer)
+    FirstSeason = Column(Integer)
     BirthDate = Column(Date)

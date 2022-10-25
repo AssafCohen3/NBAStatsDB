@@ -276,6 +276,30 @@
 				}
 			},
 			"description": "Add Starters data to your Downloaded Box Scores from BREF"
+		},
+		"nba_players_birthdate": {
+			"messages": {
+				"players_with_birthdate": {
+					"title": "Players with Birthdate:",
+					"text": "%{players_with_birthdates_count} Players out of %{players_count} existing Players"
+				}
+			},
+			"actions": {
+				"download_birthdates": {
+					"downloading_team_roster_birthdates": "Downloading Birthdates of the roster of the %{season} %{team}",
+					"downloading_player_birthdate": "Downloading %{player} Birthdate"
+				},
+				"update_players_birthdate": {
+					"title": "Update missing Birthdates"
+				},
+				"redownload_players_birthdate": {
+					"title": "Redownload all Players Birthdates"
+				},
+				"download_players_birthdate_in_season_range": {
+					"title": "Download the Birthdates of Players who started their career in a seasons range"
+				}
+			},
+			"description": "Download the Birthdates of the players in the NBAPlayer table from stats.nba"
 		}
 	},
 	"common": {

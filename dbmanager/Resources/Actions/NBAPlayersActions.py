@@ -35,7 +35,8 @@ class UpdateNBAPlayersAction(ActionAbc):
                 'Country': insert_stmt.excluded.Country,
                 'DraftYear': insert_stmt.excluded.DraftYear,
                 'DraftRound': insert_stmt.excluded.DraftRound,
-                'DraftNumber': insert_stmt.excluded.DraftNumber
+                'DraftNumber': insert_stmt.excluded.DraftNumber,
+                'FirstSeason': insert_stmt.excluded.FirstSeason,
             }
         )
         self.session.execute(stmt, players)
@@ -60,12 +61,13 @@ class UpdateNBAPlayersAction(ActionAbc):
             'Active': 1 if int(p[25]) >= last_season else 0,
             'Position': p[11],
             'Height': p[12],
-            'Weigth': p[13],
+            'Weight': int(p[13]) if p[13] else None,
             'College': p[14],
             'Country': p[15],
             'DraftYear': p[16],
             'DraftRound': p[17],
             'DraftNumber': p[18],
+            'FirstSeason': int(p[24]),
             'BirthDate': None,
         } for p in data]
         self.insert_players(data)

@@ -70,7 +70,7 @@ class DownloadRookiesAwardsInSeasonsRange(ActionSpecificationAbc):
     @classmethod
     def validate_request_abs(cls, session: scoped_session, params: Dict[str, Any]):
         if params['start_season'] > params['end_season']:
-            raise InvalidActionCallError(cls.get_resource().get_id(), cls.get_action_id(), params,
+            raise InvalidActionCallError(cls, params,
                                          'start season must be before end season')
 
     @classmethod
