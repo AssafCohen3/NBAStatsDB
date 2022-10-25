@@ -174,3 +174,14 @@ class DbManager:
         actions_to_dispatch: List[ActionAbc] = [action_recipe.action_cls.create_action_from_request(self.session, action_recipe.params)
                                                 for action_recipe in sorted(preset.action_recipes, key=lambda p: p.order)]
         return TasksGroup(f'preset_{preset.preset_id}', preset.preset_name, actions_to_dispatch)
+
+    def get_extended_actions_presets_list(self) -> List[Dict]:
+        to_ret = [
+            {
+                'preset_id': actions_preset.preset_id,
+                'preset_name': actions_preset.preset_name.get_value(),
+                'action_recipes': [recipe.to_dict() for recipe in actions_preset.action_recipes]
+            }
+            for actions_preset in self.load_presets().values()
+        ]
+        return to_ret

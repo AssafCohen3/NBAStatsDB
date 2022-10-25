@@ -16,6 +16,13 @@
 			:to="{name: 'home'}"
 			prepend-icon="mdi-home"
 			:title="$t('generic.home')" />
+		<v-list-item
+			link
+			no-action
+			exact
+			:to="{name: 'presets-page'}"
+			prepend-icon="mdi-script-text-outline"
+			:title="$t('generic.presets')" />
 		<v-list
 			v-model:opened="open"
 			bg-color="transparent">

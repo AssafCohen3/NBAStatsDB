@@ -12,6 +12,13 @@ def get_presets_list():
     return to_ret
 
 
+@presets_bp.route('/extended', methods=['GET'])
+def get_extended_presets_list():
+    to_ret = db_manager.get_extended_actions_presets_list()
+    to_ret = jsonify(to_ret)
+    return to_ret
+
+
 @presets_bp.route('/<preset_id>', methods=['GET'])
 def get_preset_details(preset_id):
     to_ret = db_manager.get_actions_preset_details(preset_id)

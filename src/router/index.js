@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import AppBase from '../components/AppBase';
 import HomePage from '../components/HomePage';
 import ResourcePage from '../components/ResourcePage';
+import PresetsPage from '../components/PresetsPage';
 
 const routes = [
 	{
@@ -17,6 +18,11 @@ const routes = [
 				path: 'resources/:resourceId',
 				name: 'resource-page',
 				component: ResourcePage
+			},
+			{
+				path: 'presets',
+				name: 'presets-page',
+				component: PresetsPage,
 			}
 		]
 	},

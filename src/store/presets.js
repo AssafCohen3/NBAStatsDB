@@ -7,6 +7,10 @@ const state = {
 	presets: [],
 	fetchingPresets: false,
 
+	// extended presets
+	extendedPresets: [],
+	fetchingExtendedPresets: false,
+	
 	// preset
 	fetchingPreset: false,
 
@@ -20,6 +24,10 @@ const getters = {
 	presets: (state) => state.presets,
 	fetchingPresets: (state) => state.fetchingPresets,
 
+	// extended presets
+	extendedPresets: (state) => state.extendedPresets,
+	fetchingExtendedPresets: (state) => state.fetchingExtendedPresets,
+	
 	// preset
 	fetchingPreset: (state) => state.fetchingPreset,
 
@@ -64,6 +72,20 @@ const actions = {
 			// catch?
 		});
 	},
+	fetchExtendedPresets({commit}){
+		return new Promise((resolve, reject) => {
+			commit('fetchExtendedPresetsStart');
+			axios.get('/presets/extended')
+				.then(resp => {
+					commit('fetchExtendedPresetsSuccess', resp);
+					resolve(resp.data);
+				})
+				.catch(err => {
+					console.log(err.toJSON());
+				});
+			// catch?
+		});
+	}
 };
 
 const mutations = {
@@ -76,6 +98,15 @@ const mutations = {
 		state.presets = resp.data;
 	},
 
+	// extended presets
+	fetchExtendedPresetsStart(state){
+		state.fetchingExtendedPresets = true;
+	},
+	fetchExtendedPresetsSuccess(state, resp){
+		state.fetchingExtendedPresets = false;
+		state.extendedPresets = resp.data;
+	},
+	
 	// preset
 	fetchPresetStart(state){
 		state.fetchingPreset = true;
