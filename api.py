@@ -22,7 +22,8 @@ app = Flask(__name__)
 app.config.from_file("flask.config.json", load=json.load)
 app.json_encoder = CustomJSONEncoder
 CORS(app)
-Language(app)
+lang = Language(app)
+
 tasks_thread = Thread(target=run_tasks_loop, daemon=True)
 tasks_thread.start()
 app.register_blueprint(resources_bp)

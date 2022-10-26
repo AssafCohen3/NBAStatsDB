@@ -1,8 +1,9 @@
 """
     inspired by https://github.com/rclement/flask-language
 """
+from typing import Dict
 
-
+import i18n
 from flask import request
 
 from dbmanager.AppI18n import set_locale
@@ -16,7 +17,12 @@ class Language(object):
 
     def init_app(self, app):
         app.before_request(self._before_request)
+        i18n.set('available_locales', list(self.get_available_languages().keys()))
+        i18n.set('fallback', self._default_language)
         return self
+
+    def get_available_languages(self) -> Dict[str, str]:
+        return self._allowed_languages
 
     def _before_request(self):
         """

@@ -27,7 +27,7 @@ class ResourceDependentDataAbs(ABC, Generic[T]):
         pass
 
     def to_refresh(self, session: scoped_session) -> bool:
-        if not self.data:
+        if self.data is None:
             return True
         last_updates_stmt = (
             select(Resource.ResourceId, Resource.LastUpdated).

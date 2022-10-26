@@ -12,8 +12,8 @@ class SharedDataResourceAbc(ABC, Generic[D]):
         self.cached_data: Optional[D] = None
 
     def get_data(self) -> D:
-        if not self.cached_data:
-            with self._lock:
+        with self._lock:
+            if self.cached_data is None:
                 self.cached_data = self._fetch_data()
         return self.cached_data
 

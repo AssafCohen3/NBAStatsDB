@@ -10,14 +10,14 @@
 		<!-- content wrappe -->
 		<div
 			v-else>
-			<!-- title -->
 			<div
-				class="flex flex-col w-[fit-content]">
+				class="flex flex-col h-full">
 				<div
 					v-for="preset in presets"
 					:key="preset.preset_id">
 					<!-- TODO preset div -->
-					{{ preset.preset_name }}
+					<preset-card 
+						:preset="preset" />
 				</div>
 			</div>
 		</div>
@@ -26,7 +26,9 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import PresetCard from './PresetCard.vue';
 export default {
+	components: { PresetCard },
 	computed: {
 		...mapGetters('presets', {
 			'fetchingPresets': 'fetchingExtendedPresets',
@@ -53,5 +55,4 @@ export default {
 <style
 	lang="postcss"
 	scoped>
-
 </style>

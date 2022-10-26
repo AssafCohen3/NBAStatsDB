@@ -8,6 +8,8 @@ from dbmanager.AppI18n import gettext
 
 if typing.TYPE_CHECKING:
     from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+    from dbmanager.Resources.ActionsGroupsPresets.ActionRecipeObject import ActionRecipeObject
+    from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import ActionsGroupPresetObject
 
 
 class ActionNotExistError(Exception):
@@ -78,9 +80,29 @@ class UnexpectedParameterError(Exception):
 
 
 class PresetNotExistError(Exception):
-    def __init__(self, preset_id: int):
+    def __init__(self, preset_id: str):
         self.preset_id = preset_id
         super().__init__(f'preset with id {preset_id} not exist')
+
+
+class PresetAlreadyExistError(Exception):
+    def __init__(self, preset_id: str):
+        self.preset_id = preset_id
+        super().__init__(f'preset with id {preset_id} already exist')
+
+
+class ActionRecipeNotExistError(Exception):
+    def __init__(self, preset: ActionsGroupPresetObject, action_recipe_id: int):
+        self.preset = preset
+        self.action_recipe_id = action_recipe_id
+        super().__init__(f'action recipe with id {action_recipe_id} not exist in the preset {preset.get_repr()}')
+
+
+class ParamAlreadyExistError(Exception):
+    def __init__(self, recipe: ActionRecipeObject, param_key: str):
+        self.recipe = recipe
+        self.param_key = param_key
+        super().__init__(f'parameter {param_key} already exist in the recipe {recipe.action_recipe_id} of the preset {recipe.preset.get_repr()}')
 
 
 class TaskError(Exception, ABC):
@@ -131,3 +153,17 @@ class TaskDismissedError(TaskError):
 class TaskNotInitiatedError(TaskError):
     def __init__(self):
         super().__init__('task not initiated')
+
+
+class RequiredRequestArgumentMissing(Exception):
+    def __init__(self, arg_name: str):
+        self.arg_name = arg_name
+        super().__init__(f'argument "{arg_name}" is missing in the request')
+
+
+class IncorrectRequestArgumentType(Exception):
+    def __init__(self, arg_name: str, expected_type: type, val):
+        self.arg_name = arg_name
+        self.expected_type = expected_type
+        self.val = val
+        super().__init__(f'argument "{arg_name}" has incorrect type. expected {str(expected_type)}, received: {val}')

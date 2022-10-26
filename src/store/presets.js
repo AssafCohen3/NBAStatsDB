@@ -53,7 +53,7 @@ const actions = {
 	fetchPreset({commit}, [presetId]){
 		return new Promise((resolve, reject) => {
 			commit('fetchPresetStart');
-			axios.get(`/presets/${presetId}`).
+			axios.get(`/presets/details/${presetId}`).
 				then(resp => {
 					commit('fetchPresetSuccess');
 					resolve(resp.data);
@@ -64,7 +64,7 @@ const actions = {
 	dispatchPreset({commit}, [presetId]){
 		return new Promise((resolve, reject) => {
 			commit('dispatchPresetStart');
-			axios.post(`/presets/${presetId}/dispatch`).
+			axios.post(`/presets/dispatch/${presetId}`).
 				then(resp => {
 					commit('dispatchPresetSuccess');
 					resolve(resp.data);

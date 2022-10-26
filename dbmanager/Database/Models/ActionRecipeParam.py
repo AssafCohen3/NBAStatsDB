@@ -5,7 +5,7 @@ from dbmanager.base import Base
 
 class ActionRecipeParam(Base):
     __tablename__ = 'ActionRecipeParam'
-    ActionRecipeId = Column(Integer, ForeignKey('ActionRecipe.ActionRecipeId'))
+    ActionRecipeId = Column(Integer, ForeignKey('ActionRecipe.ActionRecipeId', ondelete="CASCADE"))
     ParamKey = Column(Text)
     ParamValue = Column(Text)
     __table_args__ = (

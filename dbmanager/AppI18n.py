@@ -1,5 +1,5 @@
 import json
-from typing import Dict
+from typing import Dict, List
 
 # noinspection PyPackageRequirements
 import i18n
@@ -20,6 +20,14 @@ def gettext_marker(path: str):
 
 def set_locale(new_locale: str):
     i18n.set('locale', new_locale)
+
+
+def get_available_locales() -> List[str]:
+    return i18n.get('available_locales')
+
+
+def get_default_locale() -> str:
+    return i18n.get('fallback')
 
 
 class TranslatableField:

@@ -1,9 +1,11 @@
 from typing import Dict, Type, List, Any, Optional, Tuple
-from sqlalchemy import select
+from sqlalchemy import select, insert
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
-from dbmanager.AppI18n import create_translatable_from_json, TranslatableField
+from dbmanager.AppI18n import create_translatable_from_json
+from dbmanager.Database.Models.ActionsGroupPreset import ActionsGroupPreset
+from dbmanager.PresetsManager import PresetsManager
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFPlayersActions import UpdateBREFPlayersAction
 from dbmanager.Resources.Actions.BREFPlayoffSeriesActions import UpdateBREFPlayoffSeriesAction
@@ -11,8 +13,7 @@ from dbmanager.Resources.Actions.NBAPlayersActions import UpdateNBAPlayersAction
 from dbmanager.Resources.Actions.PlayerBoxScoreActions import UpdatePlayerBoxScoresAction
 from dbmanager.Resources.Actions.PlayersMappingsActions import CompleteMissingPlayersMappingsAction
 from dbmanager.Resources.Actions.TeamBoxScoreActions import UpdateTeamBoxScoresAction
-from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import ActionsGroupPreset, \
-    create_actions_group_preset, ActionsGroupPresetObject
+from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import create_actions_group_preset, ActionsGroupPresetObject
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.BREFStartersResourceHandler import BREFStartersResourceHandler
@@ -29,6 +30,7 @@ from dbmanager.Resources.ResourceAbc import ResourceAbc
 from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Errors import ResourceNotExistError, PresetNotExistError
 from dbmanager.Resources.TeamBoxScoreResourceHandler import TeamBoxScoreResourceHandler
+from dbmanager.SharedData.CachedData import CachedData
 from dbmanager.base import Base
 # noinspection PyUnresolvedReferences
 import dbmanager.Database.Models
@@ -59,6 +61,8 @@ class DbManager:
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources
         }
+        self.cached_presets = CachedData(self._load_presets)
+        self.presets_manager: Optional[PresetsManager] = None
 
     def init(self, engine: Engine, session: scoped_session):
         self.engine = engine
@@ -71,34 +75,47 @@ class DbManager:
         stmt = insert(Resource).on_conflict_do_nothing()
         self.session.execute(stmt, to_add)
         self.session.commit()
+        self.presets_manager = PresetsManager(self.session, self.cached_presets)
+        self.create_default_presets()
 
-    def load_presets(self) -> Dict[int, ActionsGroupPresetObject]:
-        available_actions_presets: Dict[int, ActionsGroupPresetObject] = {
-            -1: create_actions_group_preset(-1, TranslatableField({'en': 'Basic Update', 'he': 'עדכון בסיסי'}),
-                                            [
-                                                (UpdateNBAPlayersAction, {}),
-                                                (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
-                                                (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
-                                                (UpdateBREFPlayoffSeriesAction, {}),
-                                                (CompleteMissingPlayersMappingsAction, {}),
-                                                (UpdateBREFPlayersAction, {})
-                                            ]),
-            0: create_actions_group_preset(0, TranslatableField({'en': 'Update Boxscores', 'he': 'עדכן בוקססקורס'}),
-                                           [
-                                               (UpdateNBAPlayersAction, {}),
-                                               (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
-                                               (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
-                                           ]),
-        }
+    def create_default_presets(self):
+        default_presets: List[Tuple[str, Dict[str, str], List[Tuple[Type[ActionAbc], Dict[str, str]]]]] = [
+            ('default_base_update', {'en': 'Basic Update', 'he': 'עדכון בסיסי'},
+                [
+                    (UpdateNBAPlayersAction, {}),
+                    (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
+                    (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
+                    (UpdateBREFPlayoffSeriesAction, {}),
+                    (CompleteMissingPlayersMappingsAction, {}),
+                    (UpdateBREFPlayersAction, {})
+                ]
+             ),
+            ('default_update_boxscore', {'en': 'Update Boxscores', 'he': 'עדכן בוקססקורס'},
+             [
+                 (UpdateNBAPlayersAction, {}),
+                 (UpdateTeamBoxScoresAction, {'season_type_code': '0'}),
+                 (UpdatePlayerBoxScoresAction, {'season_type_code': '0'}),
+             ]
+             ),
+        ]
+        for preset_id, preset_name, actions_cls in default_presets:
+            if preset_id in self.presets_manager.get_presets():
+                continue
+            self.presets_manager.create_preset(preset_id, preset_name)
+            for i, (action_cls, params) in enumerate(actions_cls):
+                self.presets_manager.create_action_recipe(preset_id, action_cls, i, params)
+
+    def _load_presets(self) -> Dict[str, ActionsGroupPresetObject]:
+        available_actions_presets: Dict[str, ActionsGroupPresetObject] = {}
         stmt = select(ActionsGroupPreset)
         presets: List[Tuple[ActionsGroupPreset]] = self.session.execute(stmt).fetchall()
         presets_models: List[ActionsGroupPreset] = [p[0] for p in presets]
         for preset_row in presets_models:
-            preset_actions: List[Tuple[Type[ActionAbc], Dict[str, str]]] = []
+            preset_actions: List[Tuple[int, Type[ActionAbc], int, Dict[str, str]]] = []
             for action_recipe in preset_row.action_recipets:
                 action_cls = self.get_resource(action_recipe.ResourceId).get_action_cls(action_recipe.ActionId)
                 params = {param.ParamKey: param.ParamValue for param in action_recipe.action_params}
-                preset_actions.append((action_cls, params))
+                preset_actions.append((action_recipe.ActionRecipeId, action_cls, action_recipe.Order, params))
             available_actions_presets[preset_row.ActionsGroupPresetId] = create_actions_group_preset(preset_row.ActionsGroupPresetId, create_translatable_from_json(preset_row.PresetTranslatableNameJson), preset_actions)
         return available_actions_presets
 
@@ -145,43 +162,41 @@ class DbManager:
         return to_ret
 
     def get_actions_presets_list(self) -> List[Dict]:
-        to_ret = [
-            {
-                'preset_id': actions_preset.preset_id,
-                'preset_name': actions_preset.preset_name.get_value(),
-            }
-            for actions_preset in self.load_presets().values()
-        ]
-        return to_ret
+        return self.presets_manager.get_actions_presets_list()
 
-    def get_actions_preset_details(self, preset_id: int) -> Dict:
-        presets = self.load_presets()
-        if preset_id not in presets:
-            raise PresetNotExistError(preset_id)
-        preset = presets[preset_id]
-        to_ret = {
-            'preset_id': preset.preset_id,
-            'preset_name': preset.preset_name.get_value(),
-            'action_recipes': [recipe.to_dict() for recipe in preset.action_recipes]
-        }
-        return to_ret
+    def get_actions_preset_details(self, preset_id: str) -> Dict:
+        return self.presets_manager.get_actions_preset_details(preset_id)
 
-    def dispatch_preset(self, preset_id: int) -> TasksGroup:
-        presets = self.load_presets()
+    def get_extended_actions_presets_list(self) -> List[Dict]:
+        return self.presets_manager.get_extended_actions_presets_list()
+
+    def create_preset(self, preset_id: str, preset_name_json: Dict) -> str:
+        return self.presets_manager.create_preset(preset_id, preset_name_json)
+
+    def edit_preset(self, preset_id: str, preset_name_json: Dict) -> str:
+        return self.presets_manager.edit_preset(preset_id, preset_name_json)
+
+    def remove_preset(self, preset_id: str) -> str:
+        return self.presets_manager.remove_preset(preset_id)
+
+    def create_action_recipe(self, preset_id: str, resource_id: str, action_id: str, order: int, params: Dict) -> int:
+        action_cls = self.get_resource(resource_id).get_action_cls(action_id)
+        return self.presets_manager.create_action_recipe(preset_id, action_cls, order, params)
+
+    def edit_action_recipe_params(self, preset_id: str, recipe_id: int, params: Dict) -> int:
+        return self.presets_manager.edit_action_recipe_params(preset_id, recipe_id, params)
+
+    def change_action_recipe_order(self, preset_id: str, recipe_id: int, new_order: int) -> int:
+        return self.presets_manager.change_action_recipe_order(preset_id, recipe_id, new_order)
+
+    def delete_action_recipe(self, preset_id: str, recipe_id: int) -> int:
+        return self.presets_manager.delete_action_recipe(preset_id, recipe_id)
+
+    def dispatch_preset(self, preset_id: str) -> TasksGroup:
+        presets = self.cached_presets.get_data()
         if preset_id not in presets:
             raise PresetNotExistError(preset_id)
         preset: ActionsGroupPresetObject = presets[preset_id]
         actions_to_dispatch: List[ActionAbc] = [action_recipe.action_cls.create_action_from_request(self.session, action_recipe.params)
-                                                for action_recipe in sorted(preset.action_recipes, key=lambda p: p.order)]
+                                                for action_recipe in sorted(preset.action_recipes.values(), key=lambda p: p.order)]
         return TasksGroup(f'preset_{preset.preset_id}', preset.preset_name, actions_to_dispatch)
-
-    def get_extended_actions_presets_list(self) -> List[Dict]:
-        to_ret = [
-            {
-                'preset_id': actions_preset.preset_id,
-                'preset_name': actions_preset.preset_name.get_value(),
-                'action_recipes': [recipe.to_dict() for recipe in actions_preset.action_recipes]
-            }
-            for actions_preset in self.load_presets().values()
-        ]
-        return to_ret
