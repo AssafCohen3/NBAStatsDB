@@ -25,7 +25,10 @@
 		"seasons_range": "טווח עונות",
 		"file_path": "נתיב הקובץ",
 		"player": "שחקן",
-		"team": "קבוצה"
+		"team": "קבוצה",
+		"no_params": "ללא םרמטרים",
+		"delete": "מחק",
+		"preset_name": "שם קבוצת הפעולות:"
 	},
 	"validations": {
 		"required": "השדה נדרש"

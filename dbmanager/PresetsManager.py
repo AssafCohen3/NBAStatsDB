@@ -9,7 +9,7 @@ from dbmanager.AppI18n import get_default_locale
 from dbmanager.Database.Models.ActionRecipe import ActionRecipe
 from dbmanager.Database.Models.ActionRecipeParam import ActionRecipeParam
 from dbmanager.Database.Models.ActionsGroupPreset import ActionsGroupPreset
-from dbmanager.Errors import PresetNotExistError, PresetAlreadyExistError, ActionRecipeNotExistError
+from dbmanager.Errors import PresetNotExistError, PresetAlreadyExistError, ActionRecipeNotExistError, IlegalValueError
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import ActionsGroupPresetObject
 from dbmanager.SharedData.CachedData import CachedData, refresh_function, DontRefreshCacheError
@@ -52,6 +52,7 @@ class PresetsManager:
             {
                 'preset_id': actions_preset.preset_id,
                 'preset_name': actions_preset.preset_name.get_value(),
+                'preset_name_json': actions_preset.preset_name.get_translations(),
                 'action_recipes': [recipe.to_dict() for recipe in actions_preset.action_recipes.values()]
             }
             for actions_preset in self.get_presets().values()
@@ -103,8 +104,13 @@ class PresetsManager:
 
     @refresh_function(get_presets_cache)
     def create_action_recipe(self, preset_id: str, action_cls: Type[ActionAbc], order: int, params: Dict[str, str]) -> int:
-        if preset_id not in self.get_presets():
+        preset = self.get_presets().get(preset_id)
+        if not preset:
             raise PresetNotExistError(preset_id)
+        if order < 0:
+            raise IlegalValueError('order', order, 'order must be a non negative integer')
+        # keep orders sequential
+        order = min(order, preset.next_available_order())
         # insert new recipe
         action_to_insert = {
             'ActionsGroupPresetId': preset_id,
@@ -168,6 +174,10 @@ class PresetsManager:
         recipe = preset.action_recipes.get(recipe_id)
         if not recipe:
             raise ActionRecipeNotExistError(preset, recipe_id)
+        if new_order < 0:
+            raise IlegalValueError('new_order', new_order, 'new_order must be a non negative integer')
+        # keep orders sequential
+        new_order = min(new_order, preset.next_available_order(recipe_id))
         if new_order == recipe.order:
             raise DontRefreshCacheError(None)
         update_recipe_stmt = (

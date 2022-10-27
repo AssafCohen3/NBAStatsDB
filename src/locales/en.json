@@ -17,7 +17,10 @@
 		"seasons_range": "Seasons range",
 		"file_path": "File path",
 		"player": "Player",
-		"team": "Team"
+		"team": "Team",
+		"no_params": "Without params",
+		"delete": "Delete",
+		"preset_name": "Actions group preset name:"
 	},
 	"generic": {
 		"home": "Home",

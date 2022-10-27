@@ -167,3 +167,11 @@ class IncorrectRequestArgumentType(Exception):
         self.expected_type = expected_type
         self.val = val
         super().__init__(f'argument "{arg_name}" has incorrect type. expected {str(expected_type)}, received: {val}')
+
+
+class IlegalValueError(Exception):
+    def __init__(self, arg_name: str, value, error_msg: str):
+        self.arg_name = arg_name
+        self.value = value
+        self.error_msg = error_msg
+        super().__init__(f'argument "{self.arg_name}" has ilegal value: {self.value}. {error_msg}')

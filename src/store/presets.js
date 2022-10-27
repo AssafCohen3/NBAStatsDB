@@ -16,6 +16,15 @@ const state = {
 
 	// dispatching
 	dispatchingPreset: false,
+
+	// create preset
+	isCreatingPreset: false,
+
+	// edit preset
+	isEditingPreset: false,
+
+	// remove preset
+	isRemovingPreset: false,
 };
 
 
@@ -33,6 +42,15 @@ const getters = {
 
 	// dispatching
 	dispatchingPreset: (state) => state.dispatchingPreset,
+
+	// create preset
+	isCreatingPreset: (state) => state.isCreatingPreset,
+
+	// edit preset
+	isEditingPreset: (state) => state.isEditingPreset,
+
+	// remove preset
+	isRemovingPreset: (state) => state.isRemovingPreset,
 };
 
 const actions = {
@@ -85,7 +103,52 @@ const actions = {
 				});
 			// catch?
 		});
-	}
+	},
+
+	createPreset({commit}, [newPreset]){
+		return new Promise((resolve, reject) => {
+			commit('createPresetStart');
+			axios.post('/presets/create', newPreset)
+				.then(resp => {
+					commit('createPresetSuccess', resp);
+					resolve(resp.data);
+				})
+				.catch(err => {
+					console.log(err.toJSON());
+				});
+			// catch?
+		});
+	},
+
+	editPreset({commit}, [updatedPreset]){
+		return new Promise((resolve, reject) => {
+			commit('editPresetStart');
+			axios.post('/presets/update', updatedPreset)
+				.then(resp => {
+					commit('editPresetSuccess', resp);
+					resolve(resp.data);
+				})
+				.catch(err => {
+					console.log(err.toJSON());
+				});
+			// catch?
+		});
+	},
+
+	removePreset({commit}, [presetId]){
+		return new Promise((resolve, reject) => {
+			commit('removePresetStart');
+			axios.post('/presets/delete', {preset_id: presetId})
+				.then(resp => {
+					commit('removePresetSuccess', resp);
+					resolve(resp.data);
+				})
+				.catch(err => {
+					console.log(err.toJSON());
+				});
+			// catch?
+		});
+	},
 };
 
 const mutations = {
@@ -121,6 +184,30 @@ const mutations = {
 	},
 	dispatchPresetSuccess(state){
 		state.dispatchingPreset = false;
+	},
+
+	// create preset
+	createPresetStart(state){
+		state.isCreatingPreset = true;
+	},
+	createPresetSuccess(state){
+		state.isCreatingPreset = false;
+	},
+
+	// edit preset
+	editPresetStart(state){
+		state.isEditingPreset = true;
+	},
+	editPresetSuccess(state){
+		state.isEditingPreset = false;
+	},
+
+	// remove preset
+	removePresetStart(state){
+		state.isRemovingPreset = true;
+	},
+	removePresetSuccess(state){
+		state.isRemovingPreset = false;
 	},
 };
 

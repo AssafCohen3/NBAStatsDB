@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import List, Type, Tuple, Dict
+from functools import reduce
+from typing import List, Type, Tuple, Dict, Optional
 
 from dbmanager.AppI18n import TranslatableField
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
@@ -14,6 +15,10 @@ class ActionsGroupPresetObject:
 
     def get_repr(self) -> str:
         return f'{self.preset_name.get_value()}({self.preset_id})'
+
+    def next_available_order(self, excluded_recipe_id: Optional[int] = None):
+        return reduce(lambda cur_max, contender: cur_max if contender.action_recipe_id == excluded_recipe_id or cur_max >= contender.order else contender.order,
+                      self.action_recipes.values(), -1) + 1
 
 
 def create_actions_group_preset(preset_id: str, preset_name: TranslatableField,

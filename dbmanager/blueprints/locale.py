@@ -12,3 +12,12 @@ def get_available_locales():
 @locale_bp.route('/default', methods=['GET'])
 def get_default_locale():
     return dbmanager.AppI18n.get_default_locale()
+
+
+@locale_bp.route('/config', methods=['GET'])
+def get_locales_config():
+    to_ret = {
+        'available_locales': dbmanager.AppI18n.get_available_locales(),
+        'default_locale': dbmanager.AppI18n.get_default_locale(),
+    }
+    return jsonify(to_ret)

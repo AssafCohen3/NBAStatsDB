@@ -23,36 +23,78 @@
 							class="mx-[5px]"
 							variant="plain"
 							icon="mdi-pencil"
-							color="primary-light" />
+							color="primary-light"
+							@click="editingPreset = true" />
 					</v-fade-transition>
 				</div>
 			</v-hover>
 		</div>
-		<!-- <v-expand-transition>
+		<v-expand-transition>
 			<div v-show="expanded">
-				<action-recipe-row
-					v-for="actionRecipe in preset.action_recipes"
-					:key="actionRecipe."
+				<draggable
+					v-model="recipesList"
+					:group="`${preset.preset_id}_group`"
+					item-key="action_recipe_id"
+					@change="onChange">
+					<template #item="{element}">
+						<action-recipe-row
+							:action-recipe="element"
+							@remove-action-recipe="removeActionRecipe" />
+					</template>
+				</draggable>
 			</div>
-		</v-expand-transition> -->
+		</v-expand-transition>
+		<v-dialog
+			v-model="editingPreset"
+			persistent>
+			<translatable-field-input
+				:field-title="$t('common.preset_name')"
+				:field-translations="preset.preset_name_json" />
+		</v-dialog>
 	</div>
 </template>
 
 <script>
-// import ActionRecipeRow from './ActionRecipeRow.vue';
+import ActionRecipeRow from './ActionRecipeRow.vue';
+// import { Sortable } from 'sortablejs-vue3';
+import draggable from 'vuedraggable';
+import TranslatableFieldInput from './TranslatableFieldInput.vue';
+
 export default {
-	// components: { ActionRecipeRow },
+	components: { ActionRecipeRow, draggable, TranslatableFieldInput},
 	props: {
 		preset: {
 			type: Object,
 			required: true,
 		},
 	},
+	emits: ['editActionRecipeOrder', 'removeActionRecipe'],
 	data(){
 		return {
 			expanded: false,
+			editingPreset: false,
 		};
 	},
+	computed: {
+		recipesList: {
+			get(){
+				return this.preset.action_recipes;
+			},
+			set(newList){
+			}
+		}
+	},
+	methods: {
+		onChange(event){
+			console.log('change: ', event);
+			if(event.moved){
+				this.$emit('editActionRecipeOrder', this.preset.preset_id, event.moved.element.action_recipe_id, event.moved.newIndex);
+			}
+		},
+		removeActionRecipe(actionRecipeId){
+			this.$emit('removeActionRecipe', this.preset.preset_id, actionRecipeId);
+		}
+	}
 };
 </script>
 

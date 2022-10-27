@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from dbmanager.FlaskLanguage import Language
+from dbmanager.blueprints.locale import locale_bp
 from dbmanager.blueprints.presets import presets_bp
 from dbmanager.blueprints.suggestions import suggestions_bp
 from dbmanager.blueprints.tasks import tasks_bp
@@ -30,6 +31,7 @@ app.register_blueprint(resources_bp)
 app.register_blueprint(tasks_bp)
 app.register_blueprint(presets_bp)
 app.register_blueprint(suggestions_bp)
+app.register_blueprint(locale_bp)
 
 
 def init_sqlalchemy(db_name: str):

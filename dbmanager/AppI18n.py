@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Dict
 
 # noinspection PyPackageRequirements
 import i18n
@@ -22,7 +22,7 @@ def set_locale(new_locale: str):
     i18n.set('locale', new_locale)
 
 
-def get_available_locales() -> List[str]:
+def get_available_locales() -> Dict[str, str]:
     return i18n.get('available_locales')
 
 
@@ -42,6 +42,9 @@ class TranslatableField:
         if self.fallback_locale in self.translations:
             return self.translations[self.fallback_locale]
         return ''
+
+    def get_translations(self) -> Dict[str, str]:
+        return self.translations
 
 
 def create_translatable_from_json(json_object: str) -> TranslatableField:

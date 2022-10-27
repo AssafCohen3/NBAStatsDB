@@ -1,24 +1,24 @@
 <template>
 	<div>
-		<div
-			v-if="fetchingPresets"
-			class="app-section p-[30px] w-[fit-content]">
-			<v-progress-circular
-				class="text-primary-light"
-				indeterminate />
-		</div>
 		<!-- content wrappe -->
+		<v-overlay
+			:model-value="isLoading"
+			class="items-center justify-center">
+			<v-progress-circular
+				indeterminate
+				class="text-primary-light"
+			/>
+		</v-overlay>
 		<div
-			v-else>
+			class="flex flex-col h-full">
 			<div
-				class="flex flex-col h-full">
-				<div
-					v-for="preset in presets"
-					:key="preset.preset_id">
-					<!-- TODO preset div -->
-					<preset-card 
-						:preset="preset" />
-				</div>
+				v-for="preset in presets"
+				:key="preset.preset_id">
+				<!-- TODO preset div -->
+				<preset-card 
+					:preset="preset"
+					@edit-action-recipe-order="editActionRecipeOrderMethod"
+					@remove-action-recipe="removeActionRecipeMethod" />
 			</div>
 		</div>
 	</div>
@@ -34,6 +34,12 @@ export default {
 			'fetchingPresets': 'fetchingExtendedPresets',
 			'presets': 'extendedPresets'
 		}),
+		...mapGetters('presets', ['isCreatingPreset', 'isEditingPreset', 'isRemovingPreset']),
+		...mapGetters('action_recipes', ['isCreatingActionRecipe', 'isEditingActionRecipeParams', 'isEditingActionRecipeOrder', 'isRemovingActionRecipe']),
+		isLoading(){
+			return this.fetchingPresets || this.isCreatingPreset || this.isEditingPreset || this.isRemovingPreset ||
+				this.isCreatingActionRecipe || this.isEditingActionRecipeParams || this.isEditingActionRecipeOrder || this.isRemovingActionRecipe;
+		}
 	},
 	mounted(){
 		this.refreshPage();
@@ -42,8 +48,22 @@ export default {
 		...mapActions('presets', {
 			'fetchPresets': 'fetchExtendedPresets'
 		}),
+		...mapActions('presets', ['createPreset', 'editPreset', 'removePreset']),
+		...mapActions('action_recipes', ['createActionRecipe', 'editActionRecipeParams', 'editActionRecipeOrder', 'removeActionRecipe']),
 		refreshPage(){
 			this.fetchPresets();
+		},
+		editActionRecipeOrderMethod(presetId, recipeId, newOrder){
+			this.editActionRecipeOrder([presetId, recipeId, newOrder]).
+				then((resp) => {
+					this.refreshPage();
+				});
+		},
+		removeActionRecipeMethod(presetId, recipeId){
+			this.removeActionRecipe([presetId, recipeId]).
+				then((resp) => {
+					this.refreshPage();
+				});
 		},
 	},
 	onLocaleChange(){

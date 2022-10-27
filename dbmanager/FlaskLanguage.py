@@ -3,6 +3,7 @@
 """
 from typing import Dict
 
+# noinspection PyPackageRequirements
 import i18n
 from flask import request
 
@@ -17,7 +18,7 @@ class Language(object):
 
     def init_app(self, app):
         app.before_request(self._before_request)
-        i18n.set('available_locales', list(self.get_available_languages().keys()))
+        i18n.set('available_locales', self.get_available_languages())
         i18n.set('fallback', self._default_language)
         return self
 
