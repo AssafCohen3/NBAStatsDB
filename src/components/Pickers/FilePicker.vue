@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<v-text-field
-			v-model="selectedFilePath"
+			:model-value="selectedFilePath"
 			class="file_path_text_field"
 			readonly
 			variant="plain"
@@ -10,7 +10,7 @@
 			:error-messages="v$.$errors.map(m => m.$message)"
 			prepend-icon="mdi-paperclip"
 			hide-details="auto"
-			@clear="clearFile"
+			@click:clear="clearFile"
 			@click="onSelectFileClick" />
 		<input
 			ref="uploader"
@@ -48,11 +48,6 @@ export default {
 			get(){
 				return this.inputData['file_path'];
 			},
-			set(newVal){
-				this.$emit('update:inputData', {
-					'season_type_code': newVal.code
-				});
-			}
 		}
 	},
 	methods: {

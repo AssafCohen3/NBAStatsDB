@@ -44,7 +44,8 @@
 	},
 	"message": "Message",
 	"validations": {
-		"required": "The field is required"
+		"required": "The field is required",
+		"idValidator": "ID must start with an english character or number and contain only english characters, numbers and underscores."
 	},
 	"tasks": {
 		"error_occurred": "An error occurred",

@@ -9,3 +9,6 @@ const withI18nMessage = createI18nMessage({ t: i18n.global.t.bind(i18n) });
 
 // wrap each validator.
 export const required = withI18nMessage(validators.required);
+
+let idRegexValidator = validators.helpers.regex(/^[a-zA-Z0-9][a-zA-Z0-9_]*$/);
+export const idValidator = withI18nMessage(idRegexValidator);

@@ -64,7 +64,7 @@ export default {
 			set(newVal){
 				this.selectedTeam = newVal;
 				this.$emit('update:inputData', {
-					'team_id': newVal ? newVal.team_id : '',
+					'team_id': newVal ? `${newVal.team_id}` : '',
 				});
 			}
 		}

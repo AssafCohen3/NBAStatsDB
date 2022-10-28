@@ -76,7 +76,8 @@ export default {
 	computed: {
 		selectedDateRange: {
 			get(){
-				return [this.inputData['start_date'], this.inputData['end_date']];
+				let toRet = [this.inputData['start_date'] || '', this.inputData['end_date'] || ''];
+				return toRet;
 			},
 			set(newVal){
 				this.$emit('update:inputData', {

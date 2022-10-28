@@ -64,7 +64,7 @@ export default {
 			set(newVal){
 				this.selectedPlayer = newVal;
 				this.$emit('update:inputData', {
-					'player_id': newVal ? newVal.player_id : '',
+					'player_id': newVal ? `${newVal.player_id}` : '',
 				});
 			}
 		}

@@ -41,7 +41,7 @@
 
 <script>
 import { useVuelidate } from '@vuelidate/core';
-import { required } from '@/utils/i18n-validators';
+import { required, idValidator, } from '@/utils/i18n-validators';
 import TranslatableFieldInput from './TranslatableFieldInput.vue';
 
 function createFormFromPreset(preset){
@@ -70,7 +70,7 @@ export default {
 	validations(){
 		return {
 			presetForm: {
-				presetId: { required },
+				presetId: { required, idValidator, },
 			}
 		};
 	},

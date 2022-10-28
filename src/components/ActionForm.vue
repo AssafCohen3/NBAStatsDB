@@ -9,7 +9,7 @@
 		<div
 			class="flex justify-between mt-[20px]">
 			<v-btn 
-				color="success"
+				color="primary"
 				@click="submitAction">
 				{{ formSubmitText }}
 			</v-btn>
@@ -27,12 +27,9 @@
 import InputPicker from './Pickers/InputPicker.vue';
 import { useVuelidate } from '@vuelidate/core';
 function createFormFromInputs(actionInputs, inputsValues){
-	console.log('ii', actionInputs, 'iv', inputsValues);
-	//[[p1, p2], [p1, p2]]
 	let expectedParams = actionInputs.map(actionInput => {
 		return actionInput.expected_params.map(p => p.parameter_name);
 	}).flat();
-	console.log(expectedParams);
 	return Object.assign({}, 
 		...expectedParams.map(p => ({[p]: (inputsValues && inputsValues[p]) || null})));
 }

@@ -2,10 +2,10 @@
 	<v-card
 		class="bg-section-bg-not-transparent">
 		<v-card-title>
-			<span
-				class="text-dimmed-white">
+			<div
+				class="text-primary-light">
 				{{ `${resourceName} - ${actionTitle}` }}
-			</span>
+			</div>
 		</v-card-title>
 		<v-card-text>
 			<action-form 
