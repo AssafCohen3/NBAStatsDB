@@ -1,10 +1,9 @@
 from functools import wraps
 from itertools import tee, islice, chain
-from typing import Iterable, TypeVar, Tuple, Optional, List
-
+from typing import Iterable, TypeVar, Tuple, Optional, Callable
 from flask import request
+from typeguard import typechecked
 
-from dbmanager.Errors import RequiredRequestArgumentMissing, IncorrectRequestArgumentType
 
 R = TypeVar('R')
 
@@ -15,18 +14,12 @@ def iterate_with_next(some_iterable: Iterable[R], last_val=None) -> Iterable[Tup
     return zip(items, nexts)
 
 
-def with_flask_parameters(expected_params: List[Tuple[str, type]]):
-    def real_decorator(method):
-        @wraps(method)
-        def _with_check_params():
-            params = request.json
-            to_send = []
-            for expected_param, expected_param_type in expected_params:
-                if expected_param not in params:
-                    raise RequiredRequestArgumentMissing(expected_param)
-                if not isinstance(params[expected_param], expected_param_type):
-                    raise IncorrectRequestArgumentType(expected_param, expected_param_type, params[expected_param])
-                to_send.append(params[expected_param])
-            return method(*to_send)
-        return _with_check_params
-    return real_decorator
+def flask_request_validation(method: Callable):
+    checked_method = typechecked(method)
+
+    @wraps(method)
+    def _with_check_params(*args, **kwargs):
+        request_json = request.get_json(silent=True)
+        json_params = request_json if request_json else {}
+        return checked_method(*args, **kwargs, **json_params)
+    return _with_check_params

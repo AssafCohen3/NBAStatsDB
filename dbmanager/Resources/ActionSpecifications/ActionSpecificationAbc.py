@@ -97,3 +97,10 @@ class ActionSpecificationAbc(ABC):
             'action_title': cls.get_action_title(),
             'action_inputs': cls.get_action_inputs(session)
         }
+
+    @classmethod
+    def to_compact_dict(cls):
+        return {
+            'action_id': cls.get_action_id(),
+            'action_title': cls.get_action_title(),
+        }

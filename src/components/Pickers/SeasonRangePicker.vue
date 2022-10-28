@@ -76,8 +76,8 @@ export default {
 			},
 			set(newVal){
 				console.log(newVal);
-				let startSeason = newVal && newVal[0] ? newVal[0] : null;
-				let endSeason = newVal && newVal[1] ? newVal[1] : startSeason;
+				let startSeason = newVal && newVal[0] ? `${newVal[0]}` : null;
+				let endSeason = newVal && newVal[1] ? `${newVal[1]}` : startSeason;
 				this.$emit('update:inputData', {
 					'start_season': startSeason,
 					'end_season': endSeason

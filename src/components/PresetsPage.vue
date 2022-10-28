@@ -10,59 +10,105 @@
 			/>
 		</v-overlay>
 		<div
-			class="flex flex-col h-full">
+			class="flex justify-between">
 			<div
-				v-for="preset in presets"
-				:key="preset.preset_id">
-				<!-- TODO preset div -->
-				<preset-card 
-					:preset="preset"
-					@edit-action-recipe-order="editActionRecipeOrderMethod"
-					@remove-action-recipe="removeActionRecipeMethod" />
+				class="presets-div-wrapper w-[60%] flex flex-col px-[30px] overflow-y-auto">
+				<div
+					class="presets-div h-[85vh] overflow-y-auto pe-4">
+					<div
+						class="flex items-center">
+						<div
+							class="text-primary-light font-bold text-[30px] select-none">
+							{{ $t('generic.presets') }}
+						</div>
+						<v-btn
+							class="mx-[5px]"
+							variant="plain"
+							icon="mdi-plus-circle-outline"
+							size="x-large"
+							color="primary-light"
+							@click="creatingPreset = true" />
+					</div>
+					<div
+						class="text-dimmed-white font-bold text-[18px] select-none">
+						{{ $t('common.presets_explanation') }}
+					</div>
+					<div
+						v-for="preset in presets"
+						:key="preset.preset_id">
+						<!-- TODO preset div -->
+						<preset-card 
+							:preset="preset"
+							@refresh="refreshPage" />
+					</div>
+				</div>
+			</div>
+			<div
+				class="flex flex-col h-[85vh] overflow-y-auto px-[30px] rounded-[10px] border-dimmed-white border-[1px] w-[40%]">
+				<div
+					class="flex items-center">
+					<div
+						class="text-primary-light font-bold text-[30px] select-none">
+						{{ $t('common.available_actions') }}
+					</div>
+				</div>
+				<div
+					v-for="resource in resources"
+					:key="resource.resource_id">
+					<pullable-resource-actions-list 
+						:resource="resource" />
+				</div>
 			</div>
 		</div>
+		<v-dialog
+			v-model="creatingPreset"
+			persistent>
+			<preset-edit-dialog
+				@save-preset="createPresetMethod"
+				@cancel="creatingPreset = false" />
+		</v-dialog>
 	</div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import PresetCard from './PresetCard.vue';
+import PresetEditDialog from './PresetEditDialog.vue';
+import PullableResourceActionsList from './PullableResourceActionsList.vue';
 export default {
-	components: { PresetCard },
+	components: { PresetCard, PresetEditDialog, PullableResourceActionsList },
+	data(){
+		return {
+			creatingPreset: false,
+		};
+	},
 	computed: {
-		...mapGetters('presets', {
-			'fetchingPresets': 'fetchingExtendedPresets',
-			'presets': 'extendedPresets'
-		}),
-		...mapGetters('presets', ['isCreatingPreset', 'isEditingPreset', 'isRemovingPreset']),
-		...mapGetters('action_recipes', ['isCreatingActionRecipe', 'isEditingActionRecipeParams', 'isEditingActionRecipeOrder', 'isRemovingActionRecipe']),
+		...mapGetters('presets', ['presets', 'fetchingPresets', 'isCreatingPreset', 'isEditingPreset', 'isRemovingPreset']),
+		...mapGetters('action_recipes', ['isCreatingActionRecipe', 'isEditingActionRecipeParams', 'isEditingActionRecipeOrder', 'isRemovingActionRecipe', 'isCopyingActionRecipe']),
+		...mapGetters('resources', ['fetchingResources', 'resources']),
 		isLoading(){
 			return this.fetchingPresets || this.isCreatingPreset || this.isEditingPreset || this.isRemovingPreset ||
-				this.isCreatingActionRecipe || this.isEditingActionRecipeParams || this.isEditingActionRecipeOrder || this.isRemovingActionRecipe;
+				this.isCreatingActionRecipe || this.isEditingActionRecipeParams || this.isEditingActionRecipeOrder || this.isRemovingActionRecipe || this.isCopyingActionRecipe;
 		}
 	},
 	mounted(){
 		this.refreshPage();
 	},
 	methods: {
-		...mapActions('presets', {
-			'fetchPresets': 'fetchExtendedPresets'
-		}),
-		...mapActions('presets', ['createPreset', 'editPreset', 'removePreset']),
-		...mapActions('action_recipes', ['createActionRecipe', 'editActionRecipeParams', 'editActionRecipeOrder', 'removeActionRecipe']),
+		...mapActions('presets', ['fetchPresets', 'createPreset', ]),
+		...mapActions('resources', ['fetchResources']),
 		refreshPage(){
 			this.fetchPresets();
+			this.fetchResources();
 		},
-		editActionRecipeOrderMethod(presetId, recipeId, newOrder){
-			this.editActionRecipeOrder([presetId, recipeId, newOrder]).
-				then((resp) => {
-					this.refreshPage();
-				});
+		refreshPresets(){
+			this.fetchPresets();
 		},
-		removeActionRecipeMethod(presetId, recipeId){
-			this.removeActionRecipe([presetId, recipeId]).
-				then((resp) => {
-					this.refreshPage();
+		createPresetMethod(presetId, presetNameJson){
+			this.createPreset([presetId, presetNameJson])
+				.then((resp) => {
+					this.refreshPresets();
+					this.creatingPreset = false;
 				});
 		},
 	},
@@ -75,4 +121,9 @@ export default {
 <style
 	lang="postcss"
 	scoped>
+.presets-div-wrapper{
+	border-inline-end-width: 1px;
+	border-inline-end-style: dashed;
+	border-inline-end-color: theme('colors.primary-light');
+}
 </style>

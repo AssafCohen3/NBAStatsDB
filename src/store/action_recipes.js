@@ -12,6 +12,9 @@ const state = {
 	// edit action recipe order
 	isEditingActionRecipeOrder: false,
 
+	// copy action recipe
+	isCopyingActionRecipe: false,
+
 	// remove action recipe
 	isRemovingActionRecipe: false,
 };
@@ -27,15 +30,23 @@ const getters = {
 	// edit action recipe order
 	isEditingActionRecipeOrder: (state) => state.isEditingActionRecipeOrder,
 
+	// copy action recipe
+	isCopyingActionRecipe: (state) => state.isCopyingActionRecipe,
+
 	// remove action recipe
 	isRemovingActionRecipe: (state) => state.isRemovingActionRecipe,
 };
 
 const actions = {
-	createActionRecipe({commit}, [newActionRecipeData]){
+	createActionRecipe({commit}, [presetId, resourceId, actionId, order, params]){
 		return new Promise((resolve, reject) => {
 			commit('createActionRecipeStart');
-			axios.post('/presets/actions_recipes/create', newActionRecipeData)
+			axios.post(`/presets/${presetId}/actions_recipes/`, {
+				resource_id: resourceId,
+				action_id: actionId,
+				order: order,
+				params: params,
+			})
 				.then(resp => {
 					commit('createActionRecipeSuccess', resp);
 					resolve(resp.data);
@@ -50,9 +61,7 @@ const actions = {
 	editActionRecipeParams({commit}, [presetId, recipeId, newParams]){
 		return new Promise((resolve, reject) => {
 			commit('editActionRecipeParamsStart');
-			axios.post('/presets/actions_recipes/update_params', {
-				preset_id: presetId,
-				recipe_id: recipeId,
+			axios.put(`/presets/${presetId}/actions_recipes/${recipeId}/update_params`, {
 				params: newParams,
 			})
 				.then(resp => {
@@ -69,9 +78,7 @@ const actions = {
 	editActionRecipeOrder({commit}, [presetId, recipeId, newOrder]){
 		return new Promise((resolve, reject) => {
 			commit('editActionRecipeOrderStart');
-			axios.post('/presets/actions_recipes/update_order', {
-				preset_id: presetId,
-				recipe_id: recipeId,
+			axios.put(`/presets/${presetId}/actions_recipes/${recipeId}/update_order`, {
 				new_order: newOrder,
 			})
 				.then(resp => {
@@ -85,13 +92,28 @@ const actions = {
 		});
 	},
 
+	copyActionRecipe({commit}, [presetId, recipeId, newPresetId, newOrder]){
+		return new Promise((resolve, reject) => {
+			commit('copyActionRecipeStart');
+			axios.post(`/presets/${presetId}/actions_recipes/${recipeId}/copy`, {
+				new_preset_id: newPresetId,
+				order_in_new_preset: newOrder
+			})
+				.then(resp => {
+					commit('copyActionRecipeSuccess', resp);
+					resolve(resp.data);
+				})
+				.catch(err => {
+					console.log(err.toJSON());
+				});
+			// catch?
+		});
+	},
+
 	removeActionRecipe({commit}, [presetId, recipeId]){
 		return new Promise((resolve, reject) => {
 			commit('removeActionRecipeStart');
-			axios.post('/presets/actions_recipes/delete', {
-				preset_id: presetId,
-				recipe_id: recipeId,
-			})
+			axios.delete(`/presets/${presetId}/actions_recipes/${recipeId}`)
 				.then(resp => {
 					commit('removeActionRecipeSuccess', resp);
 					resolve(resp.data);
@@ -129,6 +151,14 @@ const mutations = {
 		state.isEditingActionRecipeOrder = false;
 	},
 
+	// copy action recipe
+	copyActionRecipeStart(state){
+		state.isCopyingActionRecipe = true;
+	},
+	copyActionRecipeSuccess(state){
+		state.isCopyingActionRecipe = false;
+	},
+	
 	// remove action recipe
 	removeActionRecipeStart(state){
 		state.isRemovingActionRecipe = true;

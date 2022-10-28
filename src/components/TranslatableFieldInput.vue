@@ -1,50 +1,31 @@
 <template>
-	<v-card
-		class="bg-section-bg-not-transparent">
-		<v-card-title>
-			<span
-				class="text-dimmed-white">
-				{{ fieldTitle }}
-			</span>
-		</v-card-title>
-		<v-card-text>
-			<!-- <div>
-				<v-overlay
-					:model-value="false"
-					class="items-center justify-center">
-					<v-progress-circular
-						indeterminate
-						class="text-primary-light"
-					/>
-				</v-overlay>
-			</div> -->
+	<div
+		class="p-[10px]">
+		<div
+			class="pb-[5px] text-dimmed-white">
+			{{ fieldTitle }}
+		</div>
+		<div
+			class="flex flex-col h-full text-primary-light">
 			<div
-				class="pt-[10px]">
-				<div
-					class="flex flex-col h-full text-primary-light">
-					<div
-						v-for="locale in Object.keys(translationsForm)"
-						:key="locale">
-						<v-text-field
-							v-model="translationsForm[locale]"
-							:label="localesLanguageNames[locale]" />
-					</div>
-				</div>
+				v-for="locale in Object.keys(availableLocales)"
+				:key="locale"
+				class="pb-[20px]">
+				<v-text-field
+					:model-value="fieldTranslations[locale]"
+					:error-messages="v$.fieldTranslations[locale].$errors.map(m => m.$message)"
+					:label="localesLanguageNames[locale]"
+					hide-details="auto"
+					@update:model-value="updateTranslations(locale, $event)" />
 			</div>
-		</v-card-text>
-	</v-card>
+		</div>
+	</div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-
-function createFormFromTranslations(availableLocales, translations){
-	return Object.assign({}, 
-		...Object.keys(availableLocales).map(locale => ({
-			[locale]: (translations && translations[locale]) || null
-		}))
-	);
-}
+import { useVuelidate } from '@vuelidate/core';
+import { required } from '@/utils/i18n-validators';
 
 export default {
 	props: {
@@ -58,9 +39,18 @@ export default {
 			required: false,
 		},
 	},
-	data(){
+	emits: ['update:fieldTranslations'],
+	setup(){
+		const v$ = useVuelidate();
+		return { v$ };
+	},
+	validations(){
 		return {
-			translationsForm: {},
+			fieldTranslations: {
+				...Object.assign({},
+					...Object.keys(this.availableLocales).map(locale => ({[locale]: locale == this.defaultLocale ? { required } : {}}))
+				)
+			}
 		};
 	},
 	computed: {
@@ -76,17 +66,16 @@ export default {
 			return Object.assign({},
 				...Object.keys(this.availableLocales).map(locale => ({[locale]: languageNames.of(locale)}))
 			);
-		}
+		},		
 	},
 	mounted(){
-		this.getLocalesConfig().
-			then((resp) => {
-				console.log(this.localesConfig, resp);
-				this.translationsForm = createFormFromTranslations(this.localesConfig.available_locales, this.fieldTranslations);
-			});
+		this.getLocalesConfig();
 	},
 	methods: {
 		...mapActions('locales', ['getLocalesConfig']),
+		updateTranslations(locale, newTranslation){
+			this.$emit('update:fieldTranslations', {...(this.fieldTranslations || {}), [locale]: newTranslation});
+		}
 	},
 };
 </script>

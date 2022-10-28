@@ -38,7 +38,6 @@ const mutations = {
 		state.isFetchingLocalesConfig = true;
 	},
 	getLocalesConfigSuccess(state, localesConfig){
-		console.log('success', localesConfig);
 		state.localesConfig = localesConfig;
 		state.isFetchingLocalesConfig = false;
 	},

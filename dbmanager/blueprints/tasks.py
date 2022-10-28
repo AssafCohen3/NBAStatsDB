@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import flask
 from flask import Blueprint, jsonify, request
@@ -7,6 +8,7 @@ from dbmanager.Errors import TaskError
 from dbmanager.extensions import announcer
 from dbmanager.tasks.TaskManager import get_tasks_messages, pause_task, resume_task, cancel_task, \
     dismiss_task
+from dbmanager.utils import flask_request_validation
 
 tasks_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 
@@ -19,29 +21,29 @@ def get_tasks_list():
 
 
 @tasks_bp.route('/pause_task', methods=['POST'])
-def pause_task_route():
-    task_path = request.json['task_path']
+@flask_request_validation
+def pause_task_route(task_path: List[int]):
     pause_task(task_path)
     return 'ok'
 
 
 @tasks_bp.route('/resume_task', methods=['POST'])
-def resume_task_route():
-    task_path = request.json['task_path']
+@flask_request_validation
+def resume_task_route(task_path: List[int]):
     resume_task(task_path)
     return 'ok'
 
 
 @tasks_bp.route('/cancel_task', methods=['POST'])
-def cancel_task_route():
-    task_path = request.json['task_path']
+@flask_request_validation
+def cancel_task_route(task_path: List[int]):
     cancel_task(task_path)
     return 'ok'
 
 
 @tasks_bp.route('/dismiss_task', methods=['POST'])
-def dismiss_task_route():
-    task_path = request.json['task_path']
+@flask_request_validation
+def dismiss_task_route(task_path: List[int]):
     dismiss_task(task_path)
     return 'ok'
 

@@ -20,7 +20,16 @@
 		"team": "Team",
 		"no_params": "Without params",
 		"delete": "Delete",
-		"preset_name": "Actions group preset name:"
+		"preset_name": "Actions group preset name:",
+		"required": "Required",
+		"cancel": "Cancel",
+		"save": "Save",
+		"drop_to_copy": "Drop here to add the action",
+		"create_preset": "Create Pre-set Actions group",
+		"preset_id": "Preset ID",
+		"add": "Add",
+		"available_actions": "Available Actions",
+		"presets_explanation": "Create and manage groups of actions that will run sequentially.\ndrag an action from the Actions menu to add that Action to the group.\nyou can also copy Actions between groups by dragging already created actions to the desired group."
 	},
 	"generic": {
 		"home": "Home",

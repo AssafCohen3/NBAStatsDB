@@ -10,7 +10,10 @@ const state = {
 	// resource
 	fetchingResource: false,
 
-	// action
+	// action spec
+	isFetchingActionSpec: false,
+
+	// post action
 	postingAction: false,
 };
 
@@ -23,7 +26,10 @@ const getters = {
 	// resource
 	fetchingResource: (state) => state.fetchingResource,
 
-	// action
+	// action spec
+	isFetchingActionSpec: (state) => state.isFetchingActionSpec,
+
+	// post action
 	postingAction: (state) => state.postingAction,
 };
 
@@ -53,11 +59,23 @@ const actions = {
 			// catch?
 		});
 	},
+	fetchActionSpec({commit}, [resourceId, actionId]){
+		return new Promise((resolve, reject) => {
+			commit('fetchActionSpecStart');
+			axios.get(`/resources/${resourceId}/actions/${actionId}`).
+				then(resp => {
+					commit('fetchActionSpecSuccess');
+					resolve(resp.data);
+				});
+			// catch?
+		});
+	},
 	postAction({commit}, [resourceId, actionId, actionParams]){
 		return new Promise((resolve, reject) => {
 			commit('postActionStart');
-			axios.post(`/resources/${resourceId}/actions/${actionId}`,
-				actionParams).
+			axios.post(`/resources/${resourceId}/actions/${actionId}/dispatch`,{
+				params: actionParams
+			}).
 				then(resp => {
 					commit('postActionSuccess');
 					resolve(resp.data);
@@ -84,8 +102,16 @@ const mutations = {
 	fetchResourceSuccess(state, resp){
 		state.fetchingResource = false;
 	},
+
+	// action spec
+	fetchActionSpecStart(state){
+		state.isFetchingActionSpec = true;
+	},
+	fetchActionSpecSuccess(state){
+		state.isFetchingActionSpec = false;
+	},
 	
-	// actions
+	// post action
 	postActionStart(state){
 		state.postingAction = true;
 	},

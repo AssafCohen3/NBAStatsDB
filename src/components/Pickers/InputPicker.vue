@@ -54,7 +54,7 @@ export default {
 				return this.inputData;
 			},
 			set(newVal){
-				this.$emit('update:inputData', newVal);
+				this.$emit('update:inputData', {...this.inputData, ...newVal});
 			}
 		}
 	}

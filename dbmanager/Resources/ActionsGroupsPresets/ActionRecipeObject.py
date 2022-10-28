@@ -19,6 +19,7 @@ class ActionRecipeObject:
 
     def to_dict(self):
         return {
+            'preset_id': self.preset.preset_id,
             'action_recipe_id': self.action_recipe_id,
             'action_id': self.action_cls.get_action_id(),
             'action_title': self.action_cls.get_action_spec().get_action_title(),

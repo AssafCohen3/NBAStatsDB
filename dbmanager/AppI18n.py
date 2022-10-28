@@ -37,9 +37,9 @@ class TranslatableField:
 
     def get_value(self):
         current_locale = i18n.get('locale')
-        if current_locale in self.translations:
+        if self.translations.get(current_locale):
             return self.translations[current_locale]
-        if self.fallback_locale in self.translations:
+        if self.translations.get(self.fallback_locale):
             return self.translations[self.fallback_locale]
         return ''
 

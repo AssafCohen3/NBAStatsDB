@@ -26,20 +26,48 @@
 							color="primary-light"
 							@click="editingPreset = true" />
 					</v-fade-transition>
+					<v-tooltip>
+						<template #activator="{ props: tooltipProps }">
+							<v-fade-transition>
+								<v-btn
+									v-show="isHovering"
+									v-bind="tooltipProps"
+									variant="plain"
+									icon="mdi-delete"
+									color="primary-light"
+									@click="removePresetMethod" />
+							</v-fade-transition>
+						</template>
+						<p>
+							{{ $t('common.delete') }}
+						</p>
+					</v-tooltip>
 				</div>
 			</v-hover>
 		</div>
 		<v-expand-transition>
-			<div v-show="expanded">
+			<div
+				v-show="expanded">
+				<!-- TODO change pull to true and allow copy recipes between presets -->
 				<draggable
 					v-model="recipesList"
-					:group="`${preset.preset_id}_group`"
+					:group="{
+						name: `${preset.preset_id}_group`,
+						pull: 'clone',
+						put: true,
+					}"
 					item-key="action_recipe_id"
-					@change="onChange">
+					@change="onChange"
+					@move="onMove">
 					<template #item="{element}">
 						<action-recipe-row
+							v-if="element.preset_id == preset.preset_id"
 							:action-recipe="element"
-							@remove-action-recipe="removeActionRecipe" />
+							@refresh="$emit('refresh')" />
+						<div
+							v-else>
+							adsssssssssss
+						</div>
 					</template>
 				</draggable>
 			</div>
@@ -47,9 +75,24 @@
 		<v-dialog
 			v-model="editingPreset"
 			persistent>
-			<translatable-field-input
-				:field-title="$t('common.preset_name')"
-				:field-translations="preset.preset_name_json" />
+			<preset-edit-dialog
+				:preset="preset"
+				@save-preset="savePresetName"
+				@cancel="editingPreset = false" />
+		</v-dialog>
+		<v-dialog
+			v-if="actionToAdd"
+			v-model="addingAction"
+			persistent>
+			<action-form-wrapper
+				:action-id="actionToAdd.action_id"
+				:action-title="actionToAdd.action_title"
+				:resource-id="actionToAdd.resource_id"
+				:resource-name="actionToAdd.resource_name"
+				:submit-text="$t('common.add')"
+				@cancel="cancelActionCreation"
+				@submit-action="addAction"
+			/>
 		</v-dialog>
 	</div>
 </template>
@@ -58,21 +101,25 @@
 import ActionRecipeRow from './ActionRecipeRow.vue';
 // import { Sortable } from 'sortablejs-vue3';
 import draggable from 'vuedraggable';
-import TranslatableFieldInput from './TranslatableFieldInput.vue';
+import { mapActions, } from 'vuex';
+import PresetEditDialog from './PresetEditDialog.vue';
+import ActionFormWrapper from './ActionFormWrapper.vue';
 
 export default {
-	components: { ActionRecipeRow, draggable, TranslatableFieldInput},
+	components: { ActionRecipeRow, draggable, PresetEditDialog, ActionFormWrapper},
 	props: {
 		preset: {
 			type: Object,
 			required: true,
 		},
 	},
-	emits: ['editActionRecipeOrder', 'removeActionRecipe'],
+	emits: ['refresh'],
 	data(){
 		return {
 			expanded: false,
 			editingPreset: false,
+			addingAction: false,
+			actionToAdd: null,
 		};
 	},
 	computed: {
@@ -85,15 +132,65 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions('presets', ['editPreset', 'removePreset']),
+		...mapActions('action_recipes', ['editActionRecipeOrder', 'copyActionRecipe', 'createActionRecipe',]),
 		onChange(event){
 			console.log('change: ', event);
 			if(event.moved){
-				this.$emit('editActionRecipeOrder', this.preset.preset_id, event.moved.element.action_recipe_id, event.moved.newIndex);
+				this.editActionRecipeOrder([this.preset.preset_id, event.moved.element.action_recipe_id, event.moved.newIndex])
+					.then((resp) => {
+						this.$emit('refresh');
+					});
+			}
+			else if(event.added){
+				let newRecipe = event.added.element;
+				if(newRecipe.action_recipe_id){
+					this.copyActionRecipe([newRecipe.preset_id, newRecipe.action_recipe_id, this.preset.preset_id, event.added.newIndex])
+						.then((resp) => {
+							this.$emit('refresh');
+						});
+				}
+				else if(newRecipe.action_id){
+					this.actionToAdd = {...newRecipe, order: event.added.newIndex};
+					this.addingAction = true;
+				}
 			}
 		},
-		removeActionRecipe(actionRecipeId){
-			this.$emit('removeActionRecipe', this.preset.preset_id, actionRecipeId);
-		}
+		savePresetName(presetId, presetNameJson){
+			this.editPreset([this.preset.preset_id, presetNameJson])
+				.then((resp) => {
+					this.editingPreset = false;
+					this.$emit('refresh');
+				});
+		},
+		removePresetMethod(){
+			this.removePreset([this.preset.preset_id])
+				.then((resp) => {
+					this.$emit('refresh');
+				});
+		},
+		onMove(evt){
+			if(evt.from != evt.to){
+				evt.dragged.classList.add('in-other-list');
+				evt.dragged.classList.remove('some-list');
+			}
+			else{
+				evt.dragged.classList.remove('in-other-list');
+				evt.dragged.classList.add('some-list');
+			}
+		},
+		cancelActionCreation(){
+			this.addingAction = false;
+			this.actionToAdd = null;
+		},
+		//	createActionRecipe({commit}, [presetId, resourceId, actionId, order, params]){
+		addAction(resourceId, actionId, actionParams){
+			this.createActionRecipe([this.preset.preset_id, resourceId, actionId, this.actionToAdd.order, actionParams])
+				.then((resp) => {
+					this.cancelActionCreation();
+					this.$emit('refresh');
+				});
+		},
 	}
 };
 </script>
@@ -101,13 +198,15 @@ export default {
 <style
 	lang="postcss"
 	scoped>
+
 .preset-div{
 	background: linear-gradient(45deg, #13138f, #2b356880);
 	/* w-[30%] p-[30px] m-[10px] rounded-lg */
-	width: 50%;
 	padding: 5px;
-	margin: 30px;
+	width: 80%;
+	margin-block: 30px;
 	border-radius: 10px;
+	margin-inline-start: 5px;
 	box-shadow: 0px 0px 10px 3px #131434;
 }
 </style>

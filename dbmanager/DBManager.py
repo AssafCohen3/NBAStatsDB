@@ -145,6 +145,21 @@ class DbManager:
         } for resource_id, last_updated in resources]
         return resources
 
+    def get_resources_with_actions_compact(self) -> List[Dict[str, Any]]:
+        available_ids = [res.get_id() for res in self.available_resources]
+        stmt = (
+            select(Resource.ResourceId, Resource.LastUpdated).
+            where(Resource.ResourceId.in_(available_ids))
+        )
+        resources_last_update = self.session.execute(stmt).fetchall()
+        resources_with_actions = [{
+            'resource_id': (resource := self.get_resource(resource_id)).get_id(),
+            'resource_name': resource.get_name(),
+            'actions': [act.to_compact_dict() for act in resource.get_actions_specs()],
+            'last_updated': last_updated
+        } for resource_id, last_updated in resources_last_update]
+        return resources_with_actions
+
     def get_resource_details(self, resource_id: str) -> Dict[str, Any]:
         resource = self.get_resource(resource_id)
         to_ret = {
@@ -161,6 +176,11 @@ class DbManager:
         }
         return to_ret
 
+    def get_action_spec(self, resource_id: str, action_id: str):
+        resource = self.get_resource(resource_id)
+        action = resource.get_action_cls(action_id)
+        return action.get_action_spec().to_dict(self.session)
+
     def get_actions_presets_list(self) -> List[Dict]:
         return self.presets_manager.get_actions_presets_list()
 
@@ -170,20 +190,20 @@ class DbManager:
     def get_extended_actions_presets_list(self) -> List[Dict]:
         return self.presets_manager.get_extended_actions_presets_list()
 
-    def create_preset(self, preset_id: str, preset_name_json: Dict) -> str:
+    def create_preset(self, preset_id: str, preset_name_json: Dict[str, str]) -> str:
         return self.presets_manager.create_preset(preset_id, preset_name_json)
 
-    def edit_preset(self, preset_id: str, preset_name_json: Dict) -> str:
+    def edit_preset(self, preset_id: str, preset_name_json: Dict[str, str]) -> str:
         return self.presets_manager.edit_preset(preset_id, preset_name_json)
 
     def remove_preset(self, preset_id: str) -> str:
         return self.presets_manager.remove_preset(preset_id)
 
-    def create_action_recipe(self, preset_id: str, resource_id: str, action_id: str, order: int, params: Dict) -> int:
+    def create_action_recipe(self, preset_id: str, resource_id: str, action_id: str, order: int, params: Dict[str, str]) -> int:
         action_cls = self.get_resource(resource_id).get_action_cls(action_id)
         return self.presets_manager.create_action_recipe(preset_id, action_cls, order, params)
 
-    def edit_action_recipe_params(self, preset_id: str, recipe_id: int, params: Dict) -> int:
+    def edit_action_recipe_params(self, preset_id: str, recipe_id: int, params: Dict[str, str]) -> int:
         return self.presets_manager.edit_action_recipe_params(preset_id, recipe_id, params)
 
     def change_action_recipe_order(self, preset_id: str, recipe_id: int, new_order: int) -> int:
@@ -191,6 +211,9 @@ class DbManager:
 
     def delete_action_recipe(self, preset_id: str, recipe_id: int) -> int:
         return self.presets_manager.delete_action_recipe(preset_id, recipe_id)
+
+    def copy_action_recipe(self, preset_id: str, recipe_id: int, new_preset_id: str, order_in_new_preset: int) -> int:
+        return self.presets_manager.copy_action_recipe(preset_id, recipe_id, new_preset_id, order_in_new_preset)
 
     def dispatch_preset(self, preset_id: str) -> TasksGroup:
         presets = self.cached_presets.get_data()

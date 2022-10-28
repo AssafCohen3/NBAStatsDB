@@ -7,10 +7,6 @@ const state = {
 	presets: [],
 	fetchingPresets: false,
 
-	// extended presets
-	extendedPresets: [],
-	fetchingExtendedPresets: false,
-	
 	// preset
 	fetchingPreset: false,
 
@@ -33,10 +29,6 @@ const getters = {
 	presets: (state) => state.presets,
 	fetchingPresets: (state) => state.fetchingPresets,
 
-	// extended presets
-	extendedPresets: (state) => state.extendedPresets,
-	fetchingExtendedPresets: (state) => state.fetchingExtendedPresets,
-	
 	// preset
 	fetchingPreset: (state) => state.fetchingPreset,
 
@@ -71,7 +63,7 @@ const actions = {
 	fetchPreset({commit}, [presetId]){
 		return new Promise((resolve, reject) => {
 			commit('fetchPresetStart');
-			axios.get(`/presets/details/${presetId}`).
+			axios.get(`/presets/${presetId}`).
 				then(resp => {
 					commit('fetchPresetSuccess');
 					resolve(resp.data);
@@ -82,7 +74,7 @@ const actions = {
 	dispatchPreset({commit}, [presetId]){
 		return new Promise((resolve, reject) => {
 			commit('dispatchPresetStart');
-			axios.post(`/presets/dispatch/${presetId}`).
+			axios.post(`/presets/${presetId}/dispatch`).
 				then(resp => {
 					commit('dispatchPresetSuccess');
 					resolve(resp.data);
@@ -90,25 +82,13 @@ const actions = {
 			// catch?
 		});
 	},
-	fetchExtendedPresets({commit}){
-		return new Promise((resolve, reject) => {
-			commit('fetchExtendedPresetsStart');
-			axios.get('/presets/extended')
-				.then(resp => {
-					commit('fetchExtendedPresetsSuccess', resp);
-					resolve(resp.data);
-				})
-				.catch(err => {
-					console.log(err.toJSON());
-				});
-			// catch?
-		});
-	},
-
-	createPreset({commit}, [newPreset]){
+	createPreset({commit}, [presetId, presetNameJson]){
 		return new Promise((resolve, reject) => {
 			commit('createPresetStart');
-			axios.post('/presets/create', newPreset)
+			axios.post('/presets/', {
+				preset_id: presetId,
+				preset_name_json: presetNameJson,
+			})
 				.then(resp => {
 					commit('createPresetSuccess', resp);
 					resolve(resp.data);
@@ -120,10 +100,12 @@ const actions = {
 		});
 	},
 
-	editPreset({commit}, [updatedPreset]){
+	editPreset({commit}, [presetId, presetNameJson]){
 		return new Promise((resolve, reject) => {
 			commit('editPresetStart');
-			axios.post('/presets/update', updatedPreset)
+			axios.put(`/presets/${presetId}`, {
+				preset_name_json: presetNameJson
+			})
 				.then(resp => {
 					commit('editPresetSuccess', resp);
 					resolve(resp.data);
@@ -138,7 +120,7 @@ const actions = {
 	removePreset({commit}, [presetId]){
 		return new Promise((resolve, reject) => {
 			commit('removePresetStart');
-			axios.post('/presets/delete', {preset_id: presetId})
+			axios.delete(`/presets/${presetId}`)
 				.then(resp => {
 					commit('removePresetSuccess', resp);
 					resolve(resp.data);

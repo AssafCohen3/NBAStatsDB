@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Type
+from typing import Dict, List, Type, Optional
 
 from requests_unixsocket import delete
 from sqlalchemy import insert, update, delete, and_
@@ -220,3 +220,21 @@ class PresetsManager:
         self.session.execute(update_rest_stmt)
         self.session.commit()
         return recipe_id
+
+    def copy_action_recipe(self, preset_id: str, recipe_id: int, new_preset_id: str, order_in_new_preset: int) -> Optional[int]:
+        preset = self.get_presets().get(preset_id)
+        if not preset:
+            raise PresetNotExistError(preset_id)
+        recipe = preset.action_recipes.get(recipe_id)
+        if not recipe:
+            raise ActionRecipeNotExistError(preset, recipe_id)
+        new_preset = self.get_presets().get(new_preset_id)
+        if not new_preset:
+            raise PresetNotExistError(new_preset_id)
+        if order_in_new_preset < 0:
+            raise IlegalValueError('order_in_new_preset', order_in_new_preset, 'order_in_new_preset must be a non negative integer')
+        if preset_id == new_preset_id:
+            return None
+        # keep orders sequential
+        order_in_new_recipe = min(order_in_new_preset, new_preset.next_available_order())
+        return self.create_action_recipe(new_preset_id, recipe.action_cls, order_in_new_recipe, recipe.params)

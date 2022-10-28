@@ -3,26 +3,38 @@
 		<input-picker
 			v-for="actionInput, index in actionSpec.action_inputs"
 			:key="index"
-			v-model:inputData="form[actionInput.input_name]"
+			v-model:inputData="form"
 			:action-input="actionInput" />
-		<v-btn 
-			class="mt-[20px]"
-			color="success"
-			@click="submitAction">
-			{{ $t('common.submit') }}
-		</v-btn>
+
+		<div
+			class="flex justify-between mt-[20px]">
+			<v-btn 
+				color="success"
+				@click="submitAction">
+				{{ formSubmitText }}
+			</v-btn>
+			<v-btn 
+				v-if="cancelOption"
+				color="error"
+				@click="$emit('cancel')">
+				{{ $t('common.cancel') }}
+			</v-btn>
+		</div>
 	</div>
 </template>
 
 <script>
 import InputPicker from './Pickers/InputPicker.vue';
 import { useVuelidate } from '@vuelidate/core';
-function createFormFromInputs(actionInputs){
+function createFormFromInputs(actionInputs, inputsValues){
+	console.log('ii', actionInputs, 'iv', inputsValues);
+	//[[p1, p2], [p1, p2]]
+	let expectedParams = actionInputs.map(actionInput => {
+		return actionInput.expected_params.map(p => p.parameter_name);
+	}).flat();
+	console.log(expectedParams);
 	return Object.assign({}, 
-		...actionInputs.map(actionInput => ({
-			[actionInput.input_name]: {}
-		}))
-	);
+		...expectedParams.map(p => ({[p]: (inputsValues && inputsValues[p]) || null})));
 }
 
 export default {
@@ -32,9 +44,21 @@ export default {
 			type: Object,
 			required: true
 		},
+		inputsValues: {
+			type: Object,
+			default: null
+		},
+		formSubmitText: {
+			type: String,
+			required: true,
+		},
+		cancelOption: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: [
-		'postAction',
+		'postAction', 'cancel',
 	],
 	setup(){
 		const v$ = useVuelidate();
@@ -48,7 +72,7 @@ export default {
 	watch: {
 		actionSpec: {
 			handler(newVal){
-				this.form = createFormFromInputs(this.actionSpec.action_inputs);
+				this.form = createFormFromInputs(this.actionSpec.action_inputs, this.inputsValues);
 			},
 			immediate: true,
 		},
@@ -59,9 +83,7 @@ export default {
 			if(this.v$.$error){
 				return;
 			}
-			let actionForm = Object.assign({},
-				...Object.keys(this.form).map(key => this.form[key]));
-			this.$emit('postAction', this.actionSpec.action_id, actionForm);
+			this.$emit('postAction', this.actionSpec.action_id, this.form);
 		}
 	}
 };

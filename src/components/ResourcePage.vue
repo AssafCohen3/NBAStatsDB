@@ -92,8 +92,9 @@
 						<v-expansion-panel-text>
 							<div
 								class="p-[20px]">
-								<action-form
+								<action-form									
 									:action-spec="actionSpec"
+									:form-submit-text="$t('common.submit')"
 									@post-action="runAction" />
 							</div>
 						</v-expansion-panel-text>
