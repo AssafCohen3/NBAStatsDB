@@ -29,7 +29,9 @@
 		"preset_id": "Preset ID",
 		"add": "Add",
 		"available_actions": "Available Actions",
-		"presets_explanation": "Create and manage groups of actions that will run sequentially.\ndrag an action from the Actions menu to add that Action to the group.\nyou can also copy Actions between groups by dragging already created actions to the desired group."
+		"presets_explanation": "Create and manage groups of actions that will run sequentially.\ndrag an action from the Actions menu to add that Action to the group.\nyou can also copy Actions between groups by dragging already created actions to the desired group.",
+		"file_name": "File name",
+		"run": "Run"
 	},
 	"generic": {
 		"home": "Home",
@@ -53,5 +55,17 @@
 		"task_finished": "The task finished successfully",
 		"progress_line": "{completed} out of {to_finish}",
 		"progress_line_no_to_finish": "{completed} completed"
+	},
+	"messages": {
+		"action_recipe_removed_successfully": "Action removed successfully from the group",
+		"action_recipe_saved_successfully": "Action saved successfully",
+		"connected_to_db": "Connected successfully to {dbName}",
+		"actions_order_saved": "Action new order saved",
+		"action_copied_successfully": "Action copied successfully to the group",
+		"preset_saved_successfully": "The actions group saved successfully",
+		"preset_removed_successfully": "The actions group removed successfully",
+		"action_created_successfully": "Action created successfully",
+		"preset_created_successfully": "The actions group created successfully",
+		"action_submited_successfully": "Action submitted successfully"
 	}
 }

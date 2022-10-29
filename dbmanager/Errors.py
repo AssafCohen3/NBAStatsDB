@@ -4,8 +4,6 @@ import typing
 from abc import ABC
 from typing import Dict, List, Type
 
-from dbmanager.AppI18n import gettext
-
 if typing.TYPE_CHECKING:
     from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
     from dbmanager.Resources.ActionsGroupsPresets.ActionRecipeObject import ActionRecipeObject
@@ -16,7 +14,7 @@ class ActionNotExistError(Exception):
     def __init__(self, resource_id: str, action_id: str):
         self.resource_id = resource_id
         self.action_id = action_id
-        super().__init__(gettext('errors.action_not_exist', resource_id=resource_id, action_id=action_id))
+        super().__init__(f'action {action_id} does not exist in resource {resource_id}')
 
 
 class InvalidActionCallError(Exception):
@@ -24,7 +22,7 @@ class InvalidActionCallError(Exception):
         self.action_spec = action_spec
         self.params = params
         self.error_msg = error_msg
-        super().__init__(gettext('errors.invalid_action', resource_id=action_spec.get_resource().get_id(), action_id=action_spec.get_action_id(), params=params, error_msg=error_msg))
+        super().__init__(f'invalid call to action {action_spec.get_action_id()} of resource {action_spec.get_resource().get_id()} with params {params}.\n{error_msg}')
 
 
 class ActionFailedError(Exception):
@@ -35,14 +33,14 @@ class ActionFailedError(Exception):
 class ResourceNotExistError(Exception):
     def __init__(self, resource_id: str):
         self.resource_id = resource_id
-        super().__init__(gettext('errors.resource_not_exist', resource_id=resource_id))
+        super().__init__(f'resource {resource_id} does not exist')
 
 
 class RequiredParameterMissingError(Exception):
     def __init__(self, action_id: str, par: str):
         self.action_id = action_id
         self.par = par
-        super().__init__(gettext('errors.required_parameter_missing', action_id=action_id, par=par))
+        super().__init__(f'the call to {action_id} missing the parameter {par}')
 
 
 class IncorrectParameterTypeError(Exception):
@@ -51,8 +49,7 @@ class IncorrectParameterTypeError(Exception):
         self.par_name = par_name
         self.par_type = par_type
         self.par_value = par_value
-        super().__init__(gettext('errors.incorrect_parameter_type', action_id=action_id,
-                                 par_name=par_name, par_type=par_type, par_value=par_value))
+        super().__init__(f'the type of the parameter {par_name} in action {action_id} is incorrect.\nexpected type: {par_type}\nrecieved value: {par_value}')
 
 
 class IlegalParameterValueError(Exception):
@@ -61,8 +58,7 @@ class IlegalParameterValueError(Exception):
         self.par_name = par_name
         self.par_value = par_value
         self.err_message = err_message
-        super().__init__(gettext('errors.ilegal_parameter_value', action_id=action_id,
-                                 par_name=par_name, par_value=par_value, err_message=err_message))
+        super().__init__(f'the value of the parameter {par_name} in the call to action {action_id} is ilegal.\nrecieved value: {par_value}\n{err_message}')
 
 
 class UnknownParameterTypeError(Exception):
@@ -76,7 +72,7 @@ class UnexpectedParameterError(Exception):
     def __init__(self, action_id: str, unexpected_params: List[str]):
         self.action_id = action_id
         self.unexpected_params = unexpected_params
-        super().__init__(gettext('errors.unexpected_parameter', action_id=action_id, unexpected_params=', '.join(unexpected_params)))
+        super().__init__(f'unexpected parameters {", ".join(unexpected_params)} in call to action {action_id}')
 
 
 class PresetNotExistError(Exception):

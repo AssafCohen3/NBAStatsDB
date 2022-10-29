@@ -78,6 +78,9 @@ class DbManager:
         self.presets_manager = PresetsManager(self.session, self.cached_presets)
         self.create_default_presets()
 
+    def is_initiated(self):
+        return self.session is not None
+
     def create_default_presets(self):
         default_presets: List[Tuple[str, Dict[str, str], List[Tuple[Type[ActionAbc], Dict[str, str]]]]] = [
             ('default_base_update', {'en': 'Basic Update', 'he': 'עדכון בסיסי'},

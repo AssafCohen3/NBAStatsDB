@@ -13,6 +13,8 @@ import LanguagueReloadPlugin from './plugins/language_reload_plugin';
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import moment from 'moment';
+import Toast from 'vue-toastification';
+import 'vue-toastification/dist/index.css';
 
 loadFonts();
 // var aaa = window.process;
@@ -36,6 +38,7 @@ let app = createApp(App)
 	.use(vuetify)
 	.use(i18n)
 	.use(LanguagueReloadPlugin)
+	.use(Toast)
 	.component('country-flag', CountryFlag)
 	.component('date-picker', Datepicker);
 app.config.globalProperties.$moment = moment;

@@ -1,17 +1,16 @@
 import axios from 'axios';
+import { toastError } from '../utils/errorToasts';
 
 
 
 const state = {
-	// resources
-	dbStatus: {},
+	dbName: {},
 	initializingDB: false,
 };
 
 
 const getters = {
-	// resources
-	dbStatus: (state) => state.dbStatus,
+	dbName: (state) => state.dbName,
 	initializingDB: (state) => state.initializingDB,
 };
 
@@ -27,6 +26,10 @@ const actions = {
 				.then(resp => {
 					commit('initDBSuccess', resp);
 					resolve(resp.data);
+				})
+				.catch(err => {
+					commit('initDBError', err.response);
+					toastError(err.response);
 				});
 		});
 	},
@@ -36,11 +39,15 @@ const mutations = {
 	// resources
 	initDBStart(state){
 		state.initializingDB = true;
+		state.dbName = null;
 	},
 	initDBSuccess(state, resp){
 		state.initializingDB = false;
-		state.dbStatus = resp.data;
+		state.dbName = resp.data;
 	},
+	initDBError(state, err){
+		state.initializingDB = false;
+	}
 };
 
 

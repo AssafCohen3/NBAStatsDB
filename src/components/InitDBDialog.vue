@@ -13,15 +13,23 @@
 				{{ $t('common.try_again_with_another_settings') }}
 			</span>
 			<div
-				class="pt-[10px]">
+				class="pt-[10px] text-dimmed-white">
+				<v-text-field
+					v-model="filename"
+					variant="plain"
+					clearable
+					:label="$t('common.file_name')"
+					prepend-icon="mdi-paperclip"
+					hide-details="auto"
+					@click:clear="clearFile" />
 				<v-checkbox
 					v-model="createDB"
 					:label="$t('common.create_db')"
-					class="text-dimmed-white"
 					hide-details="auto" />
 				<v-btn
 					:loading="initializingDB"
-					color="green"
+					class="my-[10px]"
+					color="primary"
 					@click="submit">
 					<span>
 						{{ $t('common.try_again') }}
@@ -34,11 +42,13 @@
 
 <script>
 import { mapGetters } from 'vuex';
+
 export default {
-	emits: ['initDB'],
+	emits: ['initDb'],
 	data(){
 		return {
-			createDB: false
+			createDB: false,
+			filename: localStorage.getItem('dbName') || 'NBAStatsDB.db',
 		};
 	},
 	computed: {
@@ -48,12 +58,22 @@ export default {
 	},
 	methods: {
 		submit(){
-			this.$emit('initDB', null, this.createDB);
+			this.$emit('initDb', this.filename, this.createDB);
+		},
+		clearFile(){
+			this.filename = localStorage.getItem('dbName') || 'NBAStatsDB.db';
 		}
-	}
+	},
 };
 </script>
 
-<style>
+<style
+	scoped>
 
+.file_path_text_field :deep(.v-field__input){
+	cursor: pointer;
+}
+.hidden{
+	display: none;
+}
 </style>

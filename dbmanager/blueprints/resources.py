@@ -1,6 +1,6 @@
 from typing import Dict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from dbmanager.extensions import db_manager
 from dbmanager.tasks.TaskManager import enqueue_task
 from dbmanager.utils import flask_request_validation

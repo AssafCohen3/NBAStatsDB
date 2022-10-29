@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toastError } from '../utils/errorToasts';
 
 
 
@@ -26,7 +27,8 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					commit('getLocalesConfigError');
+					toastError(err.response);
 				});
 		});
 	},
@@ -41,6 +43,9 @@ const mutations = {
 		state.localesConfig = localesConfig;
 		state.isFetchingLocalesConfig = false;
 	},
+	getLocalesConfigError(state){
+		state.isFetchingLocalesConfig = false;
+	}
 };
 
 

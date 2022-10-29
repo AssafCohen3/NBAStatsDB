@@ -72,6 +72,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import { toastSuccess } from '../utils/errorToasts';
 import PresetCard from './PresetCard.vue';
 import PresetEditDialog from './PresetEditDialog.vue';
 import PullableResourceActionsList from './PullableResourceActionsList.vue';
@@ -109,6 +110,7 @@ export default {
 				.then((resp) => {
 					this.refreshPresets();
 					this.creatingPreset = false;
+					toastSuccess(this.$t('messages.preset_created_successfully'));
 				});
 		},
 	},

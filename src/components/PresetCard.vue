@@ -61,13 +61,8 @@
 					@move="onMove">
 					<template #item="{element}">
 						<action-recipe-row
-							v-if="element.preset_id == preset.preset_id"
 							:action-recipe="element"
 							@refresh="$emit('refresh')" />
-						<div
-							v-else>
-							adsssssssssss
-						</div>
 					</template>
 				</draggable>
 			</div>
@@ -99,11 +94,11 @@
 
 <script>
 import ActionRecipeRow from './ActionRecipeRow.vue';
-// import { Sortable } from 'sortablejs-vue3';
 import draggable from 'vuedraggable';
 import { mapActions, } from 'vuex';
 import PresetEditDialog from './PresetEditDialog.vue';
 import ActionFormWrapper from './ActionFormWrapper.vue';
+import { toastSuccess } from '../utils/errorToasts';
 
 export default {
 	components: { ActionRecipeRow, draggable, PresetEditDialog, ActionFormWrapper},
@@ -135,11 +130,11 @@ export default {
 		...mapActions('presets', ['editPreset', 'removePreset']),
 		...mapActions('action_recipes', ['editActionRecipeOrder', 'copyActionRecipe', 'createActionRecipe',]),
 		onChange(event){
-			console.log('change: ', event);
 			if(event.moved){
 				this.editActionRecipeOrder([this.preset.preset_id, event.moved.element.action_recipe_id, event.moved.newIndex])
 					.then((resp) => {
 						this.$emit('refresh');
+						toastSuccess(this.$t('messages.actions_order_saved'));
 					});
 			}
 			else if(event.added){
@@ -148,6 +143,7 @@ export default {
 					this.copyActionRecipe([newRecipe.preset_id, newRecipe.action_recipe_id, this.preset.preset_id, event.added.newIndex])
 						.then((resp) => {
 							this.$emit('refresh');
+							toastSuccess(this.$t('messages.action_copied_successfully'));
 						});
 				}
 				else if(newRecipe.action_id){
@@ -161,12 +157,14 @@ export default {
 				.then((resp) => {
 					this.editingPreset = false;
 					this.$emit('refresh');
+					toastSuccess(this.$t('messages.preset_saved_successfully'));
 				});
 		},
 		removePresetMethod(){
 			this.removePreset([this.preset.preset_id])
 				.then((resp) => {
 					this.$emit('refresh');
+					toastSuccess(this.$t('messages.preset_removed_successfully'));
 				});
 		},
 		onMove(evt){
@@ -183,12 +181,12 @@ export default {
 			this.addingAction = false;
 			this.actionToAdd = null;
 		},
-		//	createActionRecipe({commit}, [presetId, resourceId, actionId, order, params]){
 		addAction(resourceId, actionId, actionParams){
 			this.createActionRecipe([this.preset.preset_id, resourceId, actionId, this.actionToAdd.order, actionParams])
 				.then((resp) => {
 					this.cancelActionCreation();
 					this.$emit('refresh');
+					toastSuccess(this.$t('messages.action_created_successfully'));
 				});
 		},
 	}

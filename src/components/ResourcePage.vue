@@ -87,7 +87,7 @@
 								class="p-[20px]">
 								<action-form									
 									:action-spec="actionSpec"
-									:form-submit-text="$t('common.submit')"
+									:form-submit-text="$t('common.run')"
 									@post-action="runAction" />
 							</div>
 						</v-expansion-panel-text>
@@ -100,6 +100,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import { toastSuccess } from '../utils/errorToasts';
 import ActionForm from './ActionForm.vue';
 export default {
 	components: { ActionForm },
@@ -139,7 +140,10 @@ export default {
 			}
 		},
 		runAction(actionId, actionParams){
-			this.postAction([this.resourceId, actionId, actionParams]);
+			this.postAction([this.resourceId, actionId, actionParams])
+				.then(resp => {
+					toastSuccess(this.$t('messages.action_submited_successfully'));
+				});
 		},
 		getStatusColor(status){
 			switch (status) {

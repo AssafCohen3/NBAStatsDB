@@ -37,7 +37,9 @@
 		"preset_id": "מזהה הקבוצה",
 		"add": "הוסף",
 		"available_actions": "פעולות זמינות",
-		"presets_explanation": "צור ונהל קבוצות מוכנות מראש של פעולות שירוצו אוטומטית אחת אחרי השנייה.\nעל מנת להוסיף פעילות לקבוצה, יש לגרור אותה מתפריט הפעולות לקבוצה הרצויה.\nניתן גם להעתיק פעולה שכבר קיימת בקבוצה לקבוצה אחרת על ידי גרירת הפעולה מהקבוצה הנוכחית שלה לקבוצה הרצויה."
+		"presets_explanation": "צור ונהל קבוצות מוכנות מראש של פעולות שירוצו אוטומטית אחת אחרי השנייה.\nעל מנת להוסיף פעילות לקבוצה, יש לגרור אותה מתפריט הפעולות לקבוצה הרצויה.\nניתן גם להעתיק פעולה שכבר קיימת בקבוצה לקבוצה אחרת על ידי גרירת הפעולה מהקבוצה הנוכחית שלה לקבוצה הרצויה.",
+		"file_name": "שם הקובץ",
+		"run": "הרץ"
 	},
 	"validations": {
 		"required": "השדה נדרש",
@@ -53,5 +55,17 @@
 		"task_finished": "המשימה התבצעה בהצלחה",
 		"progress_line": "{completed} מתוך {to_finish}",
 		"progress_line_no_to_finish": "{completed} הסתיימו"
+	},
+	"messages": {
+		"action_recipe_removed_successfully": "הפעולה הוסרה בהצלחה מהקבוצה",
+		"action_recipe_saved_successfully": "הפעולה נשמרה בהצלחה",
+		"connected_to_db": "החיבור לבסיס הנתונים {dbName} הצליח",
+		"actions_order_saved": "סדר הפעולה נשמר",
+		"action_copied_successfully": "הפעולה הועתקה בהצלחה לקבוצה",
+		"preset_saved_successfully": "קבוצת הפעולות נשמרה בהצלחה",
+		"preset_removed_successfully": "קבוצת הפעולות נמחקה בהצלחה",
+		"action_created_successfully": "הפעולה נוצרה בהצלחה",
+		"preset_created_successfully": "קבוצת הפעולות נוצרה בהצלחה",
+		"action_submited_successfully": "הפעולה הוגשה להרצה בהצלחה"
 	}
 }

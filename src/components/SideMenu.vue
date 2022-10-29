@@ -67,7 +67,6 @@ export default {
 	methods: {
 		...mapActions('resources', ['fetchResources']),
 		resourceClicked(resource){
-			console.log('resource clicked', resource);
 			this.$router.push({
 				name: 'resource-page',
 				params: {

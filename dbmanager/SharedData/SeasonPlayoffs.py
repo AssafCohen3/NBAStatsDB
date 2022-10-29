@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Callable
 from dbmanager.Downloaders.BREFPlayoffSeriesDownloader import BREFPlayoffSeriesDownloader
 from dbmanager.SharedData.BREFSeasonsLinks import BREFSeasonLink, bref_seasons_links
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
@@ -16,12 +16,12 @@ class SerieDetails:
 
 
 class SeasonPlayoffs(SharedDataResourceAbc[List[SerieDetails]]):
-    def __init__(self, season_link: BREFSeasonLink):
-        self.season_link = season_link
+    def __init__(self, get_season_link: Callable[[], BREFSeasonLink]):
+        self._season_link_func = get_season_link
         super().__init__()
 
     def _fetch_data(self):
-        downloader = BREFPlayoffSeriesDownloader(self.season_link)
+        downloader = BREFPlayoffSeriesDownloader(self._season_link_func())
         data = downloader.download()
         if not data:
             return []
@@ -59,7 +59,7 @@ class SeasonPlayoffs(SharedDataResourceAbc[List[SerieDetails]]):
         return min(self.get_data(), key=lambda s: s.serie_order).serie_order if self.get_data() else -1
 
 
-last_season_playoffs = SeasonPlayoffs(bref_seasons_links.max_nba_season_link())
+last_season_playoffs = SeasonPlayoffs(bref_seasons_links.max_nba_season_link)
 
 
 def get_last_season_with_playoffs() -> int:

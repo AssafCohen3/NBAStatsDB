@@ -74,7 +74,7 @@ export default {
 <style
 	scoped>
 
-.file_path_text_field >>> .v-field__input{
+.file_path_text_field :deep(.v-field__input){
 	cursor: pointer;
 }
 

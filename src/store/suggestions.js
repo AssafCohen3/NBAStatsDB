@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toastError } from '../utils/errorToasts';
 
 
 
@@ -21,7 +22,7 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					toastError(err.response);
 				});
 		});
 	},
@@ -34,7 +35,7 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					toastError(err.response);
 				});
 		});
 	},

@@ -30,13 +30,14 @@ module.exports = {
 					'**/*',
 					'!dbmanager/',
 					'!build/',
+					'!dbmanagerbuild/',
 				],
 				win: {
 					target: 'nsis',
 					icon: './src/assets/app-icons/logo.png',
 					extraResources: [
 						{
-							from: './dbmanager/build/api.exe',
+							from: './dbmanagerbuild/api.exe',
 						}
 					]
 				},
@@ -48,7 +49,7 @@ module.exports = {
 					icon: './src/assets/app-icons/logo.png',
 					extraResources: [
 						{
-							from: './dbmanager/build/api',
+							from: './dbmanagerbuild/api',
 						}
 					],
 					darkModeSupport: false,
@@ -62,7 +63,7 @@ module.exports = {
 					icon: './src/assets/app-icons/logo.png',
 					extraResources: [
 						{
-							from: './dbmanager/build/api',
+							from: './dbmanagerbuild/api',
 						}
 					]
 				},

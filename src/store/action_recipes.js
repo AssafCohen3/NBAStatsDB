@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toastError } from '../utils/errorToasts';
 
 
 
@@ -52,9 +53,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					commit('createActionRecipeError');
+					toastError(err.response);					
 				});
-			// catch?
 		});
 	},
 
@@ -69,9 +70,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					commit('editActionRecipeParamsError');
+					toastError(err.response);					
 				});
-			// catch?
 		});
 	},
 
@@ -86,9 +87,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					commit('editActionRecipeOrderError');
+					toastError(err.response);					
 				});
-			// catch?
 		});
 	},
 
@@ -104,9 +105,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					commit('copyActionRecipeError');
+					toastError(err.response);					
 				});
-			// catch?
 		});
 	},
 
@@ -119,9 +120,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					commit('removeActionRecipeError');
+					toastError(err.response);					
 				});
-			// catch?
 		});
 	},
 };
@@ -134,12 +135,18 @@ const mutations = {
 	createActionRecipeSuccess(state){
 		state.isCreatingActionRecipe = false;
 	},
+	createActionRecipeError(state){
+		state.isCreatingActionRecipe = false;
+	},
 
 	// edit action recipe params
 	editActionRecipeParamsStart(state){
 		state.isEditingActionRecipeParams = true;
 	},
 	editActionRecipeParamsSuccess(state){
+		state.isEditingActionRecipeParams = false;
+	},
+	editActionRecipeParamsError(state){
 		state.isEditingActionRecipeParams = false;
 	},
 
@@ -150,6 +157,9 @@ const mutations = {
 	editActionRecipeOrderSuccess(state){
 		state.isEditingActionRecipeOrder = false;
 	},
+	editActionRecipeOrderError(state){
+		state.isEditingActionRecipeOrder = false;
+	},
 
 	// copy action recipe
 	copyActionRecipeStart(state){
@@ -158,12 +168,18 @@ const mutations = {
 	copyActionRecipeSuccess(state){
 		state.isCopyingActionRecipe = false;
 	},
+	copyActionRecipeError(state){
+		state.isCopyingActionRecipe = false;
+	},
 	
 	// remove action recipe
 	removeActionRecipeStart(state){
 		state.isRemovingActionRecipe = true;
 	},
 	removeActionRecipeSuccess(state){
+		state.isRemovingActionRecipe = false;
+	},
+	removeActionRecipeError(state){
 		state.isRemovingActionRecipe = false;
 	},
 };

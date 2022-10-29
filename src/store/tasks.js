@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toastError } from '../utils/errorToasts';
 
 const state = {
 	// tasks
@@ -54,6 +55,10 @@ const actions = {
 				.then(resp => {
 					commit('fetchTasksSuccess', resp);
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('fetchTasksError');
 				});
 		});
 	},
@@ -67,6 +72,10 @@ const actions = {
 				.then(resp => {
 					commit('pauseTaskSuccess', resp);
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('pauseTaskError');
 				});
 		});
 	},
@@ -80,6 +89,10 @@ const actions = {
 				.then(resp => {
 					commit('resumeTaskSuccess', resp);
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('resumeTaskError');
 				});
 		});
 	},
@@ -93,6 +106,10 @@ const actions = {
 				.then(resp => {
 					commit('cancelTaskSuccess', resp);
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('cancelTaskError');
 				});
 		});
 	},
@@ -106,6 +123,10 @@ const actions = {
 				.then(resp => {
 					commit('dismissTaskSuccess', [resp, taskPath]);
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('dismissTaskError');
 				});
 		});
 	},
@@ -166,11 +187,17 @@ const mutations = {
 		state.isFetchingTasks = false;
 		state.currentTasks = resp.data;
 	},
+	fetchTasksError(state){
+		state.isFetchingTasks = false;
+	},
 	// pause task
 	pauseTaskStart(state){
 		state.isPausingTask = true;
 	},
 	pauseTaskSuccess(state){
+		state.isPausingTask = false;
+	},
+	pauseTaskError(state){
 		state.isPausingTask = false;
 	},
 	// resume task
@@ -180,11 +207,17 @@ const mutations = {
 	resumeTaskSuccess(state){
 		state.isResumingTask = false;
 	},
+	resumeTaskError(state){
+		state.isResumingTask = false;
+	},
 	// cancel task
 	cancelTaskStart(state){
 		state.isCancellingTask = true;
 	},
 	cancelTaskSuccess(state){
+		state.isCancellingTask = false;
+	},
+	cancelTaskError(state){
 		state.isCancellingTask = false;
 	},
 	// dismiss task
@@ -204,6 +237,9 @@ const mutations = {
 		if(taskIndex != -1){
 			taskParent.subtasks_messages.splice(taskIndex,1);
 		}
+		state.isDismissingTask = false;
+	},
+	dismissTaskError(state){
 		state.isDismissingTask = false;
 	},
 };

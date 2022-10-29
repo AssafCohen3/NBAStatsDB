@@ -1,7 +1,7 @@
 <template>
 	<v-app>
 		<template
-			v-if="!connectedToServer || !dbStatus || !dbStatus.status">
+			v-if="!connectedToServer || initializingDB">
 			<div
 				class="flex h-full w-full justify-center items-center">
 				<v-progress-circular
@@ -10,7 +10,7 @@
 			</div>
 		</template>
 		<template
-			v-else-if="connectedToServer && dbStatus && dbStatus.status && dbStatus.status == 'ok'">
+			v-else-if="connectedToServer && dbName">
 			<side-menu />
 			<app-header />
 			<v-main>
@@ -40,6 +40,7 @@ import SideMenu from './SideMenu.vue';
 import axios from 'axios';
 import { mapActions, mapGetters, mapMutations } from 'vuex';
 import InitDbDialog from './InitDBDialog.vue';
+import {toastSuccess} from '../utils/errorToasts.js';
 
 export default {
 	components: { SideMenu, AppHeader, InitDbDialog },
@@ -51,7 +52,7 @@ export default {
 	},
 	computed: {
 		...mapGetters('db', {
-			dbStatus: 'dbStatus',
+			dbName: 'dbName',
 			initializingDB: 'initializingDB',
 		}),
 	},
@@ -113,7 +114,10 @@ export default {
 			if(dbName === null){
 				currentDBName = localStorage.getItem('dbName') || 'NBAStatsDB.db';
 			}
-			this.initDB([currentDBName, createDB]);
+			this.initDB([currentDBName, createDB])
+				.then((resp) => {
+					toastSuccess(this.$t('messages.connected_to_db', {dbName: resp}));
+				});
 		}
 	}
 };

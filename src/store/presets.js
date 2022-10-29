@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toastError } from '../utils/errorToasts';
 
 
 
@@ -55,9 +56,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					toastError(err.response);
+					commit('fetchPresetsError');
 				});
-			// catch?
 		});
 	},
 	fetchPreset({commit}, [presetId]){
@@ -67,8 +68,11 @@ const actions = {
 				then(resp => {
 					commit('fetchPresetSuccess');
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('fetchPresetError');
 				});
-			// catch?
 		});
 	},
 	dispatchPreset({commit}, [presetId]){
@@ -78,8 +82,11 @@ const actions = {
 				then(resp => {
 					commit('dispatchPresetSuccess');
 					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+					commit('dispatchPresetError');
 				});
-			// catch?
 		});
 	},
 	createPreset({commit}, [presetId, presetNameJson]){
@@ -94,9 +101,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					toastError(err.response);
+					commit('createPresetError');
 				});
-			// catch?
 		});
 	},
 
@@ -111,9 +118,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					toastError(err.response);
+					commit('editPresetError');
 				});
-			// catch?
 		});
 	},
 
@@ -126,9 +133,9 @@ const actions = {
 					resolve(resp.data);
 				})
 				.catch(err => {
-					console.log(err.toJSON());
+					toastError(err.response);
+					commit('removePresetError');
 				});
-			// catch?
 		});
 	},
 };
@@ -142,14 +149,8 @@ const mutations = {
 		state.fetchingPresets = false;
 		state.presets = resp.data;
 	},
-
-	// extended presets
-	fetchExtendedPresetsStart(state){
-		state.fetchingExtendedPresets = true;
-	},
-	fetchExtendedPresetsSuccess(state, resp){
-		state.fetchingExtendedPresets = false;
-		state.extendedPresets = resp.data;
+	fetchPresetsError(state){
+		state.fetchingPresets = false;
 	},
 	
 	// preset
@@ -157,6 +158,9 @@ const mutations = {
 		state.fetchingPreset = true;
 	},
 	fetchPresetSuccess(state, resp){
+		state.fetchingPreset = false;
+	},
+	fetchPresetError(state){
 		state.fetchingPreset = false;
 	},
 	
@@ -167,12 +171,18 @@ const mutations = {
 	dispatchPresetSuccess(state){
 		state.dispatchingPreset = false;
 	},
+	dispatchPresetError(state){
+		state.dispatchingPreset = false;
+	},
 
 	// create preset
 	createPresetStart(state){
 		state.isCreatingPreset = true;
 	},
 	createPresetSuccess(state){
+		state.isCreatingPreset = false;
+	},
+	createPresetError(state){
 		state.isCreatingPreset = false;
 	},
 
@@ -183,12 +193,18 @@ const mutations = {
 	editPresetSuccess(state){
 		state.isEditingPreset = false;
 	},
+	editPresetError(state){
+		state.isEditingPreset = false;
+	},
 
 	// remove preset
 	removePresetStart(state){
 		state.isRemovingPreset = true;
 	},
 	removePresetSuccess(state){
+		state.isRemovingPreset = false;
+	},
+	removePresetError(state){
 		state.isRemovingPreset = false;
 	},
 };

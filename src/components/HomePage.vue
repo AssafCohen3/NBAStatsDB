@@ -72,8 +72,7 @@ export default {
 		...mapGetters('presets', ['presets', 'fetchingPresets']),
 	},
 	mounted(){
-		this.fetchResources();
-		this.fetchPresets();
+		this.refreshPage();
 	},
 	methods: {
 		...mapActions('resources',['fetchResources']),
@@ -87,11 +86,16 @@ export default {
 			});
 		},
 		presetClicked(preset){
-			this.dispatchPreset([preset.preset_id]);
+			// TODO open preset dialog
+			// this.dispatchPreset([preset.preset_id]);
+		},
+		refreshPage(){
+			this.fetchResources();
+			this.fetchPresets();			
 		},
 	},
 	onLocaleChange(){
-		this.fetchPresets();
+		this.refreshPage();
 	}
 };
 </script>

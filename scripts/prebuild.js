@@ -3,7 +3,7 @@ const path = require('path');
 const deleteitemsRecursive = require('./clean.js');
 
 const pathArgs = [
-	path.join(__dirname, '..', 'dbmanager', 'build'),
+	path.join(__dirname, '..', 'dbmanagerbuild'),
 	path.join(__dirname, '..', 'build'),
 ];
 

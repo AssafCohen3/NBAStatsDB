@@ -5,6 +5,11 @@
 			:key="index"
 			v-model:inputData="form"
 			:action-input="actionInput" />
+		<div
+			v-if="actionSpec.action_inputs.length == 0"
+			class="text-dimmed-white text-[12px]">
+			{{ $t('common.no_params') }}
+		</div>
 
 		<div
 			class="flex justify-between mt-[20px]">

@@ -84,6 +84,7 @@
 
 <script>
 import { mapActions } from 'vuex';
+import { toastSuccess } from '../utils/errorToasts';
 import ActionFormWrapper from './ActionFormWrapper.vue';
 export default {
 	components: { ActionFormWrapper, },
@@ -110,6 +111,7 @@ export default {
 			this.removeActionRecipe([this.actionRecipe.preset_id, this.actionRecipe.action_recipe_id]).
 				then((resp) => {
 					this.$emit('refresh');
+					toastSuccess(this.$t('messages.action_recipe_removed_successfully'));
 				});
 		},
 		editActionRecipeParamsMethod(resourceId, actionId, actionParams){
@@ -117,6 +119,7 @@ export default {
 				then((resp) => {
 					this.$emit('refresh');
 					this.editingParams = false;
+					toastSuccess(this.$t('messages.action_recipe_saved_successfully'));
 				});
 		},
 	}
