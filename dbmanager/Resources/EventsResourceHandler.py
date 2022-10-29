@@ -9,7 +9,7 @@ from dbmanager.Database.Models.Event import Event
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.EventsActions import UpdateEventsAction, ResetEventsAction, \
     UpdateEventsInDateRangeAction, ResetEventsInDateRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.EventsResourceSpecification import EventsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SeasonType import SEASON_TYPES
@@ -55,7 +55,7 @@ class EventsResourceHandler(ResourceAbc):
             games_message = ResourceMessage(
                 gettext('resources.events.messages.games_message.title', season_type=season_type.name),
                 gettext('resources.events.messages.games_message.text', games_count=games_count, games_with_events=games_count - games_with_events),
-                'ok'
+                StatusOption.OK if games_with_events == games_count else StatusOption.MISSING,
             )
             to_ret.append(games_message)
         return to_ret

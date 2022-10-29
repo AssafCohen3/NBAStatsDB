@@ -1,52 +1,4 @@
 import axios from 'axios';
-// {
-// 	action_title: 'Action A title',
-// 	task_id: 55,
-// 	mini_text: 'aaaaa',
-// 	completed: 100,
-// 	to_finish: 200,
-// 	status: 'on-progress',
-// },
-// {
-// 	action_title: 'Action B title',
-// 	task_id: 56,
-// 	mini_text: 'bbbbbbbbaddadasads dassdads sdasad',
-// 	completed: 2,
-// 	to_finish: 267,
-// 	status: 'paused',
-// },
-// {
-// 	action_title: 'Action C title',
-// 	task_id: 599,
-// 	mini_text: 'saa adsa asdsa sdasad',
-// 	completed: 88,
-// 	to_finish: 267,
-// 	status: 'error',
-// },
-// {
-// 	action_title: 'Action D title',
-// 	task_id: 5991,
-// 	mini_text: 'saa adsa asdsa sdasad',
-// 	completed: 88,
-// 	to_finish: 267,
-// 	status: 'finished',
-// },
-// {
-// 	action_title: 'Action E title',
-// 	task_id: 5992,
-// 	mini_text: 'saa adsa asdsa sdasad',
-// 	completed: 88,
-// 	to_finish: 267,
-// 	status: 'cancelled',
-// },
-// {
-// 	action_title: 'Action F title',
-// 	task_id: 5995,
-// 	mini_text: 'saa adsa asdsa sdasad',
-// 	completed: 88,
-// 	to_finish: null,
-// 	status: 'on-progress',
-// },
 
 const state = {
 	// tasks
@@ -65,6 +17,9 @@ const state = {
 
 	// dismiss task
 	isDismissingTask: false,
+
+	// resources to refresh
+	resourcesIdsToRefresh: [],
 };
 
 
@@ -86,6 +41,9 @@ const getters = {
 
 	// dismiss task
 	isDismissingTask: (state) => state.isDismissingTask,
+
+	// resources to refresh
+	resourcesIdsToRefresh: (state) => state.resourcesIdsToRefresh,
 };
 
 const actions = {
@@ -198,7 +156,9 @@ const mutations = {
 			Object.assign(currentTask, taskToUpdate);
 		}
 	},
-
+	refreshResources(state, resourcesIdsToRefresh){
+		state.resourcesIdsToRefresh = resourcesIdsToRefresh;
+	},
 	fetchTasksStart(state){
 		state.isFetchingTasks = true;
 	},

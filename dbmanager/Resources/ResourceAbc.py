@@ -2,6 +2,7 @@ import abc
 import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import List, Type, Dict, Any, Optional
 from sqlalchemy import select
 from sqlalchemy.orm import scoped_session
@@ -12,11 +13,18 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
 
+class StatusOption(str, Enum):
+    OK = 'OK'
+    MISSING = 'MISSING'
+    ERROR = 'ERROR'
+    INFO = 'INFO'
+
+
 @dataclass
 class ResourceMessage:
     title: str
     text: str
-    status: str
+    status: StatusOption
 
 
 class ResourceAbc(ABC):

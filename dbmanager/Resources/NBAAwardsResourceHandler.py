@@ -6,7 +6,7 @@ from dbmanager.Database.Models.NBAAwards import NBAAwards
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.NBAAwardsActions import DownloadAllPlayersAwardsAction, \
     DownloadActivePlayersAwardsAction, DownloadRookiesAwardsInSeasonsRangeAction, DownloadPlayerAwardsAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.NBAAwardsResourceSpecification import NBAAwardsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
@@ -35,11 +35,11 @@ class NBAAwardsResourceHandler(ResourceAbc):
             ResourceMessage(
                 gettext('resources.nba_awards.messages.players_with_awards.title'),
                 gettext('resources.nba_awards.messages.players_with_awards.text', players_count=res[0][1]),
-                'ok'
+                StatusOption.INFO,
             ),
             ResourceMessage(
                 gettext('resources.nba_awards.messages.awards.title'),
                 gettext('resources.nba_awards.messages.awards.text', awards_count=res[0][0]),
-                'ok'
+                StatusOption.INFO,
             ),
         ]

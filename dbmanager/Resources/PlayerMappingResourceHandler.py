@@ -8,7 +8,7 @@ from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.PlayersMappingsActions import CompleteMissingPlayersMappingsAction, \
     ReadPlayersMappingsFromFileAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.PlayersMappingsResourceSpecification import \
     PlayersMappingsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -53,6 +53,6 @@ class PlayersMappingsResourceHandler(ResourceAbc):
                 gettext('resources.players_mappings.messages.existing_mappings.text',
                         mappings_count=mappings_count,
                         possible_mappings_count=possible_mappings_count),
-                'ok' if mappings_count == possible_mappings_count else 'update'
+                StatusOption.OK if mappings_count == possible_mappings_count else StatusOption.MISSING,
             )
         ]

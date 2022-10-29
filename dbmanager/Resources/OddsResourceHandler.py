@@ -6,7 +6,7 @@ from dbmanager.Database.Models.Odds import Odds
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.OddsActions import UpdateOddsAction, RedownloadOddsAction, \
     RedownloadOddsInSeasonsRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.OddsResourceSpecification import OddsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SharedData.BREFSeasonsLinks import bref_seasons_links
@@ -53,6 +53,6 @@ class OddsResourceHandler(ResourceAbc):
                 gettext('resources.odds.messages.seasons_with_odds.text',
                         seasons_count=seasons_count,
                         odds_seasons_count=seasons_count - missing_seasons_count),
-                'ok' if missing_seasons_count == 0 else 'missing'
+                StatusOption.OK if missing_seasons_count == 0 else StatusOption.MISSING,
             )
         ]

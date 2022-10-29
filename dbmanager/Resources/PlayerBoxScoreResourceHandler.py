@@ -8,7 +8,7 @@ from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.PlayerBoxScoreActions import UpdatePlayerBoxScoresAction, ResetPlayerBoxScoresAction, \
     UpdatePlayerBoxScoresInDateRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.PlayerBoxScoreResourceSpecification import \
     PlayerBoxScoreResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -42,12 +42,12 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
             seasons_message = ResourceMessage(
                 gettext('resources.playerboxscore.messages.seasons_message.title', season_type=season_type.name),
                 gettext('resources.playerboxscore.messages.seasons_message.text', seasons_count=seasons_count),
-                'ok'
+                StatusOption.INFO,
             )
             games_message = ResourceMessage(
                 gettext('resources.playerboxscore.messages.games_message.title', season_type=season_type.name),
                 gettext('resources.playerboxscore.messages.games_message.text', games_count=games_count),
-                'ok'
+                StatusOption.INFO,
             )
             to_ret.append(seasons_message)
             to_ret.append(games_message)

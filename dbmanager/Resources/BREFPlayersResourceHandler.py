@@ -7,7 +7,7 @@ from dbmanager.Database.Models.BREFPlayer import BREFPlayer
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFPlayersActions import UpdateBREFPlayersAction, RedownloadBREFPlayersAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.BREFPlayersResourceSpecification import BREFPlayersResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SharedData.PlayersIndex import players_index
@@ -46,6 +46,6 @@ class BREFPlayersResourceHandler(ResourceAbc):
                 gettext('resources.bref_players.messages.players.text',
                         players_count=saved_players_count,
                         possible_players_count=possible_players_count),
-                'ok' if saved_players_count == possible_players_count else 'update'
+                StatusOption.OK if saved_players_count == possible_players_count else StatusOption.MISSING
             ),
         ]

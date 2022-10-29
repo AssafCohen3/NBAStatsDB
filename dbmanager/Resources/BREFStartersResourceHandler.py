@@ -6,7 +6,7 @@ from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFStartersActions import UpdateStartersAction, RedownloadStartersAction, \
     RedownloadStartersInSeasonsRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.BREFStartersResourceSpecification import \
     BREFStartersResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -45,13 +45,13 @@ class BREFStartersResourceHandler(ResourceAbc):
                 gettext('resources.bref_starters.messages.seasons_with_starters.text',
                         seasons=seasons_count,
                         seasons_with_starters=seasons_count-seasons_without_starters_count),
-                'ok' if seasons_without_starters_count == 0 else 'missing'
+                StatusOption.OK if seasons_without_starters_count == 0 else StatusOption.MISSING,
             ),
             ResourceMessage(
                 gettext('resources.bref_starters.messages.boxscores_with_starters.title'),
                 gettext('resources.bref_starters.messages.boxscores_with_starters.text',
                         boxscores=boxscores_count,
                         boxscores_with_starters=boxscores_count - boxscores_without_starters_count),
-                'ok' if boxscores_without_starters_count == 0 else 'missing'
+                StatusOption.OK if boxscores_without_starters_count == 0 else StatusOption.MISSING,
             ),
         ]

@@ -1,10 +1,7 @@
 import json
 from typing import Dict, List, Type, Optional
-
-from requests_unixsocket import delete
 from sqlalchemy import insert, update, delete, and_
 from sqlalchemy.orm import scoped_session
-
 from dbmanager.AppI18n import get_default_locale
 from dbmanager.Database.Models.ActionRecipe import ActionRecipe
 from dbmanager.Database.Models.ActionRecipeParam import ActionRecipeParam

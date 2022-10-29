@@ -7,7 +7,7 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.NBAHonours import NBAHonours
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.NBAHonoursActions import DownloadAllHonoursAction, DownloadTeamHonoursAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.NBAHonoursResourceSpecification import NBAHonoursResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
@@ -34,6 +34,6 @@ class NBAHonoursResourceHandler(ResourceAbc):
             ResourceMessage(
                 gettext('resources.nba_honours.messages.teams_honours.title'),
                 gettext('resources.nba_honours.messages.teams_honours.text', teams_count=result[0][0]),
-                'ok'
+                StatusOption.INFO,
             )
         ]

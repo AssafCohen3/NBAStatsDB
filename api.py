@@ -1,4 +1,6 @@
-from __future__ import print_function
+import time
+timea = time.time()
+
 import os.path
 import sys
 from threading import Thread
@@ -16,8 +18,12 @@ from dbmanager.blueprints.tasks import tasks_bp
 from dbmanager.tasks.TaskManager import run_tasks_loop
 from dbmanager.blueprints.resources import resources_bp
 from dbmanager.extensions import db_manager, CustomJSONEncoder
+timeb = time.time()
+step = 'import'
+print(f'step {step} took {timeb - timea}')
+# TODO remove printings
 
-API_VERSION = "1.1.0"
+timea = time.time()
 
 app = Flask(__name__)
 app.config.from_file("flask.config.json", load=json.load)
@@ -59,6 +65,9 @@ def init_db():
     }
 
 
+timeb = time.time()
+step = 'all'
+print(f'step {step} took {timeb - timea}')
 if __name__ == "__main__":
     port = 5000
     debug = True

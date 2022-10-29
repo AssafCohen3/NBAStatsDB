@@ -39,19 +39,11 @@
 			<!-- messages -->
 			<div
 				class="pt-[40px] select-none">
-				<!-- <div
-					class="flex flex-row text-primary-light font-bold text-[30px] p-[20px] pb-[20px]">
-					<v-icon
-						class="pe-5">
-						mdi-help-circle-outline
-					</v-icon>
-					{{ $t('common.status') }}
-				</div> -->
 				<div
 					class="w-[80%] min-w-[500px] flex flex-wrap gap-[30px]">
 					<div
 						v-for="message, index in currentResource.messages"
-						:key="index"
+						:key="`${currentResource.resource_id}-${index}`"
 						class="p-[20px] app-section w-[250px] flex flex-row items-center">
 						<div
 							class="flex flex-col pe-4">
@@ -65,8 +57,9 @@
 							</span>
 						</div>
 						<v-icon
-							class="text-[40px] text-green">
-							mdi-check-circle
+							class="text-[40px]"
+							:color="getStatusColor(message.status)">
+							{{ getStatusIcon(message.status) }}
 						</v-icon>
 					</div>
 				</div>
@@ -117,6 +110,7 @@ export default {
 	},
 	computed: {
 		...mapGetters('resources', ['fetchingResource']),
+		...mapGetters('tasks', ['resourcesIdsToRefresh']),
 		resourceId(){
 			return this.$route.params.resourceId;
 		}
@@ -128,6 +122,11 @@ export default {
 			},
 			immediate: true
 		},
+		resourcesIdsToRefresh(newVal){
+			if(this.currentResource && !this.fetchingResource && this.resourcesIdsToRefresh.includes(this.currentResource.resource_id)){
+				this.refreshPage();
+			}
+		}
 	},
 	methods: {
 		...mapActions('resources', ['fetchResource', 'postAction']),
@@ -142,6 +141,34 @@ export default {
 		runAction(actionId, actionParams){
 			this.postAction([this.resourceId, actionId, actionParams]);
 		},
+		getStatusColor(status){
+			switch (status) {
+			case 'OK':
+				return 'green';
+			case 'MISSING':
+				return 'warning';
+			case 'ERROR':
+				return 'red';
+			case 'INFO':
+				return 'blue';
+			default:
+				return 'white';
+			}
+		},
+		getStatusIcon(status){
+			switch (status) {
+			case 'OK':
+				return 'mdi-check-circle';
+			case 'MISSING':
+				return 'mdi-update';
+			case 'ERROR':
+				return 'mdi-alert-circle';
+			case 'INFO':
+				return 'mdi-information';
+			default:
+				return 'mdi-help-circle';
+			}
+		}
 	},
 	onLocaleChange(){
 		this.refreshPage();

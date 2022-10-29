@@ -33,6 +33,7 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
     async def action(self):
         for i, task in enumerate(self.tasks_to_run):
             await task
+            task.after_execution_finished()
             self.current_task_index = i+1
             await self.finish_subtask()
 
@@ -53,8 +54,22 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             raise TaskPathNotExistError(self.get_task_id(), task_path)
         return self.tasks_dict[task_path[0]].get_sub_task(task_path[1:])
 
-    def announce(self, event: str, task_path: List[int], task: TaskAbc):
-        self.announcer.announce(event, [self.get_task_id(), *task_path], task)
+    def announce_task_event(self, event: str, task_path: List[int], task: TaskAbc):
+        try:
+            if self.announcer:
+                self.announcer.announce_task_event(event, [self.get_task_id(), *task_path], task)
+        except Exception as e:
+            self.error_msg = e
 
     def get_task_title(self) -> str:
         return self.group_translatable_name.get_value()
+
+    def after_execution_finished(self):
+        return
+
+    def announce_data(self, event: str, data: str):
+        try:
+            if self.announcer:
+                self.announcer.announce_data(event, data)
+        except Exception as e:
+            self.error_msg = e

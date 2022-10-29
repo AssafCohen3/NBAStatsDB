@@ -1,4 +1,5 @@
 import datetime
+import json
 from abc import ABC, abstractmethod
 from typing import Type, Dict, Any
 
@@ -59,3 +60,10 @@ class ActionAbc(TaskAbc, ABC):
         )
         self.session.execute(stmt)
         self.session.commit()
+
+    def after_execution_finished(self):
+        if self.completed_subtasks() > 0:
+            resources_to_update = [self.get_action_spec().get_resource()]
+            data_to_send = [res.get_id() for res in resources_to_update]
+            data_to_send = json.dumps(data_to_send)
+            self.call_annnouncer_with_data('refresh-resources', data_to_send)

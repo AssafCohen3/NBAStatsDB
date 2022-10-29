@@ -17,15 +17,18 @@ export default {
 };
 </script>
 <style>
+
+html{
+	overflow-y: auto !important;
+}
+
 /* Turn on custom 8px wide scrollbar */
 ::-webkit-scrollbar {
 	--scrollbar-width: 10px;
 	--scrollbar-radius: 100px;
 
-	width: var(--scrollbar-width); /* 1px wider than Lion. */
-	/* This is more usable for users trying to click it. */
+	width: var(--scrollbar-width);
 	background-color: rgba(0, 0, 0, 0.25);
-	/* opacity: 0.5; */
 	-webkit-border-radius: 100px;
 	border-radius: 100px;
 }
@@ -49,9 +52,4 @@ export default {
 	border-radius: 100px;
 }
 
-/* ::-webkit-scrollbar-thumb:vertical {
-	background-clip: padding-box;
-	border: 2px solid rgba(0, 0, 0, 0);
-	min-height: 30px;
-} */
 </style>

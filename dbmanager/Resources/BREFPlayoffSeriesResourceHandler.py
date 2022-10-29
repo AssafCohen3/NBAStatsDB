@@ -7,7 +7,7 @@ from dbmanager.Database.Models.BREFPlayoffSerie import BREFPlayoffSerie
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFPlayoffSeriesActions import UpdateBREFPlayoffSeriesAction, \
     RedownloadBREFPlayoffSeriesAction, RedownloadBREFPlayoffSeriesInSeasonsRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.BREFPlayoffSeriesResourceSpecification import \
     BREFPlayoffSeriesResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -63,7 +63,7 @@ class BREFPlayoffSeriesResourceHandler(ResourceAbc):
             ResourceMessage(
                 gettext('resources.bref_playoff_series.messages.collected_seasons.title'),
                 gettext('resources.bref_playoff_series.messages.collected_seasons.text', seasons_count=existing_seasons_count, possible_seasons_count=possible_seasons_count),
-                'ok' if existing_seasons_count == possible_seasons_count else 'update'
+                StatusOption.OK if existing_seasons_count == possible_seasons_count else StatusOption.MISSING,
             ),
             # Seasons with full playoff series:
             # 14 out of 76 Seasons
@@ -71,7 +71,7 @@ class BREFPlayoffSeriesResourceHandler(ResourceAbc):
                 gettext('resources.bref_playoff_series.messages.collected_full_seasons.title'),
                 gettext('resources.bref_playoff_series.messages.collected_full_seasons.text',
                         seasons_count=completed_seasons_count, possible_seasons_count=possible_seasons_count),
-                'ok' if completed_seasons_count == possible_seasons_count else 'update'
+                StatusOption.OK if completed_seasons_count == possible_seasons_count else StatusOption.MISSING,
             ),
             # Series Count:
             # 444 sereis out of 6777 possible series
@@ -79,7 +79,7 @@ class BREFPlayoffSeriesResourceHandler(ResourceAbc):
                 gettext('resources.bref_playoff_series.messages.collected_series.title'),
                 gettext('resources.bref_playoff_series.messages.collected_series.text',
                         series_count=existing_series_count, possible_series_count=possible_matchups_count),
-                'ok' if existing_series_count == possible_matchups_count else 'update'
+                StatusOption.OK if existing_series_count == possible_matchups_count else StatusOption.MISSING,
             ),
             # First Season with playoff serie:
             # 1956
@@ -87,13 +87,13 @@ class BREFPlayoffSeriesResourceHandler(ResourceAbc):
                 gettext('resources.bref_playoff_series.messages.first_season.title'),
                 gettext('resources.bref_playoff_series.messages.first_season.text',
                         season=min_season if min_season else gettext('common.none')),
-                'ok'
+                StatusOption.INFO
             ),
             # Last Season with playoff serie
             ResourceMessage(
                 gettext('resources.bref_playoff_series.messages.last_season.title'),
                 gettext('resources.bref_playoff_series.messages.last_season.text',
                         season=max_season if max_season else gettext('common.none')),
-                'ok'
+                StatusOption.INFO
             ),
         ]

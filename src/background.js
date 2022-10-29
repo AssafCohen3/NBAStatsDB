@@ -51,7 +51,7 @@ const guessPackaged = () => {
 // check if the python dist folder exists
 const getScriptPath = () => {
 	if (!guessPackaged()) {
-		return path.join(__dirname, '../', PY_MODULE + '.py');
+		return path.join(__dirname, '../dbmanager/', PY_MODULE + '.py');
 	}
 
 	if (process.platform === 'win32') {

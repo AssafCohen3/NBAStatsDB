@@ -8,7 +8,7 @@ from dbmanager.Database.Models.NBAPlayer import NBAPlayer
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.NBAPlayersBirthdateActions import UpdatePlayersBirthdateAction, \
     RedownloadPlayersBirthdateAction, DownloadPlayersBirthdateInSeasonsRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.NBAPlayersBirthdateResourceSpecification import \
     NBAPlayersBirthdateResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -40,6 +40,6 @@ class NBAPlayersBirthdateResourceHandler(ResourceAbc):
                 gettext('resources.nba_players_birthdate.messages.players_with_birthdate.text',
                         players_count=players_count,
                         players_with_birthdates_count=players_count - players_without_birthdates_count),
-                'ok' if players_without_birthdates_count == 0 else 'missing'
+                StatusOption.OK if players_without_birthdates_count == 0 else StatusOption.MISSING,
             )
         ]

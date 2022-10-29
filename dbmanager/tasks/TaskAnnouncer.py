@@ -14,7 +14,11 @@ if typing.TYPE_CHECKING:
 
 class AnnouncerAbc(ABC):
     @abstractmethod
-    def announce(self, event: str, task_path: List[int], task: TaskAbc):
+    def announce_task_event(self, event: str, task_path: List[int], task: TaskAbc):
+        pass
+
+    @abstractmethod
+    def announce_data(self, event: str, data: str):
         pass
 
 
@@ -32,17 +36,24 @@ class TaskAnnouncer(AnnouncerAbc):
     def unlisten(self, listener_id: int):
         del self.listeners[listener_id]
 
-    def announce(self, event: str, task_path: List[int], task: TaskAbc):
-        to_send = format_sse(event, task_path, task)
-        logging.info(f'announcing {to_send}')
+    def announce_task_event(self, event: str, task_path: List[int], task: TaskAbc):
+        data_to_send = {
+            'task_path': task_path,
+            'task_message': asdict(task.to_task_message())
+        }
+        to_send = format_sse(event, json.dumps(data_to_send))
+        self.announce(to_send)
+
+    def announce_data(self, event: str, data: str):
+        to_send = format_sse(event, data)
+        self.announce(to_send)
+
+    def announce(self, event_and_data: str):
+        logging.info(f'announcing {event_and_data}')
         for q in self.listeners.values():
-            q.put_nowait(to_send)
+            q.put_nowait(event_and_data)
 
 
-def format_sse(event: str, task_path: List[int], task: TaskAbc) -> str:
-    data_to_send = {
-        'task_path': task_path,
-        'task_message': asdict(task.to_task_message())
-    }
-    to_ret = f'event: {event}\ndata: {json.dumps(data_to_send)}\n\n'
+def format_sse(event: str, data: str) -> str:
+    to_ret = f'event: {event}\ndata: {data}\n\n'
     return to_ret

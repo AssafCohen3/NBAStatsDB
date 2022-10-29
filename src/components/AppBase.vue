@@ -62,7 +62,7 @@ export default {
 		...mapActions('db', {
 			initDB: 'initDB',
 		}),
-		...mapMutations('tasks', ['updateTask']),
+		...mapMutations('tasks', ['updateTask', 'refreshResources']),
 		connectToServer(){
 			let appUrl = axios.defaults.baseURL;
 			let source = new EventSource(appUrl + '/tasks/listen');
@@ -99,6 +99,10 @@ export default {
 			source.addEventListener('task-update-cancel', (event) => {
 				let taskData = JSON.parse(event.data);
 				this.updateTask([taskData.task_path, taskData.task_message]);
+			});
+			source.addEventListener('refresh-resources', (event) => {
+				let resourcesIdsToRefresh = JSON.parse(event.data);
+				this.refreshResources(resourcesIdsToRefresh);
 			});
 		},
 		firstInitialTry(){

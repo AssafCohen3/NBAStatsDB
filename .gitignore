@@ -29,7 +29,6 @@ pnpm-debug.log*
 **/__pycache__
 build
 src/pyflaskdist
-api.spec
 .env
 dbmanager/**/*.sqlite
 dbmanager/plots

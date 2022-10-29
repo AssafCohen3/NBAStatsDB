@@ -13,7 +13,7 @@ module.exports = async function (params) {
 
 	// Same appId in electron-builder.
 	// TODO replace id
-	let appId = 'com.megasanjay.electronvueflask';
+	let appId = 'com.assaflgc.nbastatsdb';
 
 	let appPath = path.join(params.appOutDir, `${params.packager.appInfo.productFilename}.app`);
 	if (!fs.existsSync(appPath)) {

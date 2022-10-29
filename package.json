@@ -1,9 +1,9 @@
 {
   "name": "nba-stats-db",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "private": true,
-  "description": "Simple template for combining Electron with Vue3 and Flask",
-  "author": "Sanjay Soundarajan",
+  "description": "An app to create and manage a Database with NBA stats",
+  "author": "Assaf Cohen",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -15,8 +15,8 @@
     "i18n:report": "vue-cli-service i18n:report --src \"./src/**/*.?(js|vue)\" --locales \"./src/locales/**/*.json\"",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
-    "python:build": "python3 -m PyInstaller --onefile --clean ./api.py --distpath ./src/pyflaskdist",
-    "python:dev": "python3 ./api.py"
+    "python:build": "python3.9 -m PyInstaller --onefile --clean ./dbmanager/api.py --distpath ./dbmanager/build",
+    "python:dev": "python3.9 ./api.py"
   },
   "main": "background.js",
   "dependencies": {
@@ -87,6 +87,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/megasanjay/electron-vue3-flask.git"
+    "url": "https://github.com/AssafCohen3/NBAStatsDB.git"
   }
 }

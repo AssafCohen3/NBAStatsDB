@@ -22,7 +22,7 @@ module.exports = {
 			preload: 'src/preload.js',
 			builderOptions: {
 				// TODO replace
-				appId: 'com.megasanjay.electronvueflask',
+				appId: 'com.assaflgc.nbastatsdb',
 				afterSign: './scripts/notarize.js',
 				asar: true,
 				generateUpdatesFilesForAllChannels: true,
@@ -30,14 +30,13 @@ module.exports = {
 					'**/*',
 					'!dbmanager/',
 					'!build/',
-					'!api.spec'
 				],
 				win: {
 					target: 'nsis',
-					icon: './src/assets/app-icons/windowsAppIcon.ico',
+					icon: './src/assets/app-icons/logo.png',
 					extraResources: [
 						{
-							from: './src/pyflaskdist/api.exe'
+							from: './dbmanager/build/api.exe',
 						}
 					]
 				},
@@ -46,10 +45,10 @@ module.exports = {
 						'dmg',
 						'zip'
 					],
-					icon: './src/assets/app-icons/macAppIcon.png',
+					icon: './src/assets/app-icons/logo.png',
 					extraResources: [
 						{
-							from: './src/pyflaskdist/api'
+							from: './dbmanager/build/api',
 						}
 					],
 					darkModeSupport: false,
@@ -60,10 +59,10 @@ module.exports = {
 				},
 				linux: {
 					target: 'AppImage',
-					icon: './src/assets/app-icons/linuxAppIcon.png',
+					icon: './src/assets/app-icons/logo.png',
 					extraResources: [
 						{
-							from: './src/pyflaskdist/api'
+							from: './dbmanager/build/api',
 						}
 					]
 				},
@@ -71,12 +70,12 @@ module.exports = {
 					createDesktopShortcut: 'always',
 					oneClick: true,
 					deleteAppDataOnUninstall: true,
-					installerIcon: './src/assets/app-icons/windowsAppIcon.ico'
+					installerIcon: './src/assets/app-icons/logo.png'
 				},
 				// TODO replace
 				publish: {
 					provider: 'github',
-					repository: 'https://github.com/megasanjay/electron-vue3-flask.git'
+					repository: 'https://github.com/AssafCohen3/NBAStatsDB.git'
 				}
 			}
 		},

@@ -52,11 +52,11 @@ export default {
 
 }
 
-.in-other-list.sortable-ghost .cloned{
+.presets-div .in-other-list.sortable-ghost .cloned{
 	display: flex;
 }
 
-.in-other-list.sortable-ghost .not-cloned{
+.presets-div .in-other-list.sortable-ghost .not-cloned{
 	display: none;
 }
 </style>

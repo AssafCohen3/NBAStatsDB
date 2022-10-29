@@ -1,7 +1,7 @@
 import string
 from abc import ABC, abstractmethod
-from typing import Union, Type, List, Optional
-from sqlalchemy import select, func
+from typing import Union, Type, List
+from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
@@ -11,7 +11,7 @@ from dbmanager.Downloaders.BREFPlayersDownloader import BREFPlayersDownloader
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFPlayersActionSpecs import UpdateBREFPlayers, RedownloadBREFPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
-from dbmanager.SharedData.PlayersIndex import players_index, PlayerDetails
+from dbmanager.SharedData.PlayersIndex import players_index
 from dbmanager.utils import iterate_with_next
 
 

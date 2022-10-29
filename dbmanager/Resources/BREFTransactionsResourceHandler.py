@@ -6,7 +6,7 @@ from dbmanager.Database.Models.BREFTransaction import BREFTransaction
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFTransactionsActions import DownloadAllTransactionsAction, \
     DownloadTransactionsInSeasonsRangeAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.BREFTransactionsResourceSpecification import \
     BREFTransactionsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -41,12 +41,12 @@ class BREFTransactionsResourceHandler(ResourceAbc):
                 gettext('resources.bref_transactions.messages.transactions_count.title'),
                 gettext('resources.bref_transactions.messages.transactions_count.text',
                         transactions=transactions_count),
-                'ok'
+                StatusOption.INFO,
             ),
             ResourceMessage(
                 gettext('resources.bref_transactions.messages.transactions_seasons_count.title'),
                 gettext('resources.bref_transactions.messages.transactions_seasons_count.text',
                         seasons=seasons_count),
-                'ok'
+                StatusOption.INFO,
             ),
         ]

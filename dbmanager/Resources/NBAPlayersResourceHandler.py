@@ -7,7 +7,7 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.NBAPlayer import NBAPlayer
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.NBAPlayersActions import UpdateNBAPlayersAction
-from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage
+from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.NBAPlayersResourceSpecification import NBAPlayersResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
@@ -33,11 +33,11 @@ class NBAPlayersResourceHandler(ResourceAbc):
             ResourceMessage(
                 gettext('resources.nba_players.messages.players.title'),
                 gettext('resources.nba_players.messages.players.text', players_count=res[0][0]),
-                'ok'
+                StatusOption.INFO,
             ),
             ResourceMessage(
                 gettext('resources.nba_players.messages.active_players.title'),
                 gettext('resources.nba_players.messages.active_players.text', active_players_count=res[0][1]),
-                'ok'
+                StatusOption.INFO,
             ),
         ]

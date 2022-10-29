@@ -25,6 +25,7 @@ def enqueue_task(task: TaskAbc, done_callback=None):
         task.init_task(current_task_id, announcer)
         tasks_dictionary[task.get_task_id()] = task
         await task
+        task.after_execution_finished()
 
     future = asyncio.run_coroutine_threadsafe(adder_coro(), tasks_loop)
     if done_callback:

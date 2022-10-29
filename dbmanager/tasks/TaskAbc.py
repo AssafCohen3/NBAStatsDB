@@ -55,7 +55,7 @@ class TaskAbc(ABC):
         self.cancelled = True
         if self.active is None:
             self.pre_active = True
-            self.announce_update('cancel')
+            self.announce_task_update('cancel')
         else:
             self.active.set()
 
@@ -64,7 +64,7 @@ class TaskAbc(ABC):
             raise TaskAlreadyFinishedError(self.get_task_id())
         if self.active is None:
             self.pre_active = False
-            self.announce_update('paused')
+            self.announce_task_update('paused')
         else:
             self.active.clear()
 
@@ -73,7 +73,7 @@ class TaskAbc(ABC):
             raise TaskAlreadyFinishedError(self.get_task_id())
         if self.active is None:
             self.pre_active = True
-            self.announce_update('resume')
+            self.announce_task_update('resume')
         else:
             self.active.set()
 
@@ -94,7 +94,7 @@ class TaskAbc(ABC):
             try:
                 while self.started and self.active is not None and not self.active.is_set():
                     if not paused:
-                        self.announce_update('paused')
+                        self.announce_task_update('paused')
                     paused = True
                     yield from self.active.wait().__await__()
             except BaseException as err:
@@ -105,16 +105,16 @@ class TaskAbc(ABC):
 
             # if actually paused and woke up because of resume(and not because cancelling)
             if paused and not self.cancelled:
-                self.announce_update('resume')
+                self.announce_task_update('resume')
 
             # if cancelled finish
             if self.cancelled:
-                self.announce_update('cancel')
+                self.announce_task_update('cancel')
                 return None
 
             # if crashed not in action
             if self.error_msg:
-                self.announce_update('error')
+                self.announce_task_update('error')
                 return None
 
             # continue with our regular program
@@ -126,19 +126,19 @@ class TaskAbc(ABC):
             except StopIteration as err:
                 # finished successfully
                 self.finished = True
-                self.announce_update('finish')
+                self.announce_task_update('finish')
                 return err.value
             except Exception as gen_err:
                 # error
                 self.error_msg = gen_err
-                self.announce_update('error')
+                self.announce_task_update('error')
                 return None
             else:
                 send = iter_send
             # sub finish
             # if already started and finished with finish_subtask()
             if self.started and self.subtask_finished:
-                self.announce_update('sub-finish')
+                self.announce_task_update('sub-finish')
             try:
                 message = yield signal
             except BaseException as err:
@@ -162,7 +162,7 @@ class TaskAbc(ABC):
         if self.pre_active:
             self.active.set()
         await asyncio.sleep(0)
-        self.announce_update('start')
+        self.announce_task_update('start')
         self.started = True
         # if pre paused
         await asyncio.sleep(0)
@@ -216,10 +216,21 @@ class TaskAbc(ABC):
     def get_task_title(self) -> str:
         pass
 
-    def announce_update(self, event_type: str):
+    @abstractmethod
+    def after_execution_finished(self):
+        pass
+
+    def announce_task_update(self, event_type: str):
         try:
             if self.announcer:
-                self.announcer.announce(f'task-update-{event_type}', [self.get_task_id()], self)
+                self.announcer.announce_task_event(f'task-update-{event_type}', [self.get_task_id()], self)
+        except Exception as e:
+            self.error_msg = e
+
+    def call_annnouncer_with_data(self, event: str, data: str):
+        try:
+            if self.announcer:
+                self.announcer.announce_data(event, data)
         except Exception as e:
             self.error_msg = e
 
