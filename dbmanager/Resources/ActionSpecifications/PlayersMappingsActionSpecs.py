@@ -100,5 +100,6 @@ class ReadPlayersMappingsFromFile(ActionSpecificationAbc):
     @classmethod
     def get_action_inputs(cls, session) -> List[ActionInput]:
         return [
-            FileSelector('players_example.csv')
+            # TODO replace to the main branch when possible
+            FileSelector('https://github.com/AssafCohen3/NBAStatsDB/blob/gui-interface/dbmanager/players_ids/players_example.csv')
         ]

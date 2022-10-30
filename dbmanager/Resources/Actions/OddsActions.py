@@ -13,7 +13,7 @@ from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.BREFSeasonsLinks import bref_seasons_links
 from dbmanager.SharedData.SeasonPlayoffs import get_last_season_with_playoffs, last_season_playoffs
 from dbmanager.constants import FIRST_ODDS_SEASON, EXCLUDED_ODDS_SEASONS
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 class OddsGeneralAction(ActionAbc, ABC):
@@ -65,7 +65,8 @@ class OddsGeneralAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
-    def collect_season_odds(self, season: int):
+    @retry_wrapper
+    async def collect_season_odds(self, season: int):
         downloader = OddsDownloader(season)
         odds_to_add = downloader.download()
         if odds_to_add is None:
@@ -74,7 +75,7 @@ class OddsGeneralAction(ActionAbc, ABC):
 
     async def action(self):
         for season, next_season in iterate_with_next(self.seasons_to_fetch):
-            self.collect_season_odds(season)
+            await self.collect_season_odds(season)
             self.current_season = next_season
             await self.finish_subtask()
 

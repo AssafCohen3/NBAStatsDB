@@ -10,6 +10,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.NBAPlayersActionSpecs import UpdateNBAPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.TodayConfig import today_config
+from dbmanager.utils import retry_wrapper
 
 
 class UpdateNBAPlayersAction(ActionAbc):
@@ -45,6 +46,7 @@ class UpdateNBAPlayersAction(ActionAbc):
         self.session.commit()
         self.update_resource()
 
+    @retry_wrapper
     async def action(self):
         last_season = today_config.get_current_season()
         # TODO this may cause bugs because prod last season seems to refer to the year in which the season ended

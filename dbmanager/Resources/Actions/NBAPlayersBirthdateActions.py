@@ -15,7 +15,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.NBAPlayersBirthdateActionSpecs import UpdatePlayersBirthdate, DownloadPlayersBirthdateInSeasonRange, RedownloadPlayersBirthdate
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import REGULAR_SEASON_TYPE
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 @dataclass(unsafe_hash=True)
@@ -132,6 +132,7 @@ class GeneralDownloadPlayersBirthdateAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
+    @retry_wrapper
     async def collect_team_roster(self, team_season: TeamSeason):
         downloader = TeamRosterDownloader(team_season.season, team_season.team_id)
         data = await call_async_with_retry(downloader.download)
@@ -146,6 +147,7 @@ class GeneralDownloadPlayersBirthdateAction(ActionAbc, ABC):
         self.expected_players.difference_update(to_remove)
         self.insert_players_birthdate(players)
 
+    @retry_wrapper
     async def fetch_player_profile(self, player: PlayerToCollect):
         downloader = PlayerProfileDownloader(player.player_id)
         data = await call_async_with_retry(downloader.download)

@@ -21,8 +21,8 @@
 		<a 
 			v-if="exampleFileLink"
 			class="text-dimmed-white text-[14px] example-link"
-			:href="`${exampleFileLink}`"
-			download>
+			target="_blank"
+			:href="`${exampleFileLink}`">
 			{{ $t('common.example_file') }}
 		</a>
 	</div>

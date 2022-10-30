@@ -19,6 +19,7 @@ from dbmanager.Resources.ActionSpecifications.PlayersMappingsActionSpecs import 
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.DefaultMappings import DefaultPlayerMapping, default_mappings
 from dbmanager.SharedData.PlayersIndex import PlayerDetails, players_index
+from dbmanager.utils import retry_wrapper
 
 
 @dataclass
@@ -82,8 +83,8 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
         return CompleteMissingPlayersMappings
 
-    @staticmethod
-    def get_player_stats_id(player_url) -> Tuple[int, str]:
+    @retry_wrapper
+    async def get_player_stats_id(self, player_url: str) -> Tuple[int, str]:
         player_resp = requests.get(player_url).text
         player_soup = BeautifulSoup(player_resp, 'html.parser')
         player_birth_date = player_soup.select('span#necro-birth')[0]['data-birth']
@@ -97,8 +98,8 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
                 break
         return player_stats_id, player_birth_date
 
-    @staticmethod
-    def find_season_players_links(season) -> List[MappingCandidateLink]:
+    @retry_wrapper
+    async def find_season_players_links(self, season: int) -> List[MappingCandidateLink]:
         url = 'https://www.basketball-reference.com/leagues/NBA_%s_rookies.html' % (season + 1)
         resp = requests.get(url).text
         soup = BeautifulSoup(resp, 'html.parser')
@@ -110,8 +111,8 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
                       for p in player_ids]
         return candidates
 
-    @staticmethod
-    def find_draft_players_links(season) -> List[MappingCandidateLink]:
+    @retry_wrapper
+    async def find_draft_players_links(self, season: int) -> List[MappingCandidateLink]:
         url = 'https://www.basketball-reference.com/draft/NBA_%s.html' % season
         resp = requests.get(url).text
         soup = BeautifulSoup(resp, 'html.parser')
@@ -133,7 +134,7 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
         return to_ret
 
     async def find_targets(self, target_resource: TargetResource, current_bref_mappings: Dict[str, Tuple[int, str]]):
-        candidates_links: List[MappingCandidateLink] = (
+        candidates_links: List[MappingCandidateLink] = await (
             self.find_season_players_links(target_resource.resource_year)
             if target_resource.resource_type == 'season'
             else self.find_draft_players_links(target_resource.resource_year)
@@ -142,7 +143,7 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
         self.target_resources[self.current_resource_index].links_to_fetch = len(candidates_links)
         await self.finish_subtask()
         for i, candidate_link in enumerate(candidates_links):
-            player_stats_id, player_birth_date = self.get_player_stats_id(candidate_link.candidate_bref_link)
+            player_stats_id, player_birth_date = await self.get_player_stats_id(candidate_link.candidate_bref_link)
             if not player_stats_id:
                 draft_match = target_resource.get_target_by_draft_number(candidate_link.candidate_draft_number)
                 if draft_match:

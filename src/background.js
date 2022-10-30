@@ -1,6 +1,6 @@
 'use strict';
 
-import { app, protocol, BrowserWindow, ipcMain } from 'electron';
+import { app, protocol, BrowserWindow, ipcMain, shell } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import { autoUpdater } from 'electron-updater';
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer';
@@ -114,7 +114,12 @@ async function createWindow(pyPort) {
 			preload: path.join(__dirname, 'preload.js'),
 		},
 	});
-
+	// open new windows on external browsers
+	win.webContents.on('new-window', function(e, url) {
+		e.preventDefault();
+		shell.openExternal(url);
+	});
+	
 	// Used to enable to remote modulue in renderer. 
 	// enableWebContents(win.webContents);
 

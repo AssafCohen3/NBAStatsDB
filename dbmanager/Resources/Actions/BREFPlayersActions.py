@@ -12,7 +12,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.BREFPlayersActionSpecs import UpdateBREFPlayers, RedownloadBREFPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.PlayersIndex import players_index
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
@@ -38,7 +38,8 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
-    def collect_bref_players_by_letter(self, letter: str):
+    @retry_wrapper
+    async def collect_bref_players_by_letter(self, letter: str):
         headers = [
             'PlayerId',
             'PlayerName',
@@ -58,7 +59,7 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
 
     async def action(self):
         for letter, next_letter in iterate_with_next(self.missing_letters, ''):
-            self.collect_bref_players_by_letter(letter)
+            await self.collect_bref_players_by_letter(letter)
             self.current_letter = next_letter
             await self.finish_subtask()
 

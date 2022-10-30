@@ -17,7 +17,7 @@ from dbmanager.Resources.ActionSpecifications.NBAAwardsActionSpecs import Downlo
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.FranchisesHistory import franchises_history, FranchiseSpan
 from dbmanager.SharedData.PlayersIndex import PlayerDetails, players_index
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 def transform_award(award_row):
@@ -73,6 +73,7 @@ class GeneralDownloadAwardsAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
+    @retry_wrapper
     async def collect_player_awards(self, player: PlayerDetails):
         downloader = NBAAwardsDownloader(player.player_id)
         data = await call_async_with_retry(downloader.download)

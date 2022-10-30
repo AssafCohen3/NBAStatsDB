@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Union, List
 from dbmanager.AppI18n import gettext
@@ -7,6 +8,7 @@ from dbmanager.Errors import TaskPathNotExistError, TaskDismissedError, TaskAlre
     TaskNotFinishedError
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
+from dbmanager.utils import RecoverableError
 
 
 class ThreadSafeEvent(asyncio.Event):
@@ -23,7 +25,7 @@ class ThreadSafeEvent(asyncio.Event):
 
 
 class TaskAbc(ABC):
-    def __init__(self):
+    def __init__(self, max_retries_number: int = 1, seconds_to_sleep_between_retries: float = 1.0):
         self._task_id: int = -1
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
@@ -36,6 +38,9 @@ class TaskAbc(ABC):
         self.subtask_finished = False
         self.dismissed = False
         self._data_initiated = False
+        self.recoverable_error: Optional[RecoverableError] = None
+        self.max_retries_number = max_retries_number
+        self.seconds_to_sleep_between_retries = seconds_to_sleep_between_retries
 
     def init_task(self, counter: itertools.count, announcer: AnnouncerAbc):
         self.set_task_id(next(counter))
@@ -115,6 +120,9 @@ class TaskAbc(ABC):
             if self.is_dismissed():
                 return None
 
+            # reset the recoverable error. if the user tried to resume it will be updated even if the resume wasnt a success
+            self.recoverable_error = None
+
             # if actually paused and woke up because of resume(and not because cancelling)
             if paused and not self.cancelled:
                 self.announce_task_update('resume')
@@ -151,6 +159,8 @@ class TaskAbc(ABC):
             # if already started and finished with finish_subtask()
             if self.started and self.subtask_finished:
                 self.announce_task_update('sub-finish')
+            elif self.started and self.recoverable_error:
+                self.pause()
             try:
                 message = yield signal
             except BaseException as err:
@@ -205,6 +215,8 @@ class TaskAbc(ABC):
             return gettext('common.cancelled')
         if self.is_finished():
             return gettext('common.finished')
+        if self.recoverable_error:
+            return 'Connection error. you can try to resume'
         return self.get_current_subtask_text_abs()
 
     @abstractmethod
@@ -268,3 +280,16 @@ class TaskAbc(ABC):
 
     def get_sub_task_abs(self, task_path: List[int]) -> 'TaskAbc':
         raise TaskPathNotExistError(self.get_task_id(), task_path)
+
+    async def raise_recoverable_error(self, recoverable_error: RecoverableError):
+        self.recoverable_error = recoverable_error
+        await asyncio.sleep(0)
+
+    def get_max_retries_number(self) -> int:
+        return self.max_retries_number
+
+    def on_retry(self, attempt_number, exception: RecoverableError):
+        logging.info(f'task {self.get_task_id()}: received exception {exception} in attempt number {attempt_number}.')
+
+    def get_seconds_tp_sleep_between_retries(self) -> float:
+        return self.seconds_to_sleep_between_retries

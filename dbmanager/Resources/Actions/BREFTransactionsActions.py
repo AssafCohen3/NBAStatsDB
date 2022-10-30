@@ -17,7 +17,7 @@ from dbmanager.transactions.TransactionCreator import TransactionsCreator
 from dbmanager.transactions.TransactionsAnalayzer import TransactionsAnalyzer, BREFPlayerMinimal
 from dbmanager.transactions.TransactionsParser import TransactionsParser
 from dbmanager.transactions.TransactionsScrapper import TransactionsScrapper
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 def get_transaction_key(t):
@@ -101,7 +101,8 @@ class GeneralDownloadTransactionsAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
-    def collect_season_transactions(self, season: BREFSeasonLink):
+    @retry_wrapper
+    async def collect_season_transactions(self, season: BREFSeasonLink):
         to_insert = []
         downloader = BREFTransactionsDownloader(season.leagu_id, season.season)
         transactions_html = downloader.download()
@@ -154,7 +155,7 @@ class GeneralDownloadTransactionsAction(ActionAbc, ABC):
 
     async def action(self):
         for season, next_season in iterate_with_next(self.seasons_to_collect):
-            self.collect_season_transactions(season)
+            await self.collect_season_transactions(season)
             self.current_season = next_season
             await self.finish_subtask()
 

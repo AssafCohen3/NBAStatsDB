@@ -19,7 +19,7 @@ from dbmanager.Resources.ActionSpecifications.EventsActionSpecs import UpdateEve
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.pbp.MyPBPLoader import MyPBPLoader
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 @dataclass
@@ -176,6 +176,7 @@ class GeneralEventsAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
+    @retry_wrapper
     async def collect_all_game_events(self, game_details: GameDetails):
         downloader = EventsDownloader(game_details.game_id)
         data = await call_async_with_retry(downloader.download)

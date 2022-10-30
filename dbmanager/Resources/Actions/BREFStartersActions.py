@@ -5,7 +5,6 @@ from dataclasses import dataclass, asdict
 from typing import Union, Optional, List, Dict, Type
 from sqlalchemy import select, and_, or_, bindparam, update, not_
 from sqlalchemy.orm import scoped_session
-
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BREFStartersDownloader import BREFStartersDownloader
@@ -17,7 +16,7 @@ from dbmanager.Resources.ActionSpecifications.BREFStartersActionSpecs import get
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import PLAYIN_SEASON_TYPE
 from dbmanager.SharedData.LiveMappings import live_mappings
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 @dataclass
@@ -128,7 +127,8 @@ class GeneralStartersAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
-    def collect_team_season_starters(self, season: MissingTeamSeason):
+    @retry_wrapper
+    async def collect_team_season_starters(self, season: MissingTeamSeason):
         downloader = BREFStartersDownloader(season.season, season.team_id, live_mappings.get_data(self.session))
         games_with_starters = downloader.download()
         starters_to_update = [
@@ -149,6 +149,7 @@ class GeneralStartersAction(ActionAbc, ABC):
             if game_date in season.games_map]
         self.update_boxscores_starters_all(games_to_update, starters_to_update)
 
+    @retry_wrapper
     async def collect_game_starters(self, game: GameToFetch):
         downloader = NBAStartersDownloader(game.game_id)
         games_with_starters, games_rows_to_update = await call_async_with_retry(downloader.download)
@@ -166,7 +167,7 @@ class GeneralStartersAction(ActionAbc, ABC):
 
     async def action(self):
         for team_season, next_team_season in iterate_with_next(self.seasons_to_fetch):
-            self.collect_team_season_starters(team_season)
+            await self.collect_team_season_starters(team_season)
             self.current_season = next_team_season
             await self.finish_subtask()
         for game_to_fetch, next_game_to_fetch in iterate_with_next(self.play_in_games_to_fetch):

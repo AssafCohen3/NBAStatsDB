@@ -17,7 +17,7 @@ class BREFStartersDownloader(DownloaderAbs):
 
     def download(self):
         to_send = BREF_STARTERS_URL % (self.get_team_abbrevation(), self.season+1)
-        r = requests.get(to_send)
+        r = requests.get(to_send, timeout=10)
         return self.from_html(r.text)
 
     def from_html(self, html_resp):

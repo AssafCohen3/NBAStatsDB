@@ -11,7 +11,7 @@ from dbmanager.Resources.ActionSpecifications.BREFPlayoffSeriesActionSpecs impor
     RedownloadBREFPlayoffSeries, RedownloadBREFPlayoffSeriesInSeasonsRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.BREFSeasonsLinks import BREFSeasonLink, bref_seasons_links
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
@@ -55,7 +55,8 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
         self.update_resource()
 
     # updates series of a season
-    def update_playoff_summary(self, season_link: BREFSeasonLink):
+    @retry_wrapper
+    async def update_playoff_summary(self, season_link: BREFSeasonLink):
         handler = BREFPlayoffSeriesDownloader(season_link)
         data = handler.download()
         if not data:
@@ -83,7 +84,7 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
 
     async def action(self):
         for season_link, next_season_link in iterate_with_next(self.seasons_to_fetch_links):
-            self.update_playoff_summary(season_link)
+            await self.update_playoff_summary(season_link)
             self.current_season_link = season_link
             await self.finish_subtask()
 

@@ -12,7 +12,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.NBAHonoursActionSpecs import DownloadAllHonours, DownloadTeamHonours
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.FranchisesHistory import franchises_history, FranchiseSpan
-from dbmanager.utils import iterate_with_next
+from dbmanager.utils import iterate_with_next, retry_wrapper
 
 
 def transform_hof(team_id, row):
@@ -65,6 +65,7 @@ class GeneralDownloadHonoursAction(ActionAbc, ABC):
         self.session.commit()
         self.update_resource()
 
+    @retry_wrapper
     async def collect_team_honours(self, team: FranchiseSpan):
         downloader = TeamDetailsDownloader(team.franchise_id)
         data = await call_async_with_retry(downloader.download)
