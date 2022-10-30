@@ -1,5 +1,5 @@
 import datetime
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Union, List, Optional, Type
 
 import unidecode
@@ -50,10 +50,19 @@ def transform_award(award_row):
 
 
 class GeneralDownloadAwardsAction(ActionAbc, ABC):
-    def __init__(self, session: scoped_session, players_to_collect: List[PlayerDetails]):
+    def __init__(self, session: scoped_session):
         super().__init__(session)
-        self.players_to_collect: List[PlayerDetails] = players_to_collect
-        self.current_player: Optional[PlayerDetails] = players_to_collect[0] if len(players_to_collect) > 0 else None
+        self.players_to_collect: List[PlayerDetails] = []
+        self.current_player: Optional[PlayerDetails] = None
+
+    def init_task_data_abs(self) -> bool:
+        self.players_to_collect = self.get_players_to_collect()
+        self.current_player: Optional[PlayerDetails] = self.players_to_collect[0] if len(self.players_to_collect) > 0 else None
+        return len(self.players_to_collect) > 0
+
+    @abstractmethod
+    def get_players_to_collect(self) -> List[PlayerDetails]:
+        pass
 
     def insert_awards(self, player_id: int, awards: List[dict]):
         delete_stmt = delete(NBAAwards).where(NBAAwards.PlayerId == player_id)
@@ -92,7 +101,10 @@ class GeneralDownloadAwardsAction(ActionAbc, ABC):
 
 class DownloadAllPlayersAwardsAction(GeneralDownloadAwardsAction):
     def __init__(self, session: scoped_session):
-        super().__init__(session, players_index.get_players())
+        super().__init__(session)
+
+    def get_players_to_collect(self) -> List[PlayerDetails]:
+        return players_index.get_players()
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
@@ -101,7 +113,10 @@ class DownloadAllPlayersAwardsAction(GeneralDownloadAwardsAction):
 
 class DownloadActivePlayersAwardsAction(GeneralDownloadAwardsAction):
     def __init__(self, session: scoped_session):
-        super().__init__(session, [p for p in players_index.get_players() if p.active])
+        super().__init__(session)
+
+    def get_players_to_collect(self) -> List[PlayerDetails]:
+        return [p for p in players_index.get_players() if p.active]
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
@@ -110,7 +125,12 @@ class DownloadActivePlayersAwardsAction(GeneralDownloadAwardsAction):
 
 class DownloadRookiesAwardsInSeasonsRangeAction(GeneralDownloadAwardsAction):
     def __init__(self, session: scoped_session, start_season: int, end_season: int):
-        super().__init__(session, [p for p in players_index.get_players() if start_season <= p.first_season <= end_season])
+        super().__init__(session)
+        self.start_season: int = start_season
+        self.end_season: int = end_season
+
+    def get_players_to_collect(self) -> List[PlayerDetails]:
+        return [p for p in players_index.get_players() if self.start_season <= p.first_season <= self.end_season]
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
@@ -119,7 +139,11 @@ class DownloadRookiesAwardsInSeasonsRangeAction(GeneralDownloadAwardsAction):
 
 class DownloadPlayerAwardsAction(GeneralDownloadAwardsAction):
     def __init__(self, session: scoped_session, player_id: int):
-        super().__init__(session, [players_index.get_player_details(player_id)])
+        super().__init__(session)
+        self.player_id: int = player_id
+
+    def get_players_to_collect(self) -> List[PlayerDetails]:
+        return [players_index.get_player_details(self.player_id)]
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:

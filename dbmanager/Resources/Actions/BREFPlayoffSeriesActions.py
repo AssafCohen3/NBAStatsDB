@@ -6,7 +6,6 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BREFPlayoffSerie import BREFPlayoffSerie
 from dbmanager.Downloaders.BREFPlayoffSeriesDownloader import BREFPlayoffSeriesDownloader
-from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFPlayoffSeriesActionSpecs import UpdateBREFPlayoffSeries, \
     RedownloadBREFPlayoffSeries, RedownloadBREFPlayoffSeriesInSeasonsRange
@@ -21,12 +20,17 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
         self.start_season = start_season
         self.end_season = end_season
         self.update = update
+        self.seasons_to_fetch_links: List[BREFSeasonLink] = []
+        self.current_season_link: Optional[BREFSeasonLink] = None
+
+    def init_task_data_abs(self) -> bool:
         if self.update:
             # TODO can be more efficient using the playoff schedule
             self.seasons_to_fetch_links = bref_seasons_links.get_nba_seasons_not_in_list(self.get_completed_series())
         else:
-            self.seasons_to_fetch_links = bref_seasons_links.get_nba_seasons_in_range(start_season, end_season)
-        self.current_season_link: Optional[BREFSeasonLink] = self.seasons_to_fetch_links[0] if self.seasons_to_fetch_links else None
+            self.seasons_to_fetch_links = bref_seasons_links.get_nba_seasons_in_range(self.start_season, self.end_season)
+        self.current_season_link = self.seasons_to_fetch_links[0] if self.seasons_to_fetch_links else None
+        return len(self.seasons_to_fetch_links) > 0
 
     def get_completed_series(self) -> List[int]:
         stmt = (

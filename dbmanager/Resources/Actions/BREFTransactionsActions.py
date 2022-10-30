@@ -72,12 +72,17 @@ class GeneralDownloadTransactionsAction(ActionAbc, ABC):
         super().__init__(session)
         self.start_season = start_season
         self.end_season = end_season
-        self.seasons_to_collect: List[BREFSeasonLink] = bref_seasons_links.get_nba_seasons_in_range(start_season, end_season)
-        self.current_season: Optional[BREFSeasonLink] = self.seasons_to_collect[0] if self.seasons_to_collect else None
+        self.seasons_to_collect: List[BREFSeasonLink] = []
+        self.current_season: Optional[BREFSeasonLink] = None
         self.scrapper = TransactionsScrapper()
         self.parser = TransactionsParser()
         self.analyzer = TransactionsAnalyzer(self.get_bref_player_by_id, self.get_bref_player_by_name_and_season)
         self.creator = TransactionsCreator()
+
+    def init_task_data_abs(self) -> bool:
+        self.seasons_to_collect = bref_seasons_links.get_nba_seasons_in_range(self.start_season, self.end_season)
+        self.current_season = self.seasons_to_collect[0] if self.seasons_to_collect else None
+        return len(self.seasons_to_collect) > 0
 
     def get_bref_player_by_id(self, player_id: str) -> Optional[BREFPlayerMinimal]:
         res = live_bref_players_index.get_bref_player_by_id(self.session, player_id)
@@ -103,8 +108,6 @@ class GeneralDownloadTransactionsAction(ActionAbc, ABC):
         scrapped_transactions = self.scrapper.scrap_transactions(transactions_html)
         try:
             for transaction_year, transaction_month, transaction_day, transaction_number, transaction_text, transaction_to_find in scrapped_transactions:
-                if transaction_month == 9:
-                    a = 555
                 transaction_type, parsed_transaction = self.parser.parse_transaction(transaction_text)
                 if transaction_type is None:
                     continue

@@ -35,10 +35,22 @@ class TaskAbc(ABC):
         self.announcer: Optional[AnnouncerAbc] = None
         self.subtask_finished = False
         self.dismissed = False
+        self._data_initiated = False
 
     def init_task(self, counter: itertools.count, announcer: AnnouncerAbc):
         self.set_task_id(next(counter))
         self.set_announcer(announcer)
+
+    def init_task_data(self) -> bool:
+        if self._data_initiated:
+            return False
+        to_refresh = self.init_task_data_abs()
+        self._data_initiated = True
+        return to_refresh
+
+    @abstractmethod
+    def init_task_data_abs(self) -> bool:
+        pass
 
     def get_task_id(self) -> int:
         return self._task_id
@@ -166,6 +178,8 @@ class TaskAbc(ABC):
         self.started = True
         # if pre paused
         await asyncio.sleep(0)
+        if self.init_task_data():
+            await self.refresh_status()
         await self.action()
 
     @abstractmethod
@@ -236,6 +250,10 @@ class TaskAbc(ABC):
 
     async def finish_subtask(self):
         self.completed_subtasks_count += 1
+        self.subtask_finished = True
+        await asyncio.sleep(0)
+
+    async def refresh_status(self):
         self.subtask_finished = True
         await asyncio.sleep(0)
 

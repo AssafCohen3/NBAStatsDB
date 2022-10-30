@@ -19,8 +19,13 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
 
     def __init__(self, session: scoped_session, **kwargs):
         super().__init__(session, **kwargs)
-        self.missing_letters: List[str] = self.get_letters_to_fetch()
+        self.missing_letters: List[str] = []
+        self.current_letter = ''
+
+    def init_task_data_abs(self) -> bool:
+        self.missing_letters = self.get_letters_to_fetch()
         self.current_letter = self.missing_letters[0] if self.missing_letters else ''
+        return len(self.missing_letters) > 0
 
     def insert_bref_players(self, bref_players):
         if not bref_players:

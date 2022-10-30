@@ -18,7 +18,8 @@
 			:max-season="actionInput.max_season" />
 		<file-picker
 			v-if="actionInput.input_name == 'FileSelector'"
-			v-model:inputData="inputDataModel" />
+			v-model:inputData="inputDataModel"
+			:example-file-link="actionInput.example_file_link" />
 		<players-auto-complete
 			v-if="actionInput.input_name == 'PlayersAutoComplete'"
 			v-model:inputData="inputDataModel" />

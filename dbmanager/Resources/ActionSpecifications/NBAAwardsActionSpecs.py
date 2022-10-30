@@ -98,7 +98,7 @@ class DownloadPlayerAwards(ActionSpecificationAbc):
     @classmethod
     def validate_request_abs(cls, session: scoped_session, params: Dict[str, Any]):
         if not players_index.get_player_details(params['player_id']):
-            raise IlegalParameterValueError(cls.get_action_id(), 'player_id', params['player_id'], 'cant find player with the supplied id')
+            raise IlegalParameterValueError(cls, 'player_id', params['player_id'], 'cant find player with the supplied id')
 
     @classmethod
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:

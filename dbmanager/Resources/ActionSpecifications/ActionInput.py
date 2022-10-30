@@ -1,7 +1,7 @@
 import datetime
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -57,6 +57,7 @@ class SeasonRangeSelector(ActionInput):
 
 @dataclass
 class FileSelector(ActionInput):
+    example_file_link: Optional[str] = None
 
     def __post_init__(self):
         self.input_name = 'FileSelector'

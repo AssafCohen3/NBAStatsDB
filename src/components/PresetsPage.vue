@@ -14,7 +14,7 @@
 			<div
 				class="presets-div-wrapper w-[60%] flex flex-col px-[30px] overflow-y-auto">
 				<div
-					class="presets-div h-[85vh] overflow-y-auto pe-4">
+					class="presets-div h-[85vh] overflow-y-auto px-[40px]">
 					<div
 						class="flex items-center">
 						<div
@@ -38,8 +38,11 @@
 						:key="preset.preset_id">
 						<!-- TODO preset div -->
 						<preset-card 
+							:dragged-action-source-group="draggedActionSourceGroup"
 							:preset="preset"
-							@refresh="refreshPage" />
+							@refresh="refreshPage"
+							@on-drag-start="onActionDragStart"
+							@on-drag-end="onActionDragEnd" />
 					</div>
 				</div>
 			</div>
@@ -56,7 +59,9 @@
 					v-for="resource in resources"
 					:key="resource.resource_id">
 					<pullable-resource-actions-list 
-						:resource="resource" />
+						:resource="resource"
+						@action-drag-end="onActionDragEnd"
+						@action-drag-start="onActionDragStart" />
 				</div>
 			</div>
 		</div>
@@ -81,6 +86,7 @@ export default {
 	data(){
 		return {
 			creatingPreset: false,
+			draggedActionSourceGroup: null,
 		};
 	},
 	computed: {
@@ -113,6 +119,12 @@ export default {
 					toastSuccess(this.$t('messages.preset_created_successfully'));
 				});
 		},
+		onActionDragStart(groupId){
+			this.draggedActionSourceGroup = groupId;
+		},
+		onActionDragEnd(){
+			this.draggedActionSourceGroup = null;
+		}
 	},
 	onLocaleChange(){
 		this.refreshPage();

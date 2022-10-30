@@ -1,6 +1,8 @@
 <template>
 	<div
-		class="preset-div">
+		class="preset-div"
+		@dragenter="onMouseEnter"
+		@dragleave="onMouseLeave">
 		<div
 			class="flex items-center">
 			<v-btn
@@ -58,9 +60,11 @@
 					}"
 					item-key="action_recipe_id"
 					@change="onChange"
-					@move="onMove">
+					@move="onMove"
+					@start="onDragStart"
+					@end="onDragEnd">
 					<template #item="{element}">
-						<action-recipe-row
+						<draggable-action-recipe-row
 							:action-recipe="element"
 							@refresh="$emit('refresh')" />
 					</template>
@@ -93,7 +97,7 @@
 </template>
 
 <script>
-import ActionRecipeRow from './ActionRecipeRow.vue';
+import DraggableActionRecipeRow from './DraggableActionRecipeRow.vue';
 import draggable from 'vuedraggable';
 import { mapActions, } from 'vuex';
 import PresetEditDialog from './PresetEditDialog.vue';
@@ -101,20 +105,25 @@ import ActionFormWrapper from './ActionFormWrapper.vue';
 import { toastSuccess } from '../utils/errorToasts';
 
 export default {
-	components: { ActionRecipeRow, draggable, PresetEditDialog, ActionFormWrapper},
+	components: { DraggableActionRecipeRow, draggable, PresetEditDialog, ActionFormWrapper},
 	props: {
 		preset: {
 			type: Object,
 			required: true,
 		},
+		draggedActionSourceGroup: {
+			type: String,
+			default: null,
+		},
 	},
-	emits: ['refresh'],
+	emits: ['refresh', 'onDragStart', 'onDragEnd'],
 	data(){
 		return {
 			expanded: false,
 			editingPreset: false,
 			addingAction: false,
 			actionToAdd: null,
+			expandTimeout: null,
 		};
 	},
 	computed: {
@@ -124,7 +133,13 @@ export default {
 			},
 			set(newList){
 			}
-		}
+		},
+		groupId(){
+			return this.preset ? `${this.preset.preset_id}_group` : null;
+		},
+		isDragHoverActive(){
+			return this.preset && !this.expanded && this.draggedActionSourceGroup && this.draggedActionSourceGroup != this.groupId;
+		},
 	},
 	methods: {
 		...mapActions('presets', ['editPreset', 'removePreset']),
@@ -189,6 +204,27 @@ export default {
 					toastSuccess(this.$t('messages.action_created_successfully'));
 				});
 		},
+		onDragStart(){
+			this.$emit('onDragStart', `preset-${this.preset.preset_id}`);
+		},
+		onDragEnd(){
+			this.$emit('onDragEnd');
+		},
+		onMouseEnter(){
+			if(this.isDragHoverActive){
+				this.expandTimeout = setTimeout(() => {
+					if(this.isDragHoverActive){
+						this.expanded = true;
+					}
+					this.expandTimeout = null;
+				}, 1000);
+			}
+		},
+		onMouseLeave(){
+			if(this.expandTimeout){
+				clearTimeout(this.expandTimeout);
+			}
+		},
 	}
 };
 </script>
@@ -207,4 +243,5 @@ export default {
 	margin-inline-start: 5px;
 	box-shadow: 0px 0px 10px 3px #131434;
 }
+
 </style>

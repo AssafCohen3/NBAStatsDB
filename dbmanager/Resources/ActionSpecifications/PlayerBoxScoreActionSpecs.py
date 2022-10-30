@@ -21,8 +21,8 @@ class UpdatePlayerBoxScores(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:
@@ -49,8 +49,8 @@ class ResetPlayerBoxScores(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:
@@ -77,8 +77,8 @@ class UpdatePlayerBoxScoresInDateRange(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:

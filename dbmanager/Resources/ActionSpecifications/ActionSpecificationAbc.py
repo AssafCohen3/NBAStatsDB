@@ -48,22 +48,20 @@ class ActionSpecificationAbc(ABC):
         for param in cls.get_action_params(session):
             parsed_params[param.parameter_name] = None
             if param.required and param.parameter_name not in to_check:
-                raise RequiredParameterMissingError(cls.get_action_id(), param.parameter_name)
+                raise RequiredParameterMissingError(cls, param.parameter_name)
             if param.parameter_name not in to_check:
                 # not required
                 continue
             try:
                 val = param_parser(to_check[param.parameter_name], param.parameter_type)
             except ValueError:
-                raise IncorrectParameterTypeError(cls.get_action_id(), param.parameter_name,
-                                                  param.parameter_type, to_check[param.parameter_name])
+                raise IncorrectParameterTypeError(cls, param, to_check[param.parameter_name])
             if val is None:
-                raise UnknownParameterTypeError(cls.get_action_id(),
-                                                param.parameter_name, param.parameter_type)
+                raise UnknownParameterTypeError(cls, param)
             parsed_params[param.parameter_name] = val
             to_check.pop(param.parameter_name)
         if len(to_check.keys()) > 0:
-            raise UnexpectedParameterError(cls.get_action_id(), list(to_check.keys()))
+            raise UnexpectedParameterError(cls, list(to_check.keys()))
         return parsed_params
 
     @classmethod

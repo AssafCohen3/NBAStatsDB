@@ -1,6 +1,5 @@
 <template>
 	<div>
-		<!-- resources list -->
 		<div
 			class="flex flex-col justify-center items-center">
 			<div
@@ -49,22 +48,36 @@
 							</div>
 							<div
 								class="text-center">
-								{{ resource.last_updated && $moment(resource.last_updated).format('YYYY-MM-DD') || $t('common.never') }}
+								{{ resource.last_updated ? $moment(resource.last_updated).format('YYYY-MM-DD') : $t('common.never') }}
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
+		<v-dialog
+			v-model="presetPreviewIsOpen"
+			persistent>
+			<preset-preview-dialog
+				v-if="presetToPreview"
+				:preset="presetToPreview"
+				@cancel="cancelPresetDispatch"
+				@dispatch-preset="dispatchPresetMethod" />
+		</v-dialog>
 	</div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import { toastSuccess } from '../utils/errorToasts';
+import PresetPreviewDialog from './PresetPreviewDialog.vue';
+
 export default {
+	components: { PresetPreviewDialog },
 	data(){
 		return {
-
+			presetPreviewIsOpen: false,
+			presetToPreview: null,
 		};
 	},
 	computed: {
@@ -86,8 +99,22 @@ export default {
 			});
 		},
 		presetClicked(preset){
+			this.presetToPreview = preset;
+			this.presetPreviewIsOpen = true;
 			// TODO open preset dialog
 			// this.dispatchPreset([preset.preset_id]);
+		},
+		cancelPresetDispatch(){
+			this.presetPreviewIsOpen = false;
+			this.presetToPreview = null;
+		},
+		dispatchPresetMethod(presetToDispatch){
+			this.dispatchPreset([presetToDispatch.preset_id])
+				.then(resp => {
+					toastSuccess(this.$t('messages.preset_dispatched_successfully'));
+					this.presetPreviewIsOpen = false;
+					this.presetToPreview = null;
+				});
 		},
 		refreshPage(){
 			this.fetchResources();

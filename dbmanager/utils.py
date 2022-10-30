@@ -4,6 +4,7 @@ from typing import Iterable, TypeVar, Tuple, Optional, Callable
 from flask import request
 from typeguard import typechecked
 
+from dbmanager.Errors import RequestTypeError
 
 R = TypeVar('R')
 
@@ -15,11 +16,15 @@ def iterate_with_next(some_iterable: Iterable[R], last_val=None) -> Iterable[Tup
 
 
 def flask_request_validation(method: Callable):
-    checked_method = typechecked(method)
+    checked_method = typechecked(method, always=True)
 
     @wraps(method)
     def _with_check_params(*args, **kwargs):
         request_json = request.get_json(silent=True)
         json_params = request_json if request_json else {}
-        return checked_method(*args, **kwargs, **json_params)
+        try:
+            res = checked_method(*args, **kwargs, **json_params)
+        except TypeError as e:
+            raise RequestTypeError(str(e))
+        return res
     return _with_check_params

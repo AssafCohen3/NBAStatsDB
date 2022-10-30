@@ -75,6 +75,9 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
         self.target_resources: List[TargetResource] = []
         self.current_resource_index: int = 0
 
+    def init_task_data_abs(self) -> bool:
+        return False
+
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
         return CompleteMissingPlayersMappings
@@ -241,6 +244,9 @@ class ReadPlayersMappingsFromFileAction(PlayersMappingActionGeneral):
     def __init__(self, session: scoped_session, file_path: str):
         super().__init__(session)
         self.file_path = file_path
+
+    def init_task_data_abs(self) -> bool:
+        return False
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:

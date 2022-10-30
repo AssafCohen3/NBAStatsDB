@@ -47,7 +47,7 @@ class DownloadTeamHonours(ActionSpecificationAbc):
     @classmethod
     def validate_request_abs(cls, session: scoped_session, params: Dict[str, Any]):
         if not franchises_history.get_last_span_with_id(params['team_id']):
-            raise IlegalParameterValueError(cls.get_action_id(), 'team_id', params['team_id'], 'no franchise with the supplied id')
+            raise IlegalParameterValueError(cls, 'team_id', params['team_id'], 'no franchise with the supplied id')
 
     @classmethod
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:

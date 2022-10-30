@@ -74,13 +74,13 @@ class DownloadPlayersBirthdateInSeasonRange(ActionSpecificationAbc):
         min_season = bref_seasons_links.min_nba_season()
         max_season = bref_seasons_links.max_nba_season()
         if params['start_season'] < min_season or params['start_season'] > max_season:
-            raise IlegalParameterValueError(cls.get_action_id(), 'start_season',
+            raise IlegalParameterValueError(cls, 'start_season',
                                             params['start_season'], f'start_season must be between {min_season} and {max_season}')
         if params['end_season'] < min_season or params['end_season'] > max_season:
-            raise IlegalParameterValueError(cls.get_action_id(), 'end_season',
+            raise IlegalParameterValueError(cls, 'end_season',
                                             params['end_season'], f'end_season must be between {min_season} and {max_season}')
         if params['end_season'] < params['start_season']:
-            raise IlegalParameterValueError(cls.get_action_id(), 'end_season',
+            raise IlegalParameterValueError(cls, 'end_season',
                                             params['end_season'], f'end_season must be after {params["start_season"]}')
 
     @classmethod

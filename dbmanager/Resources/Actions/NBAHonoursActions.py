@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Union, List, Optional, Type
 from sqlalchemy import delete
 from sqlalchemy.dialects.sqlite import insert
@@ -42,10 +42,19 @@ def transform_retired_jersey(team_id, row):
 
 
 class GeneralDownloadHonoursAction(ActionAbc, ABC):
-    def __init__(self, session: scoped_session, teams_to_collect: List[FranchiseSpan]):
+    def __init__(self, session: scoped_session):
         super().__init__(session)
-        self.teams_to_collect: List[FranchiseSpan] = teams_to_collect
-        self.current_team: Optional[FranchiseSpan] = teams_to_collect[0] if teams_to_collect else None
+        self.teams_to_collect: List[FranchiseSpan] = []
+        self.current_team: Optional[FranchiseSpan] = None
+
+    def init_task_data_abs(self) -> bool:
+        self.teams_to_collect = self.get_teams_to_collect()
+        self.current_team = self.teams_to_collect[0] if self.teams_to_collect else None
+        return len(self.teams_to_collect) > 0
+
+    @abstractmethod
+    def get_teams_to_collect(self) -> List[FranchiseSpan]:
+        pass
 
     def insert_honours(self, team_id: int, honours: List[dict]):
         delete_stmt = delete(NBAHonours).where(NBAHonours.TeamId == team_id)
@@ -87,7 +96,10 @@ class GeneralDownloadHonoursAction(ActionAbc, ABC):
 
 class DownloadAllHonoursAction(GeneralDownloadHonoursAction):
     def __init__(self, session: scoped_session):
-        super().__init__(session, franchises_history.get_franchises())
+        super().__init__(session)
+
+    def get_teams_to_collect(self) -> List[FranchiseSpan]:
+        return franchises_history.get_franchises()
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
@@ -96,7 +108,11 @@ class DownloadAllHonoursAction(GeneralDownloadHonoursAction):
 
 class DownloadTeamHonoursAction(GeneralDownloadHonoursAction):
     def __init__(self, session: scoped_session, team_id: int):
-        super().__init__(session, [franchises_history.get_last_span_with_id(team_id)])
+        super().__init__(session)
+        self.team_id: int = team_id
+
+    def get_teams_to_collect(self) -> List[FranchiseSpan]:
+        return [franchises_history.get_last_span_with_id(self.team_id)]
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:

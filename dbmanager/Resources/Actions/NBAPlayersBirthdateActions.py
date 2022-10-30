@@ -77,12 +77,18 @@ class GeneralDownloadPlayersBirthdateAction(ActionAbc, ABC):
         self.start_season = start_season
         self.end_season = end_season
         self.to_update = to_update
-        team_seasons_to_collect, expected_players = self.get_resources_to_collect()
-        self.team_seasons_to_collect: List[TeamSeason] = team_seasons_to_collect
-        self.current_team_season: Optional[TeamSeason] = self.team_seasons_to_collect[0] if len(self.team_seasons_to_collect) > 0 else None
-        self.expected_players: Set[PlayerToCollect] = expected_players
+        self.team_seasons_to_collect: List[TeamSeason] = []
+        self.current_team_season: Optional[TeamSeason] = None
+        self.expected_players: Set[PlayerToCollect] = set()
         self.players_profiles_to_collect: List[PlayerToCollect] = []
         self.current_player_profile: Optional[PlayerToCollect] = None
+
+    def init_task_data_abs(self) -> bool:
+        team_seasons_to_collect, expected_players = self.get_resources_to_collect()
+        self.team_seasons_to_collect = team_seasons_to_collect
+        self.current_team_season = self.team_seasons_to_collect[0] if len(self.team_seasons_to_collect) > 0 else None
+        self.expected_players = expected_players
+        return len(self.expected_players) > 0
 
     def get_resources_to_collect(self) -> Tuple[List[TeamSeason], Set[PlayerToCollect]]:
         expected_players = set()

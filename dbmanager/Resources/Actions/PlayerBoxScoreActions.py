@@ -87,6 +87,9 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
         self.replace = replace
         self.update = update
 
+    def init_task_data_abs(self) -> bool:
+        return False
+
     def insert_boxscores(self, session: scoped_session, boxscores: List[Dict[str, Any]], replace: bool):
         if not boxscores:
             return

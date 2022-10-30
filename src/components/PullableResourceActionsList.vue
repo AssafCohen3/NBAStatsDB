@@ -29,7 +29,9 @@
 					:sort="false"
 					item-key="action_id"
 					:clone="cloneAction"
-					@move="onMove">
+					@move="onMove"
+					@start="onDragStart"
+					@end="onDragEnd">
 					<template #item="{element}">
 						<draggable-action-row
 							:action="element" />
@@ -51,6 +53,7 @@ export default {
 			required: true,
 		},
 	},
+	emits: ['actionDragStart', 'actionDragEnd'],
 	data(){
 		return {
 			expanded: true,
@@ -76,6 +79,12 @@ export default {
 				evt.dragged.classList.remove('in-other-list');
 				evt.dragged.classList.add('some-list');
 			}
+		},
+		onDragStart(){
+			this.$emit('actionDragStart', '__actions-group');
+		},
+		onDragEnd(){
+			this.$emit('actionDragEnd');
 		},
 		cloneAction(action){
 			return {...action, resource_id: this.resource.resource_id, resource_name: this.resource.resource_name};

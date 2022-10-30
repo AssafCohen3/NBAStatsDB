@@ -1,14 +1,19 @@
+import logging
 import sqlite3
 import time
+from traceback import format_exc
+
 import sqlalchemy.exc
 import os.path
 import sys
 from threading import Thread
-from flask import Flask, request
+from flask import Flask, request, g
 from flask_cors import CORS
 import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
+
+from dbmanager.Errors import LibraryError, DatabaseNotInitiatedError, DatabaseError
 from dbmanager.FlaskLanguage import Language
 from dbmanager.blueprints.locale import locale_bp
 from dbmanager.blueprints.presets import presets_bp
@@ -29,17 +34,42 @@ tasks_thread = Thread(target=run_tasks_loop, daemon=True)
 tasks_thread.start()
 
 
+@app.before_request
+def test_before():
+    g.start = time.time()
+
+
+@app.after_request
+def after_request(resp):
+    diff = time.time() - g.start
+    logging.info(f'request took {diff} seconds')
+    return resp
+
+
 @resources_bp.before_request
 @presets_bp.before_request
 def validate_connection():
     if not db_manager.is_initiated():
-        return 'DB is not initiated', 400
+        raise DatabaseNotInitiatedError()
     try:
         db_manager.session.connection()
-    except sqlite3.DatabaseError:
-        return 'Could not connect to the database', 400
-    except sqlalchemy.exc.DatabaseError:
-        return 'Could not connect to the database', 400
+    except sqlite3.DatabaseError as e:
+        raise DatabaseError(str(e))
+    except sqlalchemy.exc.DatabaseError as e:
+        raise DatabaseError(str(e))
+
+
+@app.errorhandler(LibraryError)
+def library_error_handler(e):
+    traceback = format_exc()
+    return {'message': str(e), 'extended_message': repr(e), 'traceback': traceback, 'type': type(e).__name__}, 400
+
+
+@app.errorhandler(Exception)
+def internal_error_handler(e):
+    logging.error(f'internal error: {repr(e)}')
+    traceback = format_exc()
+    return {'message': str(e), 'extended_message': repr(e), 'traceback': traceback, 'type': type(e).__name__}, 500
 
 
 app.register_blueprint(resources_bp)

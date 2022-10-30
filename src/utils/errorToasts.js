@@ -4,7 +4,7 @@ import { useToast } from 'vue-toastification';
 
 export function toastError(axiosError){
 	const toast = useToast();
-	toast.error(axiosError.data);
+	toast.error(axiosError.data.message);
 }
 
 export function toastSuccess(message){

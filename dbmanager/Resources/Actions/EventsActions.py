@@ -160,6 +160,13 @@ class GeneralEventsAction(ActionAbc, ABC):
         self.games_to_fetch: List[GameDetails] = []
         self.current_game: Optional[GameDetails] = None
 
+    def init_task_data_abs(self) -> bool:
+        for season_type in self.season_types:
+            games_to_add = self.get_games_without_events(season_type) if self.update else self.get_all_games(season_type)
+            self.games_to_fetch.extend(games_to_add)
+        self.current_game = self.games_to_fetch[0] if self.games_to_fetch else None
+        return len(self.games_to_fetch) > 0
+
     def insert_events(self, game_id: str, events: List[dict]):
         delete_stmt = delete(Event).where(Event.GameId == game_id)
         self.session.execute(delete_stmt)
@@ -265,9 +272,6 @@ class GeneralEventsAction(ActionAbc, ABC):
         return [GameDetails(season_type, *g) for g in to_ret]
 
     async def action(self):
-        for season_type in self.season_types:
-            games_to_add = self.get_games_without_events(season_type) if self.update else self.get_all_games(season_type)
-            self.games_to_fetch.extend(games_to_add)
         for game, next_game in iterate_with_next(self.games_to_fetch):
             await self.collect_all_game_events(game)
             self.current_game = next_game

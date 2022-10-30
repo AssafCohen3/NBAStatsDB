@@ -20,10 +20,16 @@ class OddsGeneralAction(ActionAbc, ABC):
     def __init__(self, session: scoped_session, start_season: Optional[int], end_season: Optional[int], update: bool):
         super().__init__(session)
         self.start_season: int = start_season if start_season else FIRST_ODDS_SEASON
-        self.end_season: int = end_season if end_season else get_last_season_with_playoffs()
+        self.end_season: Optional[int] = end_season
         self.update: bool = update
+        self.seasons_to_fetch: List[int] = []
+        self.current_season: Optional[int] = None
+
+    def init_task_data_abs(self) -> bool:
+        self.end_season = self.end_season if self.end_season else get_last_season_with_playoffs()
         self.seasons_to_fetch: List[int] = self.get_seasons_to_fetch()
         self.current_season: Optional[int] = self.seasons_to_fetch[0] if self.seasons_to_fetch else None
+        return len(self.seasons_to_fetch) > 0
 
     def get_seasons_to_fetch(self) -> List[int]:
         initial_list = [i for i in range(self.start_season, self.end_season + 1) if i not in EXCLUDED_ODDS_SEASONS]

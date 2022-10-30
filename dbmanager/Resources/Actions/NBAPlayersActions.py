@@ -5,7 +5,6 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.NBAPlayer import NBAPlayer
 from dbmanager.Downloaders.NBAPlayersDownloader import NBAPlayersDownloader
 from dbmanager.Errors import ActionFailedError
-from dbmanager.Logger import log_message
 from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAPlayersActionSpecs import UpdateNBAPlayers
@@ -14,6 +13,9 @@ from dbmanager.SharedData.TodayConfig import today_config
 
 
 class UpdateNBAPlayersAction(ActionAbc):
+    def init_task_data_abs(self) -> bool:
+        return False
+
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
         return UpdateNBAPlayers
@@ -44,7 +46,6 @@ class UpdateNBAPlayersAction(ActionAbc):
         self.update_resource()
 
     async def action(self):
-        log_message('fetching nba players...')
         last_season = today_config.get_current_season()
         # TODO this may cause bugs because prod last season seems to refer to the year in which the season ended
         #  while the downloader expects for the year in which the season started. check this when season starts

@@ -66,7 +66,7 @@ class ResourceAbc(ABC):
     def get_action_cls(cls, action_id: str) -> Type[ActionAbc]:
         actions = [act for act in cls.get_actions() if act.get_action_spec().get_action_id() == action_id]
         if len(actions) == 0:
-            raise ActionNotExistError(cls.get_id(), action_id)
+            raise ActionNotExistError(cls.get_resource_spec(), action_id)
         return actions[0]
 
     @classmethod

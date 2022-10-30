@@ -5,8 +5,6 @@ from dbmanager.Errors import IlegalParameterValueError
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput
 from dbmanager.Resources.ActionSpecifications.ActionInput import SeasonTypeSelector, DateRangeSelector
 from dbmanager.Resources.ResourceSpecifications.EventsResourceSpecification import EventsResourceSpecification
-from dbmanager.Resources.ResourceSpecifications.TeamBoxScoreResourceSpecification import \
-    TeamBoxScoreResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SeasonType import get_season_types
 from dbmanager.constants import FIRST_NBA_SEASON
@@ -22,8 +20,8 @@ class UpdateEvents(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:
@@ -50,8 +48,8 @@ class ResetEvents(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:
@@ -78,8 +76,8 @@ class UpdateEventsInDateRange(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:
@@ -110,8 +108,8 @@ class ResetEventsInDateRange(ActionSpecificationAbc):
         type_code = params['season_type_code']
         season_types = get_season_types(type_code)
         if len(season_types) == 0:
-            raise IlegalParameterValueError(cls.get_action_id(), 'season_type_code',
-                                            params['season_type_code'], gettext('resources.common.errors.season_type_ilegal'))
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
 
     @classmethod
     def get_action_id(cls) -> str:

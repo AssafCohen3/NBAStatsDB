@@ -73,3 +73,10 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
                 self.announcer.announce_data(event, data)
         except Exception as e:
             self.error_msg = e
+
+    def init_task_data_abs(self) -> bool:
+        to_refresh = False
+        for action in self.tasks_to_run:
+            if action.init_task_data():
+                to_refresh = True
+        return to_refresh

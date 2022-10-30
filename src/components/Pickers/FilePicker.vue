@@ -17,7 +17,14 @@
 			class="hidden"
 			type="file"
 			@change="onFileChanged"
-		>			
+		>
+		<a 
+			v-if="exampleFileLink"
+			class="text-dimmed-white text-[14px] example-link"
+			:href="`${exampleFileLink}`"
+			download>
+			{{ $t('common.example_file') }}
+		</a>
 	</div>
 </template>
 
@@ -31,6 +38,10 @@ export default {
 		inputData: {
 			type: Object,
 			required: true,
+		},
+		exampleFileLink: {
+			type: String,
+			default: null,
 		},
 	},
 	emits: ['update:inputData'],
@@ -78,4 +89,8 @@ export default {
 	cursor: pointer;
 }
 
+.example-link{
+	text-underline-offset: 3px !important;
+	font-weight: 400 !important;
+}
 </style>

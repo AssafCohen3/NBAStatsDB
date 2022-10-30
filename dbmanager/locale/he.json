@@ -58,9 +58,7 @@
 			"description": "הורד בוקססקורס של קבוצות מאתר stats.nba"
 		},
 		"common": {
-			"errors": {
-				"season_type_ilegal": "קוד סוג עונה לא קיים"
-			}
+			"errors": {}
 		},
 		"nba_players": {
 			"actions": {

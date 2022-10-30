@@ -53,9 +53,7 @@
 			"description": "Download Teams Box Scores from stats.nba"
 		},
 		"common": {
-			"errors": {
-				"season_type_ilegal": "season type code not exist"
-			}
+			"errors": {}
 		},
 		"nba_players": {
 			"actions": {

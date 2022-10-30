@@ -64,8 +64,3 @@ def listen():
             logging.info('client disconnected')
             announcer.unlisten(listener_id)
     return flask.Response(stream(), mimetype='text/event-stream')
-
-
-@tasks_bp.errorhandler(TaskError)
-def task_error_handler(e):
-    return f'task error: {str(e)}', 400

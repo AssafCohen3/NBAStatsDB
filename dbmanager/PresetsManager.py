@@ -6,7 +6,8 @@ from dbmanager.AppI18n import get_default_locale
 from dbmanager.Database.Models.ActionRecipe import ActionRecipe
 from dbmanager.Database.Models.ActionRecipeParam import ActionRecipeParam
 from dbmanager.Database.Models.ActionsGroupPreset import ActionsGroupPreset
-from dbmanager.Errors import PresetNotExistError, PresetAlreadyExistError, ActionRecipeNotExistError, IlegalValueError
+from dbmanager.Errors import PresetNotExistError, PresetAlreadyExistError, ActionRecipeNotExistError, IlegalValueError, \
+    LibraryValueError
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import ActionsGroupPresetObject
 from dbmanager.SharedData.CachedData import CachedData, refresh_function, DontRefreshCacheError
@@ -62,7 +63,7 @@ class PresetsManager:
             raise PresetAlreadyExistError(preset_id)
         default_locale = get_default_locale()
         if not preset_name_json.get(default_locale):
-            raise ValueError(f'received preset name is missing the default translation locale ({default_locale})')
+            raise LibraryValueError(f'received preset name is missing the default translation locale ({default_locale})')
         insert_stmt = insert(ActionsGroupPreset)
         self.session.execute(insert_stmt, {
             'ActionsGroupPresetId': preset_id,
@@ -77,7 +78,7 @@ class PresetsManager:
             raise PresetNotExistError(preset_id)
         default_locale = get_default_locale()
         if not preset_name_json.get(default_locale):
-            raise ValueError(f'received preset name is missing the default translation locale ({default_locale})')
+            raise LibraryValueError(f'received preset name is missing the default translation locale ({default_locale})')
         update_stmt = (
             update(ActionsGroupPreset)
             .where(ActionsGroupPreset.ActionsGroupPresetId == preset_id)

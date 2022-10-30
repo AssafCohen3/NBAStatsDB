@@ -51,15 +51,24 @@ class GameToFetch:
 class GeneralStartersAction(ActionAbc, ABC):
     def __init__(self, session: scoped_session, start_season: Optional[int], end_season: Optional[int], to_update: bool):
         super().__init__(session)
-        min_season, max_season, count = get_starters_range(session)
-        self.start_season: int = start_season if start_season else min_season
-        self.end_season: int = end_season if end_season else max_season
+        self.start_season: Optional[int] = start_season
+        self.end_season: Optional[int] = end_season
         self.to_update: bool = to_update
+        self.seasons_to_fetch: List[MissingTeamSeason] = []
+        self.play_in_games_to_fetch: List[GameToFetch] = []
+        self.current_season: Optional[MissingTeamSeason] = None
+        self.current_game: Optional[GameToFetch] = None
+
+    def init_task_data_abs(self) -> bool:
+        min_season, max_season, count = get_starters_range(self.session)
+        self.start_season = self.start_season if self.start_season else min_season
+        self.end_season = self.end_season if self.end_season else max_season
         seasons_to_fetch, play_in_games_to_fetch = self.get_seasons_to_fetch()
-        self.seasons_to_fetch: List[MissingTeamSeason] = seasons_to_fetch
-        self.play_in_games_to_fetch: List[GameToFetch] = play_in_games_to_fetch
-        self.current_season: Optional[MissingTeamSeason] = self.seasons_to_fetch[0] if self.seasons_to_fetch else None
-        self.current_game: Optional[GameToFetch] = self.play_in_games_to_fetch[0] if self.play_in_games_to_fetch else None
+        self.seasons_to_fetch = seasons_to_fetch
+        self.play_in_games_to_fetch = play_in_games_to_fetch
+        self.current_season = self.seasons_to_fetch[0] if self.seasons_to_fetch else None
+        self.current_game = self.play_in_games_to_fetch[0] if self.play_in_games_to_fetch else None
+        return len(self.play_in_games_to_fetch) + len(self.seasons_to_fetch) > 0
 
     def get_seasons_to_fetch(self):
         stmt = (
