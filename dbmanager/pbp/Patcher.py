@@ -13,19 +13,19 @@ from pbpstats.resources.enhanced_pbp import (
     Turnover, InvalidNumberOfStartersException,
 )
 from pbpstats.resources.enhanced_pbp.stats_nba.rebound import StatsRebound
-import pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item as pbpItemClass
+import pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item as pbp_item_class
 from pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item import StatsEnhancedPbpItem
 from pbpstats.resources.enhanced_pbp.stats_nba.start_of_period import StatsStartOfPeriod
 
 from dbmanager.RequestHandlers.Sessions import stats_session
 
-pbpItemClass.KEY_ATTR_MAPPER['WCTIMESTRING'] = 'real_time'
-pbpItemClass.KEY_ATTR_MAPPER['PERSON1TYPE'] = 'person1_type'
-pbpItemClass.KEY_ATTR_MAPPER['PERSON2TYPE'] = 'person2_type'
-pbpItemClass.KEY_ATTR_MAPPER['PLAYER2_TEAM_ID'] = 'player2_team_id'
-pbpItemClass.KEY_ATTR_MAPPER['PERSON3TYPE'] = 'person3_type'
-pbpItemClass.KEY_ATTR_MAPPER['PLAYER3_TEAM_ID'] = 'player3_team_id'
-pbpItemClass.KEY_ATTR_MAPPER['SCOREMARGIN'] = 'score_margin_text'
+pbp_item_class.KEY_ATTR_MAPPER['WCTIMESTRING'] = 'real_time'
+pbp_item_class.KEY_ATTR_MAPPER['PERSON1TYPE'] = 'person1_type'
+pbp_item_class.KEY_ATTR_MAPPER['PERSON2TYPE'] = 'person2_type'
+pbp_item_class.KEY_ATTR_MAPPER['PLAYER2_TEAM_ID'] = 'player2_team_id'
+pbp_item_class.KEY_ATTR_MAPPER['PERSON3TYPE'] = 'person3_type'
+pbp_item_class.KEY_ATTR_MAPPER['PLAYER3_TEAM_ID'] = 'player3_team_id'
+pbp_item_class.KEY_ATTR_MAPPER['SCOREMARGIN'] = 'score_margin_text'
 
 
 async def _get_starters_from_boxscore_request(self):

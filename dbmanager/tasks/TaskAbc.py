@@ -46,7 +46,7 @@ class TaskAbc(ABC):
     def init_task(self, counter: itertools.count, announcer: AnnouncerAbc, retry_config: RetryConfig):
         self.set_task_id(next(counter))
         self.set_announcer(announcer)
-        self.retry_manager = RetryManager(retry_config, self.after_attempt_fail, self.after_retry_fail)
+        self.retry_manager = RetryManager(retry_config, self.after_attempt_fail, self.after_retry_fail, True)
 
     def init_task_data(self) -> bool:
         if self._data_initiated:
@@ -68,16 +68,22 @@ class TaskAbc(ABC):
     def set_announcer(self, announcer: AnnouncerAbc):
         self.announcer = announcer
 
-    def cancel_task(self):
+    def cancel_task_silent(self):
         if self.is_finished():
             raise TaskAlreadyFinishedError(self.get_task_id())
+        for sub_task in self.get_sub_tasks():
+            sub_task.cancel_task_silent()
         self.cancelled = True
         self.reset_resume_timer()
         if self.active is None:
             self.pre_active = True
-            self.announce_task_update('cancel')
         else:
             self.active.set()
+
+    def cancel_task(self):
+        self.cancel_task_silent()
+        if self.active is None:
+            self.announce_task_update('cancel')
 
     def pause(self):
         if self.is_finished():
@@ -274,6 +280,10 @@ class TaskAbc(ABC):
         self.subtask_finished = True
         await asyncio.sleep(0)
 
+    @abstractmethod
+    def get_sub_tasks(self) -> List['TaskAbc']:
+        pass
+
     def get_sub_task(self, task_path: List[int]) -> 'TaskAbc':
         if len(task_path) == 0:
             to_ret = self
@@ -306,7 +316,8 @@ class TaskAbc(ABC):
         logging.info(f'task {self.get_task_id()}: attempt number {attempt.attempt_number}(last attempt) of retry number {attempt.retry_number} failed. '
                      f'sleeping for {seconds_to_wait} seconds')
         self.pause()
-        self.resume_timer_handler = asyncio.get_event_loop().call_later(seconds_to_wait, self.resume)
+        if seconds_to_wait > 0:
+            self.resume_timer_handler = asyncio.get_event_loop().call_later(seconds_to_wait, self.resume)
         await asyncio.sleep(0)
 
     def reset_resume_timer(self):

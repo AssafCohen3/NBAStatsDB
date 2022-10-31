@@ -1,7 +1,7 @@
 import json
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from dbmanager.RequestHandlers.Sessions import stats_session
-from dbmanager.constants import PLAYERS_INDEX_ENDPOINT, STATS_HEADERS
+from dbmanager.constants import PLAYERS_INDEX_ENDPOINT
 
 
 class NBAPlayersDownloader(DownloaderAbs):

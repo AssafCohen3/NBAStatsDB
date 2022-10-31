@@ -2,7 +2,6 @@
 very inspired by the great library https://github.com/jd/tenacity which is sadly not fully supporting async currently
 """
 from __future__ import annotations
-import asyncio
 import time
 import typing
 from dataclasses import dataclass
@@ -30,8 +29,14 @@ class RetryConfig:
     delay_between_retries_multiplyer: float
 
 
-# waits 1, 2, 4, 8, 16 minutes before retrying
-DEFAULT_CONFIG = RetryConfig(2, 5, 3, 2, 20)
+# waits 1, 2, 4, 8 minutes before retrying
+DEFAULT_CONFIG = RetryConfig(
+    max_attempts_in_retry=2,
+    seconds_delay_between_attempts=5,
+    max_retries_number=4,
+    delay_between_retries_exponential_base=2,
+    delay_between_retries_multiplyer=60
+)
 
 
 class AttemptContextManager:
@@ -68,28 +73,42 @@ class AttemptContextManager:
             self.fail_timestamp = time.time()
             self.attempt_exception = exc_val
             if self.attempt_number < self.get_config().max_attempts_in_retry:
-                await self.retry_manager.after_fail_attempt_callback(self, self.get_config().seconds_delay_between_attempts)
+                # not last attempt
+                await self.retry_manager.after_fail_attempt_callback(self,
+                                                                     self.get_config().seconds_delay_between_attempts)
             elif self.retry_number <= self.get_config().max_retries_number:
+                # last attempt of non last retry
                 await self.retry_manager.after_fail_retry_callback(self, self.get_wait_after_retry_time())
+            else:
+                # last attempt of after last retry
+                await self.retry_manager.after_fail_retry_callback(self, -1)
             return True
 
 
 class RetryManager:
     def __init__(self, retry_config: RetryConfig,
                  after_fail_attempt_callback: AfterFailCallbackType,
-                 after_fail_retry_callback: AfterFailCallbackType):
+                 after_fail_retry_callback: AfterFailCallbackType,
+                 forever: bool):
         self.retry_config: RetryConfig = retry_config
         self.after_fail_attempt_callback: AfterFailCallbackType = after_fail_attempt_callback
         self.after_fail_retry_callback: AfterFailCallbackType = after_fail_retry_callback
+        self.forever: bool = forever
         self.current_attempt: Optional[AttemptContextManager] = None
 
     def _iter(self) -> Generator[AttemptContextManager, None, None]:
         for retry_number in range(0, self.retry_config.max_retries_number + 1):
             for attempt_number in range(1, self.retry_config.max_attempts_in_retry + 1):
                 self.current_attempt = AttemptContextManager(self, retry_number, attempt_number)
-                # TODO where is this resets?
                 yield self.current_attempt
                 # not certain to reach here(if the context manager passed fine)
+        if self.forever:
+            retry_number = self.retry_config.max_retries_number + 1
+            while True:
+                for attempt_number in range(1, self.retry_config.max_attempts_in_retry + 1):
+                    self.current_attempt = AttemptContextManager(self, retry_number, attempt_number)
+                    yield self.current_attempt
+                retry_number += 1
 
     def get_last_recoverable_failed_attempt(self) -> Optional[AttemptContextManager]:
         return self.current_attempt if self.current_attempt and self.current_attempt.to_recover else None
@@ -116,7 +135,7 @@ class RetryStatus:
         if not failed_attempt.failed:
             raise LibraryError('cant build retry status from a non failed attempt')
         return RetryStatus(failed_attempt.retry_number, failed_attempt.fail_timestamp, failed_attempt.get_wait_after_retry_time(),
-                           failed_attempt.retry_number == failed_attempt.get_config().max_retries_number)
+                           failed_attempt.retry_number >= failed_attempt.get_config().max_retries_number)
 
 
 TR = TypeVar('TR')
@@ -125,16 +144,14 @@ TR = TypeVar('TR')
 def retry_wrapper(method: TR) -> TR:
     @wraps(method)
     async def real_wrapper(self: TaskAbc, *args, **kwargs):
-        while True:
-            # start new retry session
-            with self.retry_manager as attempts_contexts_managers:
-                # for every attempt in the retry
-                for attempt_context_manager in attempts_contexts_managers:
-                    # start new attempt context.
-                    async with attempt_context_manager:
-                        res = await method(self, *args, **kwargs)
-                        return res
-                last_attempt = self.retry_manager.current_attempt
-            self.retry_manager.current_attempt = last_attempt
-            await asyncio.sleep(0)
+        # start new retry session
+        with self.retry_manager as attempts_contexts_managers:
+            # for every attempt in the retry
+            for attempt_context_manager in attempts_contexts_managers:
+                # start new attempt context.
+                async with attempt_context_manager:
+                    res = await method(self, *args, **kwargs)
+                    return res
+            # if in not forever mode and the retries ended raise the last error
+            raise self.retry_manager.get_last_recoverable_failed_attempt().attempt_exception
     return real_wrapper

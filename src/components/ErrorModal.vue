@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="bg-section-bg-not-transparent rounded-[10px] w-[50vw]">
+		class="bg-section-bg-not-transparent rounded-[10px] w-[50vw] overflow-auto">
 		<div
 			class="py-[20px]">
 			<div

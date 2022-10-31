@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC, abstractmethod
-from typing import Type, Dict, Any
+from typing import Type, Dict, Any, List
 
 from sqlalchemy import update
 from sqlalchemy.orm import scoped_session
@@ -70,3 +70,6 @@ class ActionAbc(TaskAbc, ABC):
             data_to_send = [res.get_id() for res in resources_to_update]
             data_to_send = json.dumps(data_to_send)
             self.call_annnouncer_with_data('refresh-resources', data_to_send)
+
+    def get_sub_tasks(self) -> List['TaskAbc']:
+        return []

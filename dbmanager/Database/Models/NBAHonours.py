@@ -1,5 +1,5 @@
 from sqlalchemy import Column, PrimaryKeyConstraint
-from sqlalchemy import Integer, Text, Date
+from sqlalchemy import Integer, Text
 
 from dbmanager.base import Base
 

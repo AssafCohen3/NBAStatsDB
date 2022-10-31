@@ -1,11 +1,12 @@
 import itertools
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Optional
 from dbmanager.AppI18n import TranslatableField
 from dbmanager.Errors import TaskPathNotExistError
 from dbmanager.tasks.RetryManager import RetryConfig
 from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
+from dbmanager.utils import iterate_with_next
 
 
 class TasksGroup(TaskAbc, AnnouncerAbc):
@@ -15,36 +16,43 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
         self.tasks_dict: Dict[int, TaskAbc] = {}
         self.group_id = group_id
         self.group_translatable_name = group_translatable_name
-        self.current_task_index = 0
+        self.current_task: Optional[TaskAbc] = self.tasks_to_run[0] if self.tasks_to_run else None
+
+    def get_subtasks_messages(self) -> List[TaskMessage]:
+        to_ret = []
+        for sub_task in self.tasks_to_run:
+            if not sub_task.is_dismissed():
+                to_ret.append(sub_task.to_task_message())
+        return to_ret
 
     def to_task_message(self) -> TaskMessage:
         return TaskMessage(
-            self.get_task_id(),
-            self.group_id,
-            self.group_translatable_name.get_value(),
-            None,
-            None,
-            self.get_current_subtask_text(),
-            self.completed_subtasks(),
-            self.subtasks_count(),
-            self.current_status(),
-            [a.to_task_message() for a in self.tasks_to_run if not a.is_dismissed()],
-            self.get_task_error_message(),
-            self.get_retry_status()
+            task_id=self.get_task_id(),
+            action_id=self.group_id,
+            action_title=self.group_translatable_name.get_value(),
+            resource_id=None,
+            resource_name=None,
+            mini_title=self.get_current_subtask_text_abs(),
+            completed=self.completed_subtasks(),
+            to_finish=self.subtasks_count(),
+            status=self.current_task.current_status() if self.current_task else self.current_status(),
+            subtasks_messages=self.get_subtasks_messages(),
+            exception=self.current_task.get_task_error_message() if self.current_task else self.get_task_error_message(),
+            retry_status=self.current_task.get_retry_status() if self.current_task else self.get_retry_status()
         )
 
     async def action(self):
-        for i, task in enumerate(self.tasks_to_run):
+        for task, next_task in iterate_with_next(self.tasks_to_run):
             await task
             task.after_execution_finished()
-            self.current_task_index = i+1
+            self.current_task = next_task
             await self.finish_subtask()
 
     def subtasks_count(self) -> Union[int, None]:
         return len(self.tasks_to_run)
 
     def get_current_subtask_text_abs(self) -> str:
-        return self.tasks_to_run[self.current_task_index].get_task_title() if self.current_task_index < len(self.tasks_to_run) else ''
+        return self.current_task.get_task_title() if self.current_task else ''
 
     def init_task(self, counter: itertools.count, announcer: AnnouncerAbc, retry_config: RetryConfig):
         super().init_task(counter, announcer, retry_config)
@@ -60,7 +68,7 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
     def announce_task_event(self, event: str, task_path: List[int], task: TaskAbc):
         try:
             if self.announcer:
-                self.announcer.announce_task_event(event, [self.get_task_id(), *task_path], task)
+                self.announcer.announce_task_event(event, [self.get_task_id()], self)
         except Exception as e:
             self.raise_error(e)
 
@@ -83,3 +91,14 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             if action.init_task_data():
                 to_refresh = True
         return to_refresh
+
+    def get_sub_tasks(self) -> List['TaskAbc']:
+        return self.tasks_to_run
+
+    def pause(self):
+        if self.current_task:
+            self.current_task.pause()
+
+    def resume(self):
+        if self.current_task:
+            self.current_task.resume()

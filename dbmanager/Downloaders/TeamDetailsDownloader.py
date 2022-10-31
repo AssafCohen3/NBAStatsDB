@@ -2,7 +2,7 @@ import json
 
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from dbmanager.RequestHandlers.Sessions import stats_session
-from dbmanager.constants import TEAM_DETAILS_ENDPOINT, STATS_HEADERS
+from dbmanager.constants import TEAM_DETAILS_ENDPOINT
 
 
 class TeamDetailsDownloader(DownloaderAbs):

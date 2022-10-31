@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Computed, DateTime
-from sqlalchemy import Integer, Text, Date
+from sqlalchemy import Column, DateTime
+from sqlalchemy import Text
 from dbmanager.base import Base
 
 

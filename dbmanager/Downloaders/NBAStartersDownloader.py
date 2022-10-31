@@ -2,7 +2,7 @@ import json
 
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from dbmanager.RequestHandlers.Sessions import stats_session
-from dbmanager.constants import NBA_STARTERS_ENDPOINT, STATS_HEADERS, START_POSITIONS
+from dbmanager.constants import NBA_STARTERS_ENDPOINT, START_POSITIONS
 
 
 class NBAStartersDownloader(DownloaderAbs):
