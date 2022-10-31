@@ -1,11 +1,9 @@
 import datetime
 import logging
 import re
-
-import requests
 from bs4 import BeautifulSoup
-
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
+from dbmanager.RequestHandlers.Sessions import bref_session
 from dbmanager.constants import BREF_STARTERS_URL, TEAM_IDS_TO_BREF_ABBR
 
 
@@ -17,7 +15,7 @@ class BREFStartersDownloader(DownloaderAbs):
 
     def download(self):
         to_send = BREF_STARTERS_URL % (self.get_team_abbrevation(), self.season+1)
-        r = requests.get(to_send, timeout=10)
+        r = bref_session.get(to_send)
         return self.from_html(r.text)
 
     def from_html(self, html_resp):

@@ -1,8 +1,9 @@
 import re
-import requests
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from bs4 import BeautifulSoup
 import pandas as pd
+
+from dbmanager.RequestHandlers.Sessions import timeout_session
 from dbmanager.constants import ODDS_ENDPOINT, ODDS_TEAM_NAMES, TEAM_NBA_NAME_TO_NBA_ID, ODDS_ROUNDS
 
 
@@ -12,7 +13,7 @@ class OddsDownloader(DownloaderAbs):
 
     def download(self):
         to_send = ODDS_ENDPOINT % f"{self.season}-{self.season + 1}"
-        r = requests.get(to_send)
+        r = timeout_session.get(to_send)
         soup = BeautifulSoup(r.content, 'html.parser')
         table = soup.find('table', {'class': "soh1"})
         if not table:

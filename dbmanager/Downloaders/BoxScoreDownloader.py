@@ -2,9 +2,9 @@ import datetime
 import json
 from typing import Optional
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import stats_session
+from dbmanager.RequestHandlers.Sessions import stats_session
 from dbmanager.SeasonType import SeasonType
-from dbmanager.constants import *
+from dbmanager.constants import BOXSCORES_ENDPOINT
 
 
 class BoxScoreDownloader(DownloaderAbs):
@@ -15,11 +15,11 @@ class BoxScoreDownloader(DownloaderAbs):
         self.season_type = season_type
         self.box_score_type = box_score_type
 
-    def download(self):
+    async def download(self):
         to_send = BOXSCORES_ENDPOINT % (self.date_from.isoformat() if self.date_from else '',
                                         self.date_until.isoformat() if self.date_until else '',
                                         self.box_score_type,
                                         self.season_type.api_name)
-        r = stats_session.get(to_send, headers=STATS_HEADERS)
+        r = await stats_session.async_get(to_send)
         to_ret = json.loads(r.content)
         return to_ret

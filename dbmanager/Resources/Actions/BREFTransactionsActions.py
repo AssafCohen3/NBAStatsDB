@@ -17,7 +17,8 @@ from dbmanager.transactions.TransactionCreator import TransactionsCreator
 from dbmanager.transactions.TransactionsAnalayzer import TransactionsAnalyzer, BREFPlayerMinimal
 from dbmanager.transactions.TransactionsParser import TransactionsParser
 from dbmanager.transactions.TransactionsScrapper import TransactionsScrapper
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 def get_transaction_key(t):

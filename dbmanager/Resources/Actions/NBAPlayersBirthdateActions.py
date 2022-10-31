@@ -10,12 +10,12 @@ from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Database.Models.NBAPlayer import NBAPlayer
 from dbmanager.Downloaders.PlayerProfileDownloader import PlayerProfileDownloader
 from dbmanager.Downloaders.TeamRosterDownloader import TeamRosterDownloader
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAPlayersBirthdateActionSpecs import UpdatePlayersBirthdate, DownloadPlayersBirthdateInSeasonRange, RedownloadPlayersBirthdate
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import REGULAR_SEASON_TYPE
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 @dataclass(unsafe_hash=True)
@@ -135,7 +135,7 @@ class GeneralDownloadPlayersBirthdateAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_team_roster(self, team_season: TeamSeason):
         downloader = TeamRosterDownloader(team_season.season, team_season.team_id)
-        data = await call_async_with_retry(downloader.download)
+        data = await downloader.download()
         data = data['resultSets'][0]['rowSet']
         players = [
             {
@@ -150,7 +150,7 @@ class GeneralDownloadPlayersBirthdateAction(ActionAbc, ABC):
     @retry_wrapper
     async def fetch_player_profile(self, player: PlayerToCollect):
         downloader = PlayerProfileDownloader(player.player_id)
-        data = await call_async_with_retry(downloader.download)
+        data = await downloader.download()
         data = data['resultSets'][0]['rowSet']
         players = [
             {

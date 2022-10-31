@@ -4,13 +4,11 @@ from sqlalchemy.dialects.sqlite import insert
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.NBAPlayer import NBAPlayer
 from dbmanager.Downloaders.NBAPlayersDownloader import NBAPlayersDownloader
-from dbmanager.Errors import ActionFailedError
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAPlayersActionSpecs import UpdateNBAPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.TodayConfig import today_config
-from dbmanager.utils import retry_wrapper
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 class UpdateNBAPlayersAction(ActionAbc):
@@ -52,9 +50,7 @@ class UpdateNBAPlayersAction(ActionAbc):
         # TODO this may cause bugs because prod last season seems to refer to the year in which the season ended
         #  while the downloader expects for the year in which the season started. check this when season starts
         downloader = NBAPlayersDownloader(last_season)
-        data = await call_async_with_retry(downloader.download)
-        if not data:
-            raise ActionFailedError(self.get_action_spec(), 'could not fetch players from stats.nba')
+        data = await downloader.download()
         data = data['resultSets'][0]['rowSet']
         data = [{
             'PlayerId': p[0],

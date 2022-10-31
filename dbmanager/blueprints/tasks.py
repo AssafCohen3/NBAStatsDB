@@ -2,9 +2,7 @@ import logging
 from typing import List
 
 import flask
-from flask import Blueprint, jsonify, request
-
-from dbmanager.Errors import TaskError
+from flask import Blueprint, jsonify
 from dbmanager.extensions import announcer
 from dbmanager.tasks.TaskManager import get_tasks_messages, pause_task, resume_task, cancel_task, \
     dismiss_task

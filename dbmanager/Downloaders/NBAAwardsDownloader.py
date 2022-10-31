@@ -1,15 +1,15 @@
 import json
 
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import stats_session
-from dbmanager.constants import PLAYER_AWARDS_ENDPOINT, STATS_HEADERS
+from dbmanager.RequestHandlers.Sessions import stats_session
+from dbmanager.constants import PLAYER_AWARDS_ENDPOINT
 
 
 class NBAAwardsDownloader(DownloaderAbs):
     def __init__(self, player_id):
         self.player_id = player_id
 
-    def download(self):
+    async def download(self):
         to_send = PLAYER_AWARDS_ENDPOINT % self.player_id
-        r = stats_session.get(to_send, headers=STATS_HEADERS)
+        r = await stats_session.async_get(to_send)
         return json.loads(r.text)

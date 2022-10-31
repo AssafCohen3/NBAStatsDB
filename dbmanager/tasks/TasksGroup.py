@@ -2,6 +2,7 @@ import itertools
 from typing import List, Union, Dict
 from dbmanager.AppI18n import TranslatableField
 from dbmanager.Errors import TaskPathNotExistError
+from dbmanager.tasks.RetryManager import RetryConfig
 from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
@@ -27,7 +28,9 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             self.completed_subtasks(),
             self.subtasks_count(),
             self.current_status(),
-            [a.to_task_message() for a in self.tasks_to_run if not a.is_dismissed()]
+            [a.to_task_message() for a in self.tasks_to_run if not a.is_dismissed()],
+            self.get_task_error_message(),
+            self.get_retry_status()
         )
 
     async def action(self):
@@ -43,10 +46,10 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
     def get_current_subtask_text_abs(self) -> str:
         return self.tasks_to_run[self.current_task_index].get_task_title() if self.current_task_index < len(self.tasks_to_run) else ''
 
-    def init_task(self, counter: itertools.count, announcer: AnnouncerAbc):
-        super().init_task(counter, announcer)
+    def init_task(self, counter: itertools.count, announcer: AnnouncerAbc, retry_config: RetryConfig):
+        super().init_task(counter, announcer, retry_config)
         for action in self.tasks_to_run:
-            action.init_task(counter, self)
+            action.init_task(counter, self, retry_config)
             self.tasks_dict[action.get_task_id()] = action
 
     def get_sub_task_abs(self, task_path: List[int]) -> 'TaskAbc':
@@ -59,7 +62,7 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             if self.announcer:
                 self.announcer.announce_task_event(event, [self.get_task_id(), *task_path], task)
         except Exception as e:
-            self.error_msg = e
+            self.raise_error(e)
 
     def get_task_title(self) -> str:
         return self.group_translatable_name.get_value()
@@ -72,7 +75,7 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             if self.announcer:
                 self.announcer.announce_data(event, data)
         except Exception as e:
-            self.error_msg = e
+            self.raise_error(e)
 
     def init_task_data_abs(self) -> bool:
         to_refresh = False

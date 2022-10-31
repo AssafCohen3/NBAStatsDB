@@ -3,7 +3,6 @@ from abc import ABC
 from dataclasses import dataclass
 from json import dumps
 from typing import Union, Optional, List, Type
-from urllib.error import HTTPError
 from sqlalchemy import select, delete, outerjoin, and_, or_
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
@@ -11,15 +10,14 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Database.Models.Event import Event
 from dbmanager.Downloaders.EventsDownloader import EventsDownloader
-from dbmanager.Logger import log_message
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.EventsActionSpecs import UpdateEvents, ResetEvents, \
     UpdateEventsInDateRange, ResetEventsInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.pbp.MyPBPLoader import MyPBPLoader
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 @dataclass
@@ -93,10 +91,11 @@ def add_possesion_number(events):
             current_possesion += 1
 
 
-def transform_game_events(game_details: GameDetails, events: List[dict]):
+async def transform_game_events(game_details: GameDetails, events: List[dict]):
     fix_events(events)
-    tranformed_events = MyPBPLoader(game_details.game_id, events)
-    add_possesion_number(tranformed_events.items)
+    pbp_loader = MyPBPLoader(game_details.game_id, events)
+    await pbp_loader.my_make_pbp_items()
+    add_possesion_number(pbp_loader.items)
     tranformed_events = [
         [
             game_details.season,
@@ -141,7 +140,7 @@ def transform_game_events(game_details: GameDetails, events: List[dict]):
             e.order,
             e.possesion_number
         ]
-        for e in tranformed_events.items
+        for e in pbp_loader.items
     ]
     return tranformed_events
 
@@ -179,15 +178,8 @@ class GeneralEventsAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_all_game_events(self, game_details: GameDetails):
         downloader = EventsDownloader(game_details.game_id)
-        data = await call_async_with_retry(downloader.download)
-        if not data:
-            log_message(f'failed to fetch {game_details.game_id} events. try again later.')
-            return
-        try:
-            transformed_events = transform_game_events(game_details, data)
-        except HTTPError as e:
-            log_message(f'failed transforming {game_details.game_id} events. try again later. error: {str(e)}')
-            return
+        data = await downloader.download()
+        transformed_events = await transform_game_events(game_details, data)
         headers = [
             'Season',
             'SeasonType',

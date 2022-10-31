@@ -1,7 +1,7 @@
 import json
 
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import stats_session
+from dbmanager.RequestHandlers.Sessions import stats_session
 from dbmanager.constants import NBA_STARTERS_ENDPOINT, STATS_HEADERS, START_POSITIONS
 
 
@@ -10,9 +10,9 @@ class NBAStartersDownloader(DownloaderAbs):
         super().__init__()
         self.game_id = game_id
 
-    def download(self):
+    async def download(self):
         url = NBA_STARTERS_ENDPOINT % self.game_id
-        resp = stats_session.get(url, headers=STATS_HEADERS)
+        resp = await stats_session.async_get(url)
         data = json.loads(resp.text)
         data = data['resultSets'][0]
         headers = data['headers']

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import traceback
 import typing
 from abc import ABC
+from dataclasses import dataclass
 from typing import Dict, List, Type
 
 
@@ -243,3 +245,18 @@ class DatabaseNotInitiatedError(DatabaseError):
 class RequestTypeError(LibraryError):
     def __init__(self, msg: str):
         super().__init__(msg)
+
+
+@dataclass
+class ExceptionMessage:
+    message: str
+    representation: str
+    traceback: str
+    type: str
+
+    @classmethod
+    def build_from_exception(cls, exc_val: Exception) -> ExceptionMessage:
+        return ExceptionMessage(str(exc_val), repr(exc_val), '\n'.join(traceback.format_exception(exc_val.__class__,
+                                                                                                  exc_val,
+                                                                                                  exc_val.__traceback__)),
+                                exc_val.__class__.__name__)

@@ -9,14 +9,14 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreDownloader
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.PlayerBoxScoreActionSpecs import UpdatePlayerBoxScores, \
     ResetPlayerBoxScores, UpdatePlayerBoxScoresInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.constants import STATS_API_COUNT_THRESHOLD, NBA_GAME_IDS_GAME_DATE_CORRECTION
-from dbmanager.utils import retry_wrapper, iterate_with_next
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 def transform_boxscores(rows: List[Any], headers: List[str]) -> List[Dict[str, Any]]:
@@ -117,9 +117,7 @@ class GeneralResetPlayerBoxScoresAction(ActionAbc, ABC):
             season_type, 'P'
         )
         last_date_to_ret = None
-        data = await call_async_with_retry(downloader.download)
-        if not data:
-            return last_date_to_ret
+        data = await downloader.download()
         data = data["resultSets"][0]
         headers = data["headers"]
         results = data["rowSet"]

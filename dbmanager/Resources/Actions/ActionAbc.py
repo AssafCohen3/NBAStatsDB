@@ -49,7 +49,10 @@ class ActionAbc(TaskAbc, ABC):
             self.get_current_subtask_text(),
             self.completed_subtasks(),
             self.subtasks_count(),
-            self.current_status()
+            self.current_status(),
+            [],
+            self.get_task_error_message(),
+            self.get_retry_status()
         )
 
     def update_resource(self):

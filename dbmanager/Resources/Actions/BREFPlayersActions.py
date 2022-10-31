@@ -12,7 +12,8 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.BREFPlayersActionSpecs import UpdateBREFPlayers, RedownloadBREFPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.PlayersIndex import players_index
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):

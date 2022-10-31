@@ -9,15 +9,14 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.NBAAwards import NBAAwards
 from dbmanager.Downloaders.NBAAwardsDownloader import NBAAwardsDownloader
-from dbmanager.Logger import log_message
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAAwardsActionSpecs import DownloadAllPlayersAwards, \
     DownloadActivePlayersAwards, DownloadRookiesAwardsInSeasonsRange, DownloadPlayerAwards
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.FranchisesHistory import franchises_history, FranchiseSpan
 from dbmanager.SharedData.PlayersIndex import PlayerDetails, players_index
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 def transform_award(award_row):
@@ -76,10 +75,7 @@ class GeneralDownloadAwardsAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_player_awards(self, player: PlayerDetails):
         downloader = NBAAwardsDownloader(player.player_id)
-        data = await call_async_with_retry(downloader.download)
-        if not data:
-            log_message(f'couldnt fetch awards of {player.player_name}({player.player_id}). try again later')
-            return
+        data = await downloader.download()
         data = data['resultSets'][0]['rowSet']
         awards = [transform_award(p) for p in data]
         self.insert_awards(player.player_id, awards)

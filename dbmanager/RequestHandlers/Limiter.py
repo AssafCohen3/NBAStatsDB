@@ -24,6 +24,12 @@ class StatsLimiter:
     def release_with_delay(self):
         asyncio.get_event_loop().call_later(self.delay, self._ready.set)
 
+    async def __aenter__(self):
+        await self.acquire()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.release_with_delay()
+
 
 # to be initiated in the asyncio thread
 stats_limiter = StatsLimiter(STATS_API_DELAY_SECONDS)

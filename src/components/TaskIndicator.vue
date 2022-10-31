@@ -10,7 +10,9 @@
 			<!-- task icon -->
 			<v-icon
 				:color="taskIconColor"
-				size="x-large">
+				:class="hasError ? ['cursor-pointer'] : []"
+				size="x-large"
+				v-on="hasError ? {click: errorClick} : {}">
 				{{ taskIcon }}
 			</v-icon>
 			<!-- main content -->
@@ -108,14 +110,24 @@
 				</div>
 			</TransitionHeight>
 		</template>
+		<v-dialog
+			v-if="hasError"
+			v-model="isErrorModalOpen">
+			<error-modal
+				:error="task.exception" />
+		</v-dialog>
 	</div>
 </template>
 
 <script>
+import ErrorModal from './ErrorModal.vue';
 import TransitionHeight from './TransitionHeight.vue';
 
 export default {
-	components: {TransitionHeight},
+	components: {
+		TransitionHeight,
+		ErrorModal, 
+	},
 	props: {
 		task: {
 			type: Object,
@@ -131,6 +143,7 @@ export default {
 	data(){
 		return {
 			expanded: false,
+			isErrorModalOpen: false,
 		};
 	},
 	computed: {
@@ -167,6 +180,9 @@ export default {
 			}
 		},
 		taskMiniText(){
+			if(this.isRecoverMode){
+				return this.recoverText;
+			}
 			switch(this.task.status){
 			case 'active':
 				return this.task.mini_title;
@@ -187,6 +203,27 @@ export default {
 		},
 		canDismiss(){
 			return ['error', 'cancelled', 'finished'].includes(this.task.status);
+		},
+		isRecoverMode(){
+			return !!this.task.retry_status;
+		},
+		hasError(){
+			return !!this.task.exception;
+		},
+		recoverText(){
+			if(this.isRecoverMode){
+				let toRet = this.task.mini_title;
+				if(this.task.retry_status.is_last_retry){
+					toRet += ' ' + this.$t('tasks.you_can_try_to_resume');
+				}
+				else{
+					let timestamp = this.task.retry_status.timestamp + this.task.retry_status.seconds_to_wait;
+					let formattedDueTime = this.$moment.unix(timestamp).format('HH:mm');
+					toRet += ' ' + this.$t('tasks.auto_retrying_in', {time: formattedDueTime});
+				}
+				return toRet;
+			}
+			return '';
 		}
 	},
 	methods: {
@@ -201,6 +238,9 @@ export default {
 		},
 		dismissTask(taskPath=[]){
 			this.$emit('dismissTask', [this.task.task_id, ...taskPath]);
+		},
+		errorClick(){
+			this.isErrorModalOpen = true;
 		},
 	}
 };

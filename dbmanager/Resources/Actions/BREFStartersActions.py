@@ -9,14 +9,14 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BREFStartersDownloader import BREFStartersDownloader
 from dbmanager.Downloaders.NBAStartersDownloader import NBAStartersDownloader
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFStartersActionSpecs import get_starters_range, UpdateStarters, \
     RedownloadStarters, RedownloadStartersInSeasonsRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import PLAYIN_SEASON_TYPE
 from dbmanager.SharedData.LiveMappings import live_mappings
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 @dataclass
@@ -152,7 +152,7 @@ class GeneralStartersAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_game_starters(self, game: GameToFetch):
         downloader = NBAStartersDownloader(game.game_id)
-        games_with_starters, games_rows_to_update = await call_async_with_retry(downloader.download)
+        games_with_starters, games_rows_to_update = await downloader.download()
         starters_to_update = [
             GameToUpdateWithStarter(
                 *game_with_starter

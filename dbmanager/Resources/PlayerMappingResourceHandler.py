@@ -1,8 +1,6 @@
 from typing import List, Type, Tuple, Dict
-
 from sqlalchemy import select
 from sqlalchemy.orm import scoped_session
-
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc

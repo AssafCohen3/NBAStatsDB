@@ -52,11 +52,13 @@
 		"idValidator": "ID must start with an english character or number and contain only english characters, numbers and underscores."
 	},
 	"tasks": {
-		"error_occurred": "An error occurred",
+		"error_occurred": "A critical error has occurred. the task has been cancelled.",
 		"task_cancelled": "The task has been cancelled",
 		"task_finished": "The task finished successfully",
 		"progress_line": "{completed} out of {to_finish}",
-		"progress_line_no_to_finish": "{completed} completed"
+		"progress_line_no_to_finish": "{completed} completed",
+		"you_can_try_to_resume": "You can try to continue the task.",
+		"auto_retrying_in": "retrying again in {time}"
 	},
 	"messages": {
 		"action_recipe_removed_successfully": "Action removed successfully from the group",
@@ -70,5 +72,10 @@
 		"preset_created_successfully": "The actions group created successfully",
 		"action_submited_successfully": "Action submitted successfully",
 		"preset_dispatched_successfully": "Actions group submitted to execution successfully"
+	},
+	"errors": {
+		"error_message": "Error message",
+		"error_description": "Error description",
+		"error_traceback": "Error traceback"
 	}
 }

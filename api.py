@@ -1,8 +1,7 @@
 import logging
 import sqlite3
 import time
-from traceback import format_exc
-
+from dataclasses import asdict
 import sqlalchemy.exc
 import os.path
 import sys
@@ -13,7 +12,7 @@ import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from dbmanager.Errors import LibraryError, DatabaseNotInitiatedError, DatabaseError
+from dbmanager.Errors import LibraryError, DatabaseNotInitiatedError, DatabaseError, ExceptionMessage
 from dbmanager.FlaskLanguage import Language
 from dbmanager.blueprints.locale import locale_bp
 from dbmanager.blueprints.presets import presets_bp
@@ -61,15 +60,16 @@ def validate_connection():
 
 @app.errorhandler(LibraryError)
 def library_error_handler(e):
-    traceback = format_exc()
-    return {'message': str(e), 'extended_message': repr(e), 'traceback': traceback, 'type': type(e).__name__}, 400
+    logging.error(f'library error: {repr(e)}')
+    to_ret = ExceptionMessage.build_from_exception(e)
+    return asdict(to_ret), 400
 
 
 @app.errorhandler(Exception)
 def internal_error_handler(e):
     logging.error(f'internal error: {repr(e)}')
-    traceback = format_exc()
-    return {'message': str(e), 'extended_message': repr(e), 'traceback': traceback, 'type': type(e).__name__}, 500
+    to_ret = ExceptionMessage.build_from_exception(e)
+    return asdict(to_ret), 500
 
 
 app.register_blueprint(resources_bp)

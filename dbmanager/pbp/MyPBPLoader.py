@@ -7,9 +7,17 @@ class MyPBPLoader(StatsNbaEnhancedPbpLoader):
     def __init__(self, game_id, events):
         self.file_directory = None
         self.shots_source_loader = None
+        self.items = []
+        self.factory = None
         super().__init__(game_id, MySourceLoader(None, events))
 
     def _make_pbp_items(self):
+        """
+        dummy version so now i can load the data myself
+        """
+        return
+
+    async def my_make_pbp_items(self):
         self._fix_order_when_technical_foul_before_period_start()
         self.factory = StatsNbaEnhancedPbpFactory()
         self.items = [
@@ -17,7 +25,24 @@ class MyPBPLoader(StatsNbaEnhancedPbpLoader):
             for i, item in enumerate(self.data)
         ]
         self._add_extra_attrs_to_all_events()
+        await self.my_set_period_start_items()
         self._check_rebound_event_order(6)
+
+    def _set_period_start_items(self):
+        # cancel the call pf super to this function
+        return
+
+    async def my_set_period_start_items(self):
+        """
+        sets team starting period with the ball and period starters for each team
+        """
+        for i in self.start_period_indices:
+            team_id = self.items[i].get_team_starting_with_ball()
+            self.items[i].team_starting_with_ball = team_id
+            period_starters = await self.items[i].get_period_starters(
+                file_directory=self.file_directory
+            )
+            self.items[i].period_starters = period_starters
 
     def _use_data_nba_event_order(self):
         return

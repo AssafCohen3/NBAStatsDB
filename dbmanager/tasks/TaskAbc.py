@@ -2,13 +2,15 @@ import asyncio
 import itertools
 import logging
 from abc import ABC, abstractmethod
+from asyncio import TimerHandle
 from typing import Optional, Union, List
+import requests.exceptions
 from dbmanager.AppI18n import gettext
 from dbmanager.Errors import TaskPathNotExistError, TaskDismissedError, TaskAlreadyFinishedError, TaskNotInitiatedError, \
     TaskNotFinishedError
+from dbmanager.tasks.RetryManager import RetryManager, RetryConfig, AttemptContextManager, RetryStatus
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
-from dbmanager.tasks.TaskMessage import TaskMessage
-from dbmanager.utils import RecoverableError
+from dbmanager.tasks.TaskMessage import TaskMessage, ExceptionMessage
 
 
 class ThreadSafeEvent(asyncio.Event):
@@ -25,12 +27,12 @@ class ThreadSafeEvent(asyncio.Event):
 
 
 class TaskAbc(ABC):
-    def __init__(self, max_retries_number: int = 1, seconds_to_sleep_between_retries: float = 1.0):
+    def __init__(self):
         self._task_id: int = -1
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
-        self.error_msg: Optional[Exception] = None
+        self._error_msg: Optional[Exception] = None
         self.completed_subtasks_count = 0
         self.finished = False
         self.started = False
@@ -38,13 +40,13 @@ class TaskAbc(ABC):
         self.subtask_finished = False
         self.dismissed = False
         self._data_initiated = False
-        self.recoverable_error: Optional[RecoverableError] = None
-        self.max_retries_number = max_retries_number
-        self.seconds_to_sleep_between_retries = seconds_to_sleep_between_retries
+        self.retry_manager: Optional[RetryManager] = None
+        self.resume_timer_handler: Optional[TimerHandle] = None
 
-    def init_task(self, counter: itertools.count, announcer: AnnouncerAbc):
+    def init_task(self, counter: itertools.count, announcer: AnnouncerAbc, retry_config: RetryConfig):
         self.set_task_id(next(counter))
         self.set_announcer(announcer)
+        self.retry_manager = RetryManager(retry_config, self.after_attempt_fail, self.after_retry_fail)
 
     def init_task_data(self) -> bool:
         if self._data_initiated:
@@ -70,6 +72,7 @@ class TaskAbc(ABC):
         if self.is_finished():
             raise TaskAlreadyFinishedError(self.get_task_id())
         self.cancelled = True
+        self.reset_resume_timer()
         if self.active is None:
             self.pre_active = True
             self.announce_task_update('cancel')
@@ -88,6 +91,7 @@ class TaskAbc(ABC):
     def resume(self):
         if self.is_finished():
             raise TaskAlreadyFinishedError(self.get_task_id())
+        self.reset_resume_timer()
         if self.active is None:
             self.pre_active = True
             self.announce_task_update('resume')
@@ -120,9 +124,6 @@ class TaskAbc(ABC):
             if self.is_dismissed():
                 return None
 
-            # reset the recoverable error. if the user tried to resume it will be updated even if the resume wasnt a success
-            self.recoverable_error = None
-
             # if actually paused and woke up because of resume(and not because cancelling)
             if paused and not self.cancelled:
                 self.announce_task_update('resume')
@@ -133,7 +134,7 @@ class TaskAbc(ABC):
                 return None
 
             # if crashed not in action
-            if self.error_msg:
+            if self.is_error():
                 self.announce_task_update('error')
                 return None
 
@@ -150,7 +151,7 @@ class TaskAbc(ABC):
                 return err.value
             except Exception as gen_err:
                 # error
-                self.error_msg = gen_err
+                self.raise_error(gen_err)
                 self.announce_task_update('error')
                 return None
             else:
@@ -159,15 +160,13 @@ class TaskAbc(ABC):
             # if already started and finished with finish_subtask()
             if self.started and self.subtask_finished:
                 self.announce_task_update('sub-finish')
-            elif self.started and self.recoverable_error:
-                self.pause()
             try:
                 message = yield signal
             except BaseException as err:
                 send, message = iter_throw, err
 
     def current_status(self) -> str:
-        if self.error_msg:
+        if self.is_error():
             return 'error'
         if self.cancelled:
             return 'cancelled'
@@ -209,14 +208,17 @@ class TaskAbc(ABC):
         return self.completed_subtasks_count
 
     def get_current_subtask_text(self) -> str:
-        if self.error_msg:
-            return repr(self.error_msg)
+        if self.is_error():
+            return repr(self.get_current_error())
         if self.cancelled:
             return gettext('common.cancelled')
         if self.is_finished():
             return gettext('common.finished')
-        if self.recoverable_error:
-            return 'Connection error. you can try to resume'
+        if self.is_recover_mode():
+            if isinstance(self.get_last_failed_attempt().attempt_exception, requests.exceptions.RequestException):
+                return gettext('common.received_recoverable_connection_error')
+            else:
+                return gettext('common.received_recoverable_arbitrary_error')
         return self.get_current_subtask_text_abs()
 
     @abstractmethod
@@ -226,13 +228,16 @@ class TaskAbc(ABC):
         """
 
     def is_finished(self) -> bool:
-        return self.cancelled or self.error_msg or self.finished
+        return self.cancelled or self.is_error() or self.finished
 
     def is_dismissed(self) -> bool:
         return self.dismissed
 
     def is_active(self) -> bool:
         return not self.is_finished() and ((self.started and self.active.is_set()) or (not self.started and self.pre_active))
+
+    def is_error(self):
+        return self.get_current_error() is not None
 
     @abstractmethod
     def to_task_message(self) -> TaskMessage:
@@ -251,14 +256,14 @@ class TaskAbc(ABC):
             if self.announcer:
                 self.announcer.announce_task_event(f'task-update-{event_type}', [self.get_task_id()], self)
         except Exception as e:
-            self.error_msg = e
+            self.raise_error(e)
 
     def call_annnouncer_with_data(self, event: str, data: str):
         try:
             if self.announcer:
                 self.announcer.announce_data(event, data)
         except Exception as e:
-            self.error_msg = e
+            self.raise_error(e)
 
     async def finish_subtask(self):
         self.completed_subtasks_count += 1
@@ -281,15 +286,42 @@ class TaskAbc(ABC):
     def get_sub_task_abs(self, task_path: List[int]) -> 'TaskAbc':
         raise TaskPathNotExistError(self.get_task_id(), task_path)
 
-    async def raise_recoverable_error(self, recoverable_error: RecoverableError):
-        self.recoverable_error = recoverable_error
+    def raise_error(self, e: Exception):
+        self._error_msg = e
+
+    def get_current_error(self):
+        return self._error_msg
+
+    def is_recover_mode(self) -> bool:
+        return self.started and self.retry_manager and self.retry_manager.get_last_recoverable_failed_attempt() is not None and not self.is_active()
+
+    def get_last_failed_attempt(self) -> Optional[AttemptContextManager]:
+        return self.retry_manager.get_last_recoverable_failed_attempt() if self.retry_manager else None
+
+    async def after_attempt_fail(self, attempt: AttemptContextManager, seconds_to_wait: float):
+        logging.info(f'task {self.get_task_id()}: attempt number {attempt.attempt_number} of retry number {attempt.retry_number} failed. sleeping for {seconds_to_wait} seconds')
+        await asyncio.sleep(seconds_to_wait)
+
+    async def after_retry_fail(self, attempt: AttemptContextManager, seconds_to_wait: float):
+        logging.info(f'task {self.get_task_id()}: attempt number {attempt.attempt_number}(last attempt) of retry number {attempt.retry_number} failed. '
+                     f'sleeping for {seconds_to_wait} seconds')
+        self.pause()
+        self.resume_timer_handler = asyncio.get_event_loop().call_later(seconds_to_wait, self.resume)
         await asyncio.sleep(0)
 
-    def get_max_retries_number(self) -> int:
-        return self.max_retries_number
+    def reset_resume_timer(self):
+        if self.resume_timer_handler:
+            self.resume_timer_handler.cancel()
+            self.resume_timer_handler = None
 
-    def on_retry(self, attempt_number, exception: RecoverableError):
-        logging.info(f'task {self.get_task_id()}: received exception {exception} in attempt number {attempt_number}.')
+    def get_task_error_message(self) -> Optional[ExceptionMessage]:
+        if self.is_error():
+            return ExceptionMessage.build_from_exception(self.get_current_error())
+        if self.is_recover_mode():
+            return ExceptionMessage.build_from_exception(self.get_last_failed_attempt().attempt_exception)
+        return None
 
-    def get_seconds_tp_sleep_between_retries(self) -> float:
-        return self.seconds_to_sleep_between_retries
+    def get_retry_status(self) -> Optional[RetryStatus]:
+        if self.is_recover_mode():
+            return RetryStatus.build_from_attempt(self.get_last_failed_attempt())
+        return None

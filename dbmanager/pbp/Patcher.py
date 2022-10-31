@@ -2,7 +2,6 @@
 import dbmanager.pbp.PatchTimeout
 from pbpstats.resources.enhanced_pbp.rebound import EventOrderError
 from pbpstats.resources.enhanced_pbp.stats_nba import StatsViolation
-from pbpstats import HEADERS, REQUEST_TIMEOUT
 from pbpstats.resources.enhanced_pbp import (
     FieldGoal,
     Foul,
@@ -18,7 +17,7 @@ import pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item as pbpItemCla
 from pbpstats.resources.enhanced_pbp.stats_nba.enhanced_pbp_item import StatsEnhancedPbpItem
 from pbpstats.resources.enhanced_pbp.stats_nba.start_of_period import StatsStartOfPeriod
 
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import stats_session
+from dbmanager.RequestHandlers.Sessions import stats_session
 
 pbpItemClass.KEY_ATTR_MAPPER['WCTIMESTRING'] = 'real_time'
 pbpItemClass.KEY_ATTR_MAPPER['PERSON1TYPE'] = 'person1_type'
@@ -29,7 +28,7 @@ pbpItemClass.KEY_ATTR_MAPPER['PLAYER3_TEAM_ID'] = 'player3_team_id'
 pbpItemClass.KEY_ATTR_MAPPER['SCOREMARGIN'] = 'score_margin_text'
 
 
-def _get_starters_from_boxscore_request(self):
+async def _get_starters_from_boxscore_request(self):
     """
     makes request to boxscore url for time from period start to first event to get period starters
     """
@@ -57,8 +56,8 @@ def _get_starters_from_boxscore_request(self):
         "EndRange": end_range,
     }
     starters_by_team = {}
-    response = stats_session.get(
-        base_url, params=params, headers=HEADERS, timeout=REQUEST_TIMEOUT
+    response = await stats_session.get(
+        base_url, params=params
     )
     if response.status_code == 200:
         response_json = response.json()
@@ -217,6 +216,24 @@ def missed_shot(self):
     )
 
 
+async def get_period_starters(self, file_directory=None):
+    """
+    Gets player ids of players who started the period for each team.
+    If players can't be determined from parsing pbp, will try to
+    find them by making API request to stats.nba.com boxscore filtered by time.
+
+    :returns: dict with list of player ids for each team
+        with players on the floor at start of period
+    :raises: :obj:`~pbpstats.resources.enhanced_pbp.start_of_period.InvalidNumberOfStartersException`:
+        If all 5 players that start the period for a team can't be determined.
+    """
+    try:
+        return self._get_period_starters_from_period_events(file_directory)
+    except InvalidNumberOfStartersException:
+        return await self._get_starters_from_boxscore_request()
+
+
 setattr(StatsRebound, 'missed_shot', new_rebound_missed_shot_property)
 setattr(StatsEnhancedPbpItem, 'get_offense_team_id', get_offense_team_id)
+setattr(StatsStartOfPeriod, 'get_period_starters', get_period_starters)
 setattr(StatsStartOfPeriod, '_get_starters_from_boxscore_request', _get_starters_from_boxscore_request)

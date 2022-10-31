@@ -4,6 +4,7 @@ from typing import Dict, List
 from dbmanager.Errors import EmptyTaskPathError, TaskNotExistError
 from dbmanager.RequestHandlers.Limiter import stats_limiter
 from dbmanager.extensions import announcer
+from dbmanager.tasks.RetryManager import DEFAULT_CONFIG
 from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
 
@@ -22,7 +23,7 @@ tasks_dictionary: Dict[int, TaskAbc] = {}
 
 def enqueue_task(task: TaskAbc, done_callback=None):
     async def adder_coro():
-        task.init_task(current_task_id, announcer)
+        task.init_task(current_task_id, announcer, DEFAULT_CONFIG)
         tasks_dictionary[task.get_task_id()] = task
         await task
         task.after_execution_finished()

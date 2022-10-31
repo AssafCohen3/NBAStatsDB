@@ -11,7 +11,8 @@ from dbmanager.Resources.ActionSpecifications.BREFPlayoffSeriesActionSpecs impor
     RedownloadBREFPlayoffSeries, RedownloadBREFPlayoffSeriesInSeasonsRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.BREFSeasonsLinks import BREFSeasonLink, bref_seasons_links
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):

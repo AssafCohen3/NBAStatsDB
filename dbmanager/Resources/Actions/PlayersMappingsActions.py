@@ -4,7 +4,6 @@ import re
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Type, Dict, Optional, List, Tuple, Union
-import requests
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert
@@ -12,6 +11,10 @@ from sqlalchemy.orm import scoped_session
 from unidecode import unidecode
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
+from dbmanager.Downloaders import BREFDraftDownloader
+from dbmanager.Downloaders.BREFDraftDownloader import BREFDraftDownloader
+from dbmanager.Downloaders.BREFPlayerPageDownloader import BREFPlayerPageDownloader
+from dbmanager.Downloaders.BREFRookiesDownloader import BREFRookiesDownloader
 from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.PlayersMappingsActionSpecs import CompleteMissingPlayersMappings, \
@@ -19,7 +22,7 @@ from dbmanager.Resources.ActionSpecifications.PlayersMappingsActionSpecs import 
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.DefaultMappings import DefaultPlayerMapping, default_mappings
 from dbmanager.SharedData.PlayersIndex import PlayerDetails, players_index
-from dbmanager.utils import retry_wrapper
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 @dataclass
@@ -84,8 +87,9 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
         return CompleteMissingPlayersMappings
 
     @retry_wrapper
-    async def get_player_stats_id(self, player_url: str) -> Tuple[int, str]:
-        player_resp = requests.get(player_url).text
+    async def get_player_stats_id(self, candidate: MappingCandidateLink) -> Tuple[int, str]:
+        downloader = BREFPlayerPageDownloader(candidate.candidate_bref_id)
+        player_resp = downloader.download()
         player_soup = BeautifulSoup(player_resp, 'html.parser')
         player_birth_date = player_soup.select('span#necro-birth')[0]['data-birth']
         nba_stats_links = player_soup.select('#div_stats-nba-com a')
@@ -100,8 +104,8 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
 
     @retry_wrapper
     async def find_season_players_links(self, season: int) -> List[MappingCandidateLink]:
-        url = 'https://www.basketball-reference.com/leagues/NBA_%s_rookies.html' % (season + 1)
-        resp = requests.get(url).text
+        downloader = BREFRookiesDownloader(season)
+        resp = downloader.download()
         soup = BeautifulSoup(resp, 'html.parser')
         player_ids = soup.select('table#rookies tbody tr td[data-stat="player"]')
         candidates = [MappingCandidateLink(p['data-append-csv'],
@@ -113,8 +117,8 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
 
     @retry_wrapper
     async def find_draft_players_links(self, season: int) -> List[MappingCandidateLink]:
-        url = 'https://www.basketball-reference.com/draft/NBA_%s.html' % season
-        resp = requests.get(url).text
+        downloader = BREFDraftDownloader(season)
+        resp = downloader.download()
         soup = BeautifulSoup(resp, 'html.parser')
         picks = soup.select('table#stats tbody tr')
         current_pick = 1
@@ -143,7 +147,7 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
         self.target_resources[self.current_resource_index].links_to_fetch = len(candidates_links)
         await self.finish_subtask()
         for i, candidate_link in enumerate(candidates_links):
-            player_stats_id, player_birth_date = await self.get_player_stats_id(candidate_link.candidate_bref_link)
+            player_stats_id, player_birth_date = await self.get_player_stats_id(candidate_link)
             if not player_stats_id:
                 draft_match = target_resource.get_target_by_draft_number(candidate_link.candidate_draft_number)
                 if draft_match:

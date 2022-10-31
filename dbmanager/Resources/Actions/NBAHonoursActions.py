@@ -6,13 +6,12 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.NBAHonours import NBAHonours
 from dbmanager.Downloaders.TeamDetailsDownloader import TeamDetailsDownloader
-from dbmanager.Logger import log_message
-from dbmanager.RequestHandlers.StatsAsyncRequestHandler import call_async_with_retry
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAHonoursActionSpecs import DownloadAllHonours, DownloadTeamHonours
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.FranchisesHistory import franchises_history, FranchiseSpan
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 def transform_hof(team_id, row):
@@ -68,10 +67,7 @@ class GeneralDownloadHonoursAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_team_honours(self, team: FranchiseSpan):
         downloader = TeamDetailsDownloader(team.franchise_id)
-        data = await call_async_with_retry(downloader.download)
-        if not data:
-            log_message(f'couldnt fetch honours of {team.franchise_name}({team.franchise_id}). try again later')
-            return
+        data = await downloader.download()
         data = data['resultSets']
         hof_data = data[6]['rowSet']
         retired_data = data[7]['rowSet']

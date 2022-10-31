@@ -2,7 +2,9 @@
 	"common": {
 		"cancelled": "בוטל",
 		"finished": "הסתיים",
-		"none": "לא קיים"
+		"none": "לא קיים",
+		"received_recoverable_connection_error": "התקבלה שגיאת חיבור לאינטרנט. ניתן לנסות להמשיך את ביצוע הפעולה",
+		"received_recoverable_arbitrary_error": "התקבלה שגיאה. ניתן לנסות להמשיך את ריצת הפעולה"
 	},
 	"resources": {
 		"playerboxscore": {

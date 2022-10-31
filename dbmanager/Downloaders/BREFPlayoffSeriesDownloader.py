@@ -1,8 +1,9 @@
 import datetime
 import re
-import requests
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from bs4 import BeautifulSoup
+
+from dbmanager.RequestHandlers.Sessions import bref_session
 from dbmanager.SharedData.BREFSeasonsLinks import BREFSeasonLink
 from dbmanager.constants import BREF_ABBREVATION_TO_NBA_TEAM_ID, TEAM_NBA_ID_TO_NBA_NAME, BREF_LEVEL_TITLE_TO_ORDER, \
     BREF_PLAYOFFS_URL
@@ -14,7 +15,7 @@ class BREFPlayoffSeriesDownloader(DownloaderAbs):
 
     def download(self):
         to_send = BREF_PLAYOFFS_URL % (self.season_link.leagu_id, self.season_link.season+1)
-        r = requests.get(to_send)
+        r = bref_session.get(to_send)
         if r.status_code == 404:
             return None
         return self.from_html(r.text)

@@ -325,7 +325,9 @@
 	"common": {
 		"cancelled": "Cancelled",
 		"finished": "Finished",
-		"none": "None"
+		"none": "None",
+		"received_recoverable_connection_error": "Received a connection error.",
+		"received_recoverable_arbitrary_error": "Received an error."
 	},
 	"errors": {},
 	"presets": {

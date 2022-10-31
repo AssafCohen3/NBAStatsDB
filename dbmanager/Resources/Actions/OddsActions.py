@@ -13,7 +13,8 @@ from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SharedData.BREFSeasonsLinks import bref_seasons_links
 from dbmanager.SharedData.SeasonPlayoffs import get_last_season_with_playoffs, last_season_playoffs
 from dbmanager.constants import FIRST_ODDS_SEASON, EXCLUDED_ODDS_SEASONS
-from dbmanager.utils import iterate_with_next, retry_wrapper
+from dbmanager.utils import iterate_with_next
+from dbmanager.tasks.RetryManager import retry_wrapper
 
 
 class OddsGeneralAction(ActionAbc, ABC):

@@ -52,11 +52,13 @@
 		"en": "אנגלית"
 	},
 	"tasks": {
-		"error_occurred": "שגיאה התרחשה",
+		"error_occurred": "שגיאה קריטית התרחשה. המשימה בוטלה.",
 		"task_cancelled": "המשימה בוטלה",
 		"task_finished": "המשימה התבצעה בהצלחה",
 		"progress_line": "{completed} מתוך {to_finish}",
-		"progress_line_no_to_finish": "{completed} הסתיימו"
+		"progress_line_no_to_finish": "{completed} הסתיימו",
+		"you_can_try_to_resume": "ניתן לנסות להמשיך את המשימה.",
+		"auto_retrying_in": "מנסה שוב בשעה {time}"
 	},
 	"messages": {
 		"action_recipe_removed_successfully": "הפעולה הוסרה בהצלחה מהקבוצה",
@@ -70,5 +72,10 @@
 		"preset_created_successfully": "קבוצת הפעולות נוצרה בהצלחה",
 		"action_submited_successfully": "הפעולה הוגשה להרצה בהצלחה",
 		"preset_dispatched_successfully": "קבוצת הפעולות הוגשה להרצה בהצלחה"
+	},
+	"errors": {
+		"error_message": "הודעת השגיאה",
+		"error_description": "תיאור השגיאה",
+		"error_traceback": "מחסנית השגיאה"
 	}
 }

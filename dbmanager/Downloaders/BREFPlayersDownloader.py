@@ -1,8 +1,9 @@
 import datetime
-import requests
 import unidecode
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from bs4 import BeautifulSoup
+
+from dbmanager.RequestHandlers.Sessions import bref_session
 from dbmanager.constants import BREF_PLAYERS_URL
 
 
@@ -12,7 +13,7 @@ class BREFPlayersDownloader(DownloaderAbs):
 
     def download(self):
         to_send = BREF_PLAYERS_URL % self.letter
-        r = requests.get(to_send)
+        r = bref_session.get(to_send)
         return self.from_html(r.text)
 
     @staticmethod
