@@ -36,7 +36,9 @@
 		"example_file": "Example file",
 		"yes": "Yes",
 		"no": "No",
-		"remember_my_answer": "Remember my answer"
+		"remember_my_answer": "Remember my answer",
+		"read_less": "Read less",
+		"related_table": "Related table"
 	},
 	"generic": {
 		"home": "Home",
@@ -84,5 +86,6 @@
 		"error_message": "Error message",
 		"error_description": "Error description",
 		"error_traceback": "Error traceback"
-	}
+	},
+	"read_more": "Read more"
 }

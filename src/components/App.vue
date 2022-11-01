@@ -31,6 +31,7 @@ html{
 	background-color: rgba(0, 0, 0, 0.25);
 	-webkit-border-radius: 100px;
 	border-radius: 100px;
+	max-height: 10px;
 }
 
 
@@ -47,6 +48,18 @@ html{
 }
 
 ::-webkit-scrollbar-thumb:vertical:active {
+	background: rgba(0, 0, 0, 0.61);
+	-webkit-border-radius: 100px;
+	border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+	background: rgba(0, 0, 0, 0.5);
+	-webkit-border-radius: 100px;
+	border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:horizontal:active {
 	background: rgba(0, 0, 0, 0.61);
 	-webkit-border-radius: 100px;
 	border-radius: 100px;

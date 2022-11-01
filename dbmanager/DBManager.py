@@ -186,6 +186,7 @@ class DbManager:
             'resource_id': resource.get_id(),
             'last_updated': resource.get_last_updated(self.session),
             'resource_name': resource.get_name(),
+            'description': resource.get_resource_spec().get_description(),
             'messages': resource.get_messages(self.session),
             'actions_specs': list(map(lambda spec: spec.to_dict(self.session), resource.get_actions_specs())),
             'related_tables': resource.get_related_tables(),

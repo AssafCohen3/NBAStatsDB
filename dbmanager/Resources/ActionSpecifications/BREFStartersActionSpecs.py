@@ -137,8 +137,8 @@ class RedownloadStartersInSeasonsRange(ActionSpecificationAbc):
         return [
             ActionDependency(UpdatePlayerBoxScoresInDateRange, {
                 'season_type_code': '0',
-                'start_date': estimate_season_start_date(parsed_params['season_start'] if 'season_start' in parsed_params else BREF_STARTERS_FIRST_GAME_DATE),
-                'end_date': estimate_season_start_date(parsed_params['end_date'] if 'end_date' in parsed_params else datetime.date.today()),
+                'start_date': estimate_season_start_date(parsed_params['season_start']) if 'season_start' in parsed_params else BREF_STARTERS_FIRST_GAME_DATE,
+                'end_date': estimate_season_start_date(parsed_params['end_date']) if 'end_date' in parsed_params else datetime.date.today(),
             }),
             ActionDependency(CompleteMissingPlayersMappings, {}),
         ]

@@ -44,7 +44,9 @@
 		"example_file": "קובץ לדוגמא",
 		"yes": "כן",
 		"no": "לא",
-		"remember_my_answer": "זכור את התשובה שלי"
+		"remember_my_answer": "זכור את התשובה שלי",
+		"read_less": "קרא פחות",
+		"related_table": "טבלה קשורה"
 	},
 	"validations": {
 		"required": "השדה נדרש",
@@ -84,5 +86,6 @@
 		"error_message": "הודעת השגיאה",
 		"error_description": "תיאור השגיאה",
 		"error_traceback": "מחסנית השגיאה"
-	}
+	},
+	"read_more": "קרא עוד"
 }

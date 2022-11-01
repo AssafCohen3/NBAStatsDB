@@ -13,21 +13,43 @@
 			v-else>
 			<!-- title -->
 			<div
-				class="flex flex-col w-[fit-content] select-none">
+				class="flex flex-col w-[fit-content]">
 				<div
 					class="px-[20px] text-primary-light text-[50px] font-bold">
 					{{ currentResource.resource_name }}
 				</div>
 				<div
-					class="flex flex-row items-center p-[30px]">
+					class="text-dimmed-white p-[30px]">
 					<v-icon
-						class="text-primary-light text-[30px] pe-4 mb-[15px]">
+						color="info"
+						class="pb-[5px]"
+						size="x-large">
+						mdi-information
+					</v-icon>
+					<span
+						class="ms-3 text-[24px] whitespace-pre-wrap">
+						{{ descriptionToShow }}
+					</span>
+					<span
+						v-if="showReadMoreButton"
+						class="ms-3 text-dimmed-white text-[16px] font-bold cursor-pointer"
+						@click="descriptionExpanded = !descriptionExpanded">
+						{{ expandCollapseDescriptionButtonText }}
+					</span>
+				</div>
+			</div>
+			<div
+				class="flex flex-row overflow-x-auto gap-[30px] items-center py-[10px] my-[30px]">
+				<div
+					class="custom-card flex items-center">
+					<v-icon
+						class="text-primary-light text-[30px] pe-4">
 						mdi-clock-time-five-outline
 					</v-icon>
 					<div>
 						<div
-							class="text-dimmed-white font-bold text-[25px]">
-							{{ currentResource.last_updated && $moment(currentResource.last_updated).format('YYYY-MM-DD') || $t('common.never') }}
+							class="text-dimmed-white whitespace-pre font-bold text-[25px]">
+							{{ currentResource.last_updated && $moment(currentResource.last_updated).format('YYYY-MM-DD[\n]HH:mm') || $t('common.never') }}
 						</div>
 						<div
 							class="text-dimmed-white text-[12px]">
@@ -35,16 +57,38 @@
 						</div>
 					</div>
 				</div>
+				<div
+					v-for="table in [
+						currentResource.related_tables[0],
+					]"
+					:key="table.name"
+					class="custom-card flex items-center">
+					<v-icon
+						class="text-primary-light text-[30px] pe-4 mb-[15px]">
+						mdi-database
+					</v-icon>
+					<div>
+						<div
+							class="text-dimmed-white whitespace-pre-wrap font-bold text-[25px]">
+							{{ table.name }}
+						</div>
+						<div
+							class="text-dimmed-white text-[12px]">
+							{{ $t('common.related_table') }}
+						</div>
+					</div>
+				</div>
 			</div>
 			<!-- messages -->
 			<div
-				class="pt-[40px] select-none">
+				class="select-none">
 				<div
 					class="w-[80%] min-w-[500px] flex flex-wrap gap-[30px]">
+					<!-- bg-[#2c235a] -->
 					<div
 						v-for="message, index in currentResource.messages"
 						:key="`${currentResource.resource_id}-${index}`"
-						class="p-[20px] app-section w-[250px] flex flex-row items-center">
+						class="p-[20px] app-section w-[250px] flex flex-row items-center message-card ">
 						<div
 							class="flex flex-col pe-4">
 							<span
@@ -122,6 +166,8 @@ export default {
 			actionIdForModal: null,
 			actionParamsForModal: null,
 			actionDependenciesForModal: null,
+			descriptionExpanded: false,
+			maxCollapsedDescriptionLength: 150,
 		};
 	},
 	computed: {
@@ -129,7 +175,25 @@ export default {
 		...mapGetters('tasks', ['resourcesIdsToRefresh']),
 		resourceId(){
 			return this.$route.params.resourceId;
-		}
+		},
+		descriptionToShow(){
+			if(!this.currentResource){
+				return '';
+			}
+			if(this.descriptionExpanded){
+				return this.currentResource.description;
+			}
+			if(this.currentResource.description.length <= this.maxCollapsedDescriptionLength){
+				return this.currentResource.description;
+			}
+			return this.currentResource.description.slice(0, this.maxCollapsedDescriptionLength) + '...';
+		},
+		showReadMoreButton(){
+			return this.currentResource && this.currentResource.description.length > this.maxCollapsedDescriptionLength;
+		},
+		expandCollapseDescriptionButtonText(){
+			return this.descriptionExpanded ? this.$t('common.read_less') : this.$t('read_more');
+		},
 	},
 	watch: {
 		resourceId: {
@@ -227,5 +291,21 @@ export default {
 .v-expansion-panel.action_panel :deep(.v-expansion-panel-title){
 	@apply text-[20px]
 }
+.custom-card{
+	border-radius: 10px;
+	border-color: #ffffff40;
+	border-width: 3px;
+	border-style: groove;
+	padding: 20px;
+	box-shadow: 0px 0px 4px 1px #2a2b4e;
+}
 
+.message-card{
+	/* border-radius: 10px;
+	border-color: #181845;
+	border-width: 3px;
+	border-style: groove; */
+	padding: 20px;
+	box-shadow: 0px 0px 10px 1px #0b0b2c;
+}
 </style>
