@@ -24,7 +24,7 @@
 					"title": "Redownload boxscores in date range"
 				}
 			},
-			"description": "Download Players Box Scores from stats.nba"
+			"description": "Download Players Box Scores from stats.nba. \nevery boxscore in the history of the league(since 1947) is available. \nthis is an important resource and used in some other resource so keep it updated"
 		},
 		"teamboxscore": {
 			"messages": {
@@ -50,7 +50,7 @@
 					"title": "Redownload boxscores in date range"
 				}
 			},
-			"description": "Download Teams Box Scores from stats.nba"
+			"description": "Download Players Box Scores from stats.nba. \nevery boxscore in the history of the league(since 1947) is available. \nthis is an important resource and used in some other resource so keep it updated"
 		},
 		"common": {
 			"errors": {}
@@ -109,7 +109,7 @@
 					"title": "Redownload playoff series in seasons range"
 				}
 			},
-			"description": "Download Playoff Series Summary from BREF. The summary includes results, serie dates and more"
+			"description": "Download Playoff Series Summary from BREF. The summary includes results, serie dates and more."
 		},
 		"players_mappings": {
 			"actions": {
@@ -128,7 +128,7 @@
 					"text": "%{mappings_count} out of %{possible_mappings_count} players that needs mapping"
 				}
 			},
-			"description": "Map the player ids of BREF to the player ids of stats.nba, allowing to combine the data from both sites"
+			"description": "Maps the player ids of BREF to the player ids of stats.nba, allowing to combine the data from both sites.\nvery important for every resource which combines data from BREF and stats.nba."
 		},
 		"bref_players": {
 			"actions": {
@@ -146,7 +146,7 @@
 					"text": "%{players_count} out of %{possible_players_count} mapped players"
 				}
 			},
-			"description": "Download the players index of BREF, including bio data"
+			"description": "Download the players index of BREF, to complete the mapping to the stats.nba data. the index includes birthdate, weight, height and more.\nthis index includes only players who have played a game in the nba, grouped by the first letter of their last name.\nin a case that there is a player which have a mapping but have not played a game yet, the resource will fetch his data from his player page."
 		},
 		"nba_awards": {
 			"actions": {
@@ -176,7 +176,7 @@
 					"text": "%{awards_count} Awards"
 				}
 			},
-			"description": "Download every awards of every selected player from stats.nba"
+			"description": "Download every awards of every selected player from stats.nba.\nthis is a heavy task to execute from scratch since the awards need to be downloaded for every player separately."
 		},
 		"events": {
 			"actions": {
@@ -202,7 +202,7 @@
 					"text": "%{games_with_events} out of %{games_count} possible games"
 				}
 			},
-			"description": "Download Play-By-Play data from stats.nba. saves every event of every selected game."
+			"description": "Download Play-By-Play data from stats.nba. saves every event of every selected game.\nthe data is available for every game since 1996-97(except for the 98-02 allstar games).\nsince the actions relying on the Team Boxscore data to get the games to download, the data can be downloaded only for games which have a Team Boxscore(update the teams boxscores before running this)\nthis is the heaviest actions to execute from scratch since the data should be downloaded for every game seperately so downloading all of the data from scratch may take even a day."
 		},
 		"nba_honours": {
 			"messages": {
@@ -222,7 +222,7 @@
 					"fetching_honours_of_team": "Downloading Honours of %{team_name}"
 				}
 			},
-			"description": "Download eveery honour titles of every selected team from stats.nba"
+			"description": "Download every honour titles of every selected team from stats.nba.\nthe titles included is HOF entrances and retired Jersies."
 		},
 		"odds": {
 			"actions": {
@@ -273,7 +273,7 @@
 					"title": "Download Starters data in Seasons range"
 				}
 			},
-			"description": "Add Starters data to your Downloaded Box Scores from BREF"
+			"description": "Add Starters data from BREF to your Downloaded Box Scores from stats.nba.\nthe data exists for every season since 1984, but saved in the Boxscores table so it can be downloaded only for a boxscores you already downloaded(so update the Player Box Score resource before running this resource).\nthe actions is using the players mappings to map the players to their boxscore so make sure the mappings is updated before running this. \nsince the page not containing play-in games this games collected separately from stats.nba per game.\nin some games in the 90s, the data in BREF and stats.nba conflicting and BREF shows a starter who according to stats.nba hasn't even played in the game. in such cases only the players who have played in the game according to stats.nba will be saved as starters so a case in which a team in a game has less than 5 starters is possible."
 		},
 		"nba_players_birthdate": {
 			"messages": {
@@ -297,7 +297,7 @@
 					"title": "Download the Birthdates of Players who started their career in a seasons range"
 				}
 			},
-			"description": "Download the Birthdates of the players in the NBAPlayer table from stats.nba"
+			"description": "Download the Birthdates of the players in the NBAPlayer table from stats.nba.\nthe birthdates can be fetched directly from the player page or from the roster page of a season of a team that the player played in her roster in the end of the season.\nthe resource first tries to cover the data by getting the minimal group of rosters that includes together every player without a birthdate. the rosters is estimated by considering a player as in the roster of a team if he played in that team in his last game of the season. for this to work, the players boxscores is needed to be updated.\nafter thats stage, the resource downloads separately the birthdate for every player who still doesn't have a birthdate."
 		},
 		"bref_transactions": {
 			"messages": {
@@ -319,7 +319,7 @@
 					"title": "Download Transactions in Seasons range"
 				}
 			},
-			"description": "Download Transactions from BREF"
+			"description": "Download Transactions from BREF. \nthe transactions is parsed by a parser that i created.\nsince the format and the kind of transactions vary every season this may fail for new seasons or completly if the app version is old.\ni will try to update the parser to the new formats every season to allow this resource to be used always."
 		}
 	},
 	"common": {
