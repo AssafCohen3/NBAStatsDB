@@ -1,5 +1,6 @@
 import datetime
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Dict, Any, List, Type
 
 from sqlalchemy.orm import scoped_session
@@ -18,6 +19,12 @@ def param_parser(param_value: str, param_type: str):
     if param_type == 'isodate':
         return datetime.date.fromisoformat(param_value)
     return None
+
+
+@dataclass
+class ActionDependency:
+    dependent_action_spec: Type['ActionSpecificationAbc']
+    parsed_params: Dict[str, Any]
 
 
 class ActionSpecificationAbc(ABC):
@@ -93,7 +100,8 @@ class ActionSpecificationAbc(ABC):
         return {
             'action_id': cls.get_action_id(),
             'action_title': cls.get_action_title(),
-            'action_inputs': cls.get_action_inputs(session)
+            'action_inputs': cls.get_action_inputs(session),
+            'action_dependencies': [dp.dependent_action_spec.to_compact_dict_with_resource() for dp in cls.get_action_dependencies_nested({})],
         }
 
     @classmethod
@@ -102,3 +110,24 @@ class ActionSpecificationAbc(ABC):
             'action_id': cls.get_action_id(),
             'action_title': cls.get_action_title(),
         }
+
+    @classmethod
+    def to_compact_dict_with_resource(cls):
+        return {
+            'action_id': cls.get_action_id(),
+            'action_title': cls.get_action_title(),
+            'resource_id': cls.get_resource().get_id(),
+            'resource_name': cls.get_resource().get_name(),
+        }
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return []
+
+    @classmethod
+    def get_action_dependencies_nested(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        to_ret = []
+        for dependency in cls.get_action_dependencies(parsed_params):
+            to_ret.extend(dependency.dependent_action_spec.get_action_dependencies_nested(dependency.parsed_params))
+            to_ret.append(dependency)
+        return to_ret

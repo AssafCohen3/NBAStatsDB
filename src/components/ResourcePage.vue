@@ -95,18 +95,33 @@
 				</v-expansion-panels>
 			</div>
 		</div>
+		<v-dialog
+			v-if="isDependenciesModalOpen"
+			v-model="isDependenciesModalOpen"
+			persistent>
+			<action-dependencies-modal 
+				:action-id="actionIdForModal"
+				:action-params="actionParamsForModal"
+				:action-dependencies="actionDependenciesForModal"
+				@submit-dependencies="submitDependencies" />
+		</v-dialog>
 	</div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import { toastSuccess } from '../utils/errorToasts';
+import ActionDependenciesModal from './ActionDependenciesModal.vue';
 import ActionForm from './ActionForm.vue';
 export default {
-	components: { ActionForm },
+	components: { ActionForm, ActionDependenciesModal },
 	data(){
 		return {
 			currentResource: null,
+			isDependenciesModalOpen: false,
+			actionIdForModal: null,
+			actionParamsForModal: null,
+			actionDependenciesForModal: null,
 		};
 	},
 	computed: {
@@ -140,10 +155,35 @@ export default {
 			}
 		},
 		runAction(actionId, actionParams){
-			this.postAction([this.resourceId, actionId, actionParams])
+			let action = this.currentResource.actions_specs.find((action) => action.action_id == actionId);
+			let downloadDependencies = localStorage.getItem('downloadDependencies', null);
+			if(action.action_dependencies && downloadDependencies === null){
+				this.actionIdForModal = actionId;
+				this.actionParamsForModal = actionParams;
+				this.actionDependenciesForModal = action.action_dependencies;
+				this.isDependenciesModalOpen = true;
+				return;
+			}
+			this.postAction([this.resourceId, actionId, actionParams, !!downloadDependencies])
 				.then(resp => {
 					toastSuccess(this.$t('messages.action_submited_successfully'));
 				});
+		},
+		closeDependenciesModal(){
+			this.isDependenciesModalOpen = false;
+			this.actionIdForModal = null;
+			this.actionParamsForModal = null;
+			this.actionDependenciesForModal = null;
+		},
+		submitDependencies(actionId, actionParams, downloadDependencies, rememberMyAnswer){
+			if(rememberMyAnswer){
+				localStorage.setItem('downloadDependencies', downloadDependencies);
+			}
+			this.postAction([this.resourceId, actionId, actionParams, downloadDependencies])
+				.then(resp => {
+					toastSuccess(this.$t('messages.action_submited_successfully'));
+				});
+			this.closeDependenciesModal();
 		},
 		getStatusColor(status){
 			switch (status) {

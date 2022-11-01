@@ -1,7 +1,7 @@
 import itertools
 from typing import List, Union, Dict, Optional
 from dbmanager.AppI18n import TranslatableField
-from dbmanager.Errors import TaskPathNotExistError
+from dbmanager.Errors import TaskPathNotExistError, ExceptionMessage
 from dbmanager.tasks.RetryManager import RetryConfig
 from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
@@ -32,17 +32,28 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             action_title=self.group_translatable_name.get_value(),
             resource_id=None,
             resource_name=None,
-            mini_title=self.get_current_subtask_text_abs(),
+            mini_title=self.get_current_subtask_text(),
             completed=self.completed_subtasks(),
             to_finish=self.subtasks_count(),
-            status=self.current_task.current_status() if self.current_task else self.current_status(),
+            status=self.get_delegated_current_status(),
             subtasks_messages=self.get_subtasks_messages(),
-            exception=self.current_task.get_task_error_message() if self.current_task else self.get_task_error_message(),
+            exception=self.get_delegated__exception_message(),
             retry_status=self.current_task.get_retry_status() if self.current_task else self.get_retry_status()
         )
 
+    def get_delegated__exception_message(self) -> ExceptionMessage:
+        if self.is_critical_error():
+            return self.get_task_error_message()
+        return self.current_task.get_task_error_message() if self.current_task else self.get_task_error_message()
+
+    def get_delegated_current_status(self) -> str:
+        if self.is_critical_error():
+            return self.current_status()
+        return self.current_task.current_status() if self.current_task else self.current_status()
+
     async def action(self):
         for task, next_task in iterate_with_next(self.tasks_to_run):
+            task.init_task_data()
             await task
             task.after_execution_finished()
             self.current_task = next_task
@@ -70,7 +81,7 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             if self.announcer:
                 self.announcer.announce_task_event(event, [self.get_task_id()], self)
         except Exception as e:
-            self.raise_error(e)
+            self.raise_critical_error(e)
 
     def get_task_title(self) -> str:
         return self.group_translatable_name.get_value()
@@ -83,13 +94,10 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
             if self.announcer:
                 self.announcer.announce_data(event, data)
         except Exception as e:
-            self.raise_error(e)
+            self.raise_critical_error(e)
 
     def init_task_data_abs(self) -> bool:
-        to_refresh = False
-        for action in self.tasks_to_run:
-            if action.init_task_data():
-                to_refresh = True
+        to_refresh = self.current_task.init_task_data() if self.current_task else False
         return to_refresh
 
     def get_sub_tasks(self) -> List['TaskAbc']:

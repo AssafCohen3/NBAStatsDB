@@ -33,7 +33,7 @@ def get_action_spec(resource_id: str, action_id: str):
 
 @resources_bp.route('/<resource_id>/actions/<action_id>/dispatch', methods=['POST'])
 @flask_request_validation
-def dispatch_action(resource_id: str, action_id: str, params: Dict[str, str]):
-    action_to_run = db_manager.dispatch_action(resource_id, action_id, params)
+def dispatch_action(resource_id: str, action_id: str, params: Dict[str, str], download_dependencies: bool):
+    action_to_run = db_manager.dispatch_action(resource_id, action_id, params, download_dependencies)
     enqueue_task(action_to_run)
     return 'ok'

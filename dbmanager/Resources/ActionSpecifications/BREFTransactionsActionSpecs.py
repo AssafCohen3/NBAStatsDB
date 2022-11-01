@@ -5,7 +5,8 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Errors import IlegalParameterValueError
 from dbmanager.Resources.ActionSpecifications.ActionInput import ActionInput, SeasonRangeSelector
-from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionDependency
+from dbmanager.Resources.ActionSpecifications.BREFPlayersActionSpecs import UpdateBREFPlayers
 from dbmanager.Resources.ResourceSpecifications.BREFTransactionsResourceSpecification import \
     BREFTransactionsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -32,6 +33,12 @@ class DownloadAllTransactions(ActionSpecificationAbc):
     @classmethod
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:
         return []
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateBREFPlayers, {}),
+        ]
 
 
 class DownloadTransactionsInSeasonsRange(ActionSpecificationAbc):
@@ -67,4 +74,10 @@ class DownloadTransactionsInSeasonsRange(ActionSpecificationAbc):
             SeasonRangeSelector(bref_seasons_links.min_nba_season(),
                                 bref_seasons_links.max_nba_season(),
                                 bref_seasons_links.max_nba_season())
+        ]
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateBREFPlayers, {}),
         ]

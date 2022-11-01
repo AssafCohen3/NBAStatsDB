@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Dict, Any, Type, Tuple, Optional
 
 from sqlalchemy import select, func
@@ -7,11 +8,14 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Errors import InvalidActionCallError, IlegalParameterValueError
 from dbmanager.Resources.ActionSpecifications.ActionInput import ActionInput, SeasonRangeSelector
-from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionDependency
+from dbmanager.Resources.ActionSpecifications.PlayerBoxScoreActionSpecs import UpdatePlayerBoxScoresInDateRange
+from dbmanager.Resources.ActionSpecifications.PlayersMappingsActionSpecs import CompleteMissingPlayersMappings
 from dbmanager.Resources.ResourceSpecifications.BREFStartersResourceSpecification import \
     BREFStartersResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.constants import BREF_STARTERS_FIRST_SEASON
+from dbmanager.constants import BREF_STARTERS_FIRST_SEASON, BREF_STARTERS_FIRST_GAME_DATE
+from dbmanager.utils import estimate_season_start_date
 
 
 def get_starters_range(session: scoped_session) -> Tuple[Optional[int], Optional[int], int]:
@@ -44,6 +48,17 @@ class UpdateStarters(ActionSpecificationAbc):
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:
         return []
 
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdatePlayerBoxScoresInDateRange, {
+                'season_type_code': '0',
+                'start_date': BREF_STARTERS_FIRST_GAME_DATE,
+                'end_date': datetime.date.today(),
+            }),
+            ActionDependency(CompleteMissingPlayersMappings, {}),
+        ]
+
 
 class RedownloadStarters(ActionSpecificationAbc):
     @classmethod
@@ -65,6 +80,17 @@ class RedownloadStarters(ActionSpecificationAbc):
     @classmethod
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:
         return []
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdatePlayerBoxScoresInDateRange, {
+                'season_type_code': '0',
+                'start_date': BREF_STARTERS_FIRST_GAME_DATE,
+                'end_date': datetime.date.today(),
+            }),
+            ActionDependency(CompleteMissingPlayersMappings, {}),
+        ]
 
 
 class RedownloadStartersInSeasonsRange(ActionSpecificationAbc):
@@ -104,4 +130,15 @@ class RedownloadStartersInSeasonsRange(ActionSpecificationAbc):
                 max_season,
                 max_season
             )
+        ]
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdatePlayerBoxScoresInDateRange, {
+                'season_type_code': '0',
+                'start_date': estimate_season_start_date(parsed_params['season_start'] if 'season_start' in parsed_params else BREF_STARTERS_FIRST_GAME_DATE),
+                'end_date': estimate_season_start_date(parsed_params['end_date'] if 'end_date' in parsed_params else datetime.date.today()),
+            }),
+            ActionDependency(CompleteMissingPlayersMappings, {}),
         ]

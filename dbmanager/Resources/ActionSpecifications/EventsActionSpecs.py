@@ -1,9 +1,12 @@
 import datetime
-from typing import List, Type
+from typing import List, Type, Dict, Any
 from dbmanager.AppI18n import gettext
 from dbmanager.Errors import IlegalParameterValueError
-from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput, \
+    ActionDependency
 from dbmanager.Resources.ActionSpecifications.ActionInput import SeasonTypeSelector, DateRangeSelector
+from dbmanager.Resources.ActionSpecifications.TeamBoxScoreActionSpecs import UpdateTeamBoxScores, \
+    UpdateTeamBoxScoresInDateRange
 from dbmanager.Resources.ResourceSpecifications.EventsResourceSpecification import EventsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SeasonType import get_season_types
@@ -37,6 +40,12 @@ class UpdateEvents(ActionSpecificationAbc):
             SeasonTypeSelector()
         ]
 
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateTeamBoxScores, parsed_params)
+        ]
+
 
 class ResetEvents(ActionSpecificationAbc):
     @classmethod
@@ -63,6 +72,12 @@ class ResetEvents(ActionSpecificationAbc):
     def get_action_inputs(cls, session) -> List[ActionInput]:
         return [
             SeasonTypeSelector()
+        ]
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateTeamBoxScores, parsed_params)
         ]
 
 
@@ -97,6 +112,12 @@ class UpdateEventsInDateRange(ActionSpecificationAbc):
                               datetime.date.today())
         ]
 
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateTeamBoxScoresInDateRange, parsed_params)
+        ]
+
 
 class ResetEventsInDateRange(ActionSpecificationAbc):
     @classmethod
@@ -127,4 +148,10 @@ class ResetEventsInDateRange(ActionSpecificationAbc):
             DateRangeSelector(datetime.date(FIRST_NBA_SEASON, 1, 1),
                               datetime.date.today(),
                               datetime.date.today())
+        ]
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateTeamBoxScoresInDateRange, parsed_params)
         ]

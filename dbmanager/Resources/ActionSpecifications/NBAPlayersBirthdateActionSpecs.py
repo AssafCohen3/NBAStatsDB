@@ -5,7 +5,8 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Errors import IlegalParameterValueError
 from dbmanager.Resources.ActionSpecifications.ActionInput import ActionInput, SeasonRangeSelector
-from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionDependency
+from dbmanager.Resources.ActionSpecifications.NBAPlayersActionSpecs import UpdateNBAPlayers
 from dbmanager.Resources.ResourceSpecifications.NBAPlayersBirthdateResourceSpecification import \
     NBAPlayersBirthdateResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
@@ -33,6 +34,12 @@ class UpdatePlayersBirthdate(ActionSpecificationAbc):
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:
         return []
 
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateNBAPlayers, {})
+        ]
+
 
 class RedownloadPlayersBirthdate(ActionSpecificationAbc):
     @classmethod
@@ -54,6 +61,12 @@ class RedownloadPlayersBirthdate(ActionSpecificationAbc):
     @classmethod
     def get_action_inputs(cls, session: scoped_session) -> List[ActionInput]:
         return []
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateNBAPlayers, {})
+        ]
 
 
 class DownloadPlayersBirthdateInSeasonRange(ActionSpecificationAbc):
@@ -89,4 +102,10 @@ class DownloadPlayersBirthdateInSeasonRange(ActionSpecificationAbc):
             SeasonRangeSelector(bref_seasons_links.min_nba_season(),
                                 bref_seasons_links.max_nba_season(),
                                 bref_seasons_links.max_nba_season())
+        ]
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, Any]) -> List[ActionDependency]:
+        return [
+            ActionDependency(UpdateNBAPlayers, {})
         ]

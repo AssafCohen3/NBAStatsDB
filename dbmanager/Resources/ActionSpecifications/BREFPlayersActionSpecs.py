@@ -1,6 +1,8 @@
-from typing import List, Type
+from typing import List, Type, Dict
 from dbmanager.AppI18n import gettext
-from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc, ActionInput, \
+    ActionDependency
+from dbmanager.Resources.ActionSpecifications.PlayersMappingsActionSpecs import CompleteMissingPlayersMappings
 from dbmanager.Resources.ResourceSpecifications.BREFPlayersResourceSpecification import BREFPlayersResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 
@@ -26,6 +28,12 @@ class UpdateBREFPlayers(ActionSpecificationAbc):
     def get_action_inputs(cls, session) -> List[ActionInput]:
         return []
 
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, str]) -> List[ActionDependency]:
+        return [
+            ActionDependency(CompleteMissingPlayersMappings, {}),
+        ]
+
 
 class RedownloadBREFPlayers(ActionSpecificationAbc):
     @classmethod
@@ -47,3 +55,9 @@ class RedownloadBREFPlayers(ActionSpecificationAbc):
     @classmethod
     def get_action_inputs(cls, session) -> List[ActionInput]:
         return []
+
+    @classmethod
+    def get_action_dependencies(cls, parsed_params: Dict[str, str]) -> List[ActionDependency]:
+        return [
+            ActionDependency(CompleteMissingPlayersMappings, {}),
+        ]

@@ -77,11 +77,12 @@ const actions = {
 				});
 		});
 	},
-	postAction({commit}, [resourceId, actionId, actionParams]){
+	postAction({commit}, [resourceId, actionId, actionParams, downloadDependencies]){
 		return new Promise((resolve, reject) => {
 			commit('postActionStart');
 			axios.post(`/resources/${resourceId}/actions/${actionId}/dispatch`,{
-				params: actionParams
+				params: actionParams,
+				download_dependencies: downloadDependencies,
 			}).
 				then(resp => {
 					commit('postActionSuccess');

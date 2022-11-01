@@ -3,9 +3,10 @@ from sqlalchemy import select, insert
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import scoped_session
-from dbmanager.AppI18n import create_translatable_from_json
+from dbmanager.AppI18n import create_translatable_from_json, TranslatableFieldFromAction
 from dbmanager.Database.Models.ActionsGroupPreset import ActionsGroupPreset
 from dbmanager.PresetsManager import PresetsManager
+from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionDependency
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.BREFPlayersActions import UpdateBREFPlayersAction
 from dbmanager.Resources.Actions.BREFPlayoffSeriesActions import UpdateBREFPlayoffSeriesAction
@@ -36,6 +37,7 @@ from dbmanager.base import Base
 import dbmanager.Database.Models
 # noinspection PyUnresolvedReferences
 import dbmanager.pbp.Patcher
+from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TasksGroup import TasksGroup
 
 
@@ -127,10 +129,25 @@ class DbManager:
             raise ResourceNotExistError(resource_id)
         return self.resources[resource_id]
 
-    def dispatch_action(self, resource_id: str, action_id: str, params: Dict[str, str]) -> ActionAbc:
+    def dispatch_action(self, resource_id: str, action_id: str, params: Dict[str, str], download_dependencies: bool) -> TaskAbc:
         resource = self.get_resource(resource_id)
         action_to_run = resource.create_action(self.session, action_id, params)
-        return action_to_run
+        to_ret = action_to_run
+        if download_dependencies:
+            depends_on_actions: List[TaskAbc] = []
+            all_dependencies: List[ActionDependency] = action_to_run.get_action_spec().get_action_dependencies_nested(
+                action_to_run.get_action_spec().parse_params(self.session, params)
+            )
+            for depends_on_action in all_dependencies:
+                dependent_action_to_run = self.dispatch_action(depends_on_action.dependent_action_spec().get_resource().get_id(),
+                                                               depends_on_action.dependent_action_spec.get_action_id(),
+                                                               # TODO maybe recursive download?
+                                                               depends_on_action.parsed_params, False)
+                depends_on_actions.append(dependent_action_to_run)
+            to_ret = TasksGroup(f'action_with_dep-{action_id}', TranslatableFieldFromAction(action_to_run.get_action_spec()),
+                                [*depends_on_actions, to_ret])
+
+        return to_ret
 
     def get_resources_list_compact(self) -> List[Dict[str, Any]]:
         available_ids = [res.get_id() for res in self.available_resources]

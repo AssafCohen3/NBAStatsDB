@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from functools import reduce
 from typing import List, Type, Tuple, Dict, Optional
 
-from dbmanager.AppI18n import TranslatableField
+from dbmanager.AppI18n import TranslatableFieldFromDict
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.ActionsGroupsPresets.ActionRecipeObject import ActionRecipeObject
 
@@ -10,7 +10,7 @@ from dbmanager.Resources.ActionsGroupsPresets.ActionRecipeObject import ActionRe
 @dataclass
 class ActionsGroupPresetObject:
     preset_id: str
-    preset_name: TranslatableField
+    preset_name: TranslatableFieldFromDict
     action_recipes: Dict[int, ActionRecipeObject]
 
     def get_repr(self) -> str:
@@ -21,7 +21,7 @@ class ActionsGroupPresetObject:
                       self.action_recipes.values(), -1) + 1
 
 
-def create_actions_group_preset(preset_id: str, preset_name: TranslatableField,
+def create_actions_group_preset(preset_id: str, preset_name: TranslatableFieldFromDict,
                                 actions_classes_with_params: List[Tuple[int, Type[ActionAbc], int, Dict[str, str]]]):
     preset = ActionsGroupPresetObject(preset_id, preset_name, {})
     actions_recipes = {

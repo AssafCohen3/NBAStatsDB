@@ -1,3 +1,5 @@
+import datetime
+
 BOXSCORES_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
 BOXSCORES_FINDER_ENDPOINT = "https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=%s&DateTo=%s&Direction=ASC&LeagueID=00&PlayerOrTeam=%s&Season=ALLTIME&SeasonType=%s&Sorter=DATE"
 NBA_STARTERS_ENDPOINT = 'https://stats.nba.com/stats/boxscoretraditionalv2/?gameId=%s&startPeriod=0&endPeriod=14&startRange=0&endRange=2147483647&rangeType=0'
@@ -51,6 +53,7 @@ EXCLUDED_ODDS_SEASONS = [
 ]
 PBP_FIRST_SEASON = 1996
 BREF_STARTERS_FIRST_SEASON = 1983
+BREF_STARTERS_FIRST_GAME_DATE = datetime.date(1983, 10, 28)
 
 START_POSITIONS = [
     'G',

@@ -1,6 +1,9 @@
+import datetime
 from functools import wraps
 from itertools import tee, islice, chain
 from typing import Iterable, TypeVar, Tuple, Optional, Callable
+
+import requests
 from flask import request
 from typeguard import typechecked
 from dbmanager.Errors import RequestTypeError
@@ -28,3 +31,15 @@ def flask_request_validation(method: Callable):
             raise RequestTypeError(str(e))
         return res
     return _with_check_params
+
+
+def estimate_season_start_date(season: int) -> datetime.date:
+    return datetime.date(year=season, month=10, day=1)
+
+
+def protocol_retry_request(url: str, *args, **kwargs):
+    without_protocol = url.replace('https://', '').replace('http://', '')
+    resp = requests.get('https://' + without_protocol, *args, **kwargs)
+    if resp.status_code == 200:
+        return resp
+    return requests.get('http://' + without_protocol, *args, **kwargs)

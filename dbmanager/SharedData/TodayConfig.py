@@ -5,12 +5,13 @@ import requests
 
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 from dbmanager.constants import DATA_PROD_TODAY_FILE
+from dbmanager.utils import protocol_retry_request
 
 
 class TodayConfig(SharedDataResourceAbc[dict]):
     def _fetch_data(self):
-        today_resp = requests.get(DATA_PROD_TODAY_FILE)
-        if today_resp.status_code == 404:
+        today_resp = protocol_retry_request(DATA_PROD_TODAY_FILE)
+        if today_resp.status_code != 200:
             return {}
         return json.loads(today_resp.text)
 

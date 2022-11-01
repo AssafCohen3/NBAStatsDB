@@ -8,7 +8,13 @@
 		<div
 			class="task_body flex flex-row items-center">
 			<!-- task icon -->
+			<v-progress-circular
+				v-if="isLoading"
+				:color="taskIconColor"
+				size="30"
+				indeterminate />
 			<v-icon
+				v-else
 				:color="taskIconColor"
 				:class="hasError ? ['cursor-pointer'] : []"
 				size="x-large"
@@ -159,6 +165,10 @@ export default {
 				return 'mdi-progress-close';
 			case 'finished':
 				return 'mdi-progress-check';
+			case 'pending':
+				return 'mdi-timer-outline';
+			case 'initiating':
+				return 'mdi-loading';
 			default:
 				return 'mdi-progress-question';
 			}
@@ -175,6 +185,10 @@ export default {
 				return 'red';
 			case 'finished':
 				return 'green';
+			case 'pending':
+				return 'blue';
+			case 'initiating':
+				return 'blue';
 			default:
 				return 'blue';
 			}
@@ -194,12 +208,19 @@ export default {
 				return this.$t('tasks.task_cancelled');
 			case 'finished':
 				return this.$t('tasks.task_finished');
+			case 'pending':
+				return this.$t('tasks.waiting_for_execution');
+			case 'initiating':
+				return this.$t('tasks.loading');
 			default:
 				return this.task.mini_title;
 			}
 		},
 		showProgressBar(){
-			return ['active', 'paused'].includes(this.task.status);
+			return ['active', 'initiating', 'paused'].includes(this.task.status);
+		},
+		isLoading(){
+			return ['active', 'initiating'].includes(this.task.status);
 		},
 		canDismiss(){
 			return ['error', 'cancelled', 'finished'].includes(this.task.status);

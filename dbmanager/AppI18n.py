@@ -1,8 +1,13 @@
+from __future__ import annotations
 import json
-from typing import Dict
+import typing
+from abc import ABC, abstractmethod
+from typing import Dict, Type
 
 # noinspection PyPackageRequirements
 import i18n
+if typing.TYPE_CHECKING:
+    from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 
 i18n.set('file_format', 'json')
 i18n.set('filename_format', '{locale}.{format}')
@@ -30,7 +35,13 @@ def get_default_locale() -> str:
     return i18n.get('fallback')
 
 
-class TranslatableField:
+class TranslatableField(ABC):
+    @abstractmethod
+    def get_value(self) -> str:
+        pass
+
+
+class TranslatableFieldFromDict(TranslatableField):
     def __init__(self, translations: Dict[str, str], fallback_locale='en'):
         self.translations = translations
         self.fallback_locale = fallback_locale
@@ -47,5 +58,13 @@ class TranslatableField:
         return self.translations
 
 
-def create_translatable_from_json(json_object: str) -> TranslatableField:
-    return TranslatableField(json.loads(json_object))
+def create_translatable_from_json(json_object: str) -> TranslatableFieldFromDict:
+    return TranslatableFieldFromDict(json.loads(json_object))
+
+
+class TranslatableFieldFromAction(TranslatableField):
+    def __init__(self, action_spec: Type[ActionSpecificationAbc]):
+        self.action_spec = action_spec
+
+    def get_value(self):
+        return self.action_spec.get_action_title()

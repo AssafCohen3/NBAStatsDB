@@ -1,8 +1,10 @@
 import asyncio
 import itertools
 import logging
+import time
 from abc import ABC, abstractmethod
 from asyncio import TimerHandle
+from enum import Enum
 from typing import Optional, Union, List
 import requests.exceptions
 from dbmanager.AppI18n import gettext
@@ -26,20 +28,26 @@ class ThreadSafeEvent(asyncio.Event):
         self._loop.call_soon_threadsafe(super().clear)
 
 
+class InitStatus(Enum):
+    PENDING = 1
+    INITIATING = 2
+    INITIATED = 3
+
+
 class TaskAbc(ABC):
     def __init__(self):
         self._task_id: int = -1
         self.pre_active = True
         self.active: Optional[ThreadSafeEvent] = None
         self.cancelled = False
-        self._error_msg: Optional[Exception] = None
+        self._critical_error_msg: Optional[Exception] = None
         self.completed_subtasks_count = 0
         self.finished = False
         self.started = False
         self.announcer: Optional[AnnouncerAbc] = None
         self.subtask_finished = False
         self.dismissed = False
-        self._data_initiated = False
+        self._data_init_status = InitStatus.PENDING
         self.retry_manager: Optional[RetryManager] = None
         self.resume_timer_handler: Optional[TimerHandle] = None
 
@@ -49,11 +57,15 @@ class TaskAbc(ABC):
         self.retry_manager = RetryManager(retry_config, self.after_attempt_fail, self.after_retry_fail, True)
 
     def init_task_data(self) -> bool:
-        if self._data_initiated:
+        if self.is_data_initiated():
             return False
-        to_refresh = self.init_task_data_abs()
-        self._data_initiated = True
-        return to_refresh
+        self._data_init_status = InitStatus.INITIATING
+        self.refresh_status_sync()
+        self.init_task_data_abs()
+        self._data_init_status = InitStatus.INITIATED
+        self.refresh_status_sync()
+        # always refresh to change pending status
+        return True
 
     @abstractmethod
     def init_task_data_abs(self) -> bool:
@@ -72,7 +84,8 @@ class TaskAbc(ABC):
         if self.is_finished():
             raise TaskAlreadyFinishedError(self.get_task_id())
         for sub_task in self.get_sub_tasks():
-            sub_task.cancel_task_silent()
+            if not sub_task.is_finished():
+                sub_task.cancel_task_silent()
         self.cancelled = True
         self.reset_resume_timer()
         if self.active is None:
@@ -140,7 +153,7 @@ class TaskAbc(ABC):
                 return None
 
             # if crashed not in action
-            if self.is_error():
+            if self.is_critical_error():
                 self.announce_task_update('error')
                 return None
 
@@ -157,7 +170,7 @@ class TaskAbc(ABC):
                 return err.value
             except Exception as gen_err:
                 # error
-                self.raise_error(gen_err)
+                self.raise_critical_error(gen_err)
                 self.announce_task_update('error')
                 return None
             else:
@@ -172,12 +185,16 @@ class TaskAbc(ABC):
                 send, message = iter_throw, err
 
     def current_status(self) -> str:
-        if self.is_error():
+        if self.is_critical_error():
             return 'error'
         if self.cancelled:
             return 'cancelled'
         if self.is_finished():
             return 'finished'
+        if self.is_data_initiating():
+            return 'initiating'
+        if not self.is_data_initiated():
+            return 'pending'
         if self.is_active():
             return 'active'
         return 'paused'
@@ -193,8 +210,7 @@ class TaskAbc(ABC):
         self.started = True
         # if pre paused
         await asyncio.sleep(0)
-        if self.init_task_data():
-            await self.refresh_status()
+        self.init_task_data()
         await self.action()
 
     @abstractmethod
@@ -214,8 +230,8 @@ class TaskAbc(ABC):
         return self.completed_subtasks_count
 
     def get_current_subtask_text(self) -> str:
-        if self.is_error():
-            return repr(self.get_current_error())
+        if self.is_critical_error():
+            return repr(self.get_critical_error())
         if self.cancelled:
             return gettext('common.cancelled')
         if self.is_finished():
@@ -234,7 +250,7 @@ class TaskAbc(ABC):
         """
 
     def is_finished(self) -> bool:
-        return self.cancelled or self.is_error() or self.finished
+        return self.cancelled or self.is_critical_error() or self.finished
 
     def is_dismissed(self) -> bool:
         return self.dismissed
@@ -242,8 +258,8 @@ class TaskAbc(ABC):
     def is_active(self) -> bool:
         return not self.is_finished() and ((self.started and self.active.is_set()) or (not self.started and self.pre_active))
 
-    def is_error(self):
-        return self.get_current_error() is not None
+    def is_critical_error(self):
+        return self.get_critical_error() is not None
 
     @abstractmethod
     def to_task_message(self) -> TaskMessage:
@@ -262,14 +278,14 @@ class TaskAbc(ABC):
             if self.announcer:
                 self.announcer.announce_task_event(f'task-update-{event_type}', [self.get_task_id()], self)
         except Exception as e:
-            self.raise_error(e)
+            self.raise_critical_error(e)
 
     def call_annnouncer_with_data(self, event: str, data: str):
         try:
             if self.announcer:
                 self.announcer.announce_data(event, data)
         except Exception as e:
-            self.raise_error(e)
+            self.raise_critical_error(e)
 
     async def finish_subtask(self):
         self.completed_subtasks_count += 1
@@ -279,6 +295,9 @@ class TaskAbc(ABC):
     async def refresh_status(self):
         self.subtask_finished = True
         await asyncio.sleep(0)
+
+    def refresh_status_sync(self):
+        self.announce_task_update('sub-finish')
 
     @abstractmethod
     def get_sub_tasks(self) -> List['TaskAbc']:
@@ -296,11 +315,11 @@ class TaskAbc(ABC):
     def get_sub_task_abs(self, task_path: List[int]) -> 'TaskAbc':
         raise TaskPathNotExistError(self.get_task_id(), task_path)
 
-    def raise_error(self, e: Exception):
-        self._error_msg = e
+    def raise_critical_error(self, e: Exception):
+        self._critical_error_msg = e
 
-    def get_current_error(self):
-        return self._error_msg
+    def get_critical_error(self):
+        return self._critical_error_msg
 
     def is_recover_mode(self) -> bool:
         return self.started and self.retry_manager and self.retry_manager.get_last_recoverable_failed_attempt() is not None and not self.is_active()
@@ -326,8 +345,8 @@ class TaskAbc(ABC):
             self.resume_timer_handler = None
 
     def get_task_error_message(self) -> Optional[ExceptionMessage]:
-        if self.is_error():
-            return ExceptionMessage.build_from_exception(self.get_current_error())
+        if self.is_critical_error():
+            return ExceptionMessage.build_from_exception(self.get_critical_error())
         if self.is_recover_mode():
             return ExceptionMessage.build_from_exception(self.get_last_failed_attempt().attempt_exception)
         return None
@@ -336,3 +355,9 @@ class TaskAbc(ABC):
         if self.is_recover_mode():
             return RetryStatus.build_from_attempt(self.get_last_failed_attempt())
         return None
+
+    def is_data_initiating(self) -> bool:
+        return self._data_init_status == InitStatus.INITIATING
+
+    def is_data_initiated(self) -> bool:
+        return self._data_init_status == InitStatus.INITIATED
