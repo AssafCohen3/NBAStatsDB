@@ -1,4 +1,7 @@
+import sqlite3
 from typing import Dict, Type, List, Any, Optional, Tuple
+
+import sqlalchemy.exc
 from sqlalchemy import select, insert
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.engine import Engine
@@ -67,18 +70,27 @@ class DbManager:
         self.presets_manager: Optional[PresetsManager] = None
 
     def init(self, engine: Engine, session: scoped_session):
-        self.engine = engine
-        self.session = session
-        MyModel.metadata.create_all(self.engine)
-        to_add = [{
-            'ResourceId': res.get_id(),
-            'LastUpdated': None
-        } for res in self.available_resources]
-        stmt = insert(Resource).on_conflict_do_nothing()
-        self.session.execute(stmt, to_add)
-        self.session.commit()
-        self.presets_manager = PresetsManager(self.session, self.cached_presets)
-        self.create_default_presets()
+        try:
+            self.engine = engine
+            self.session = session
+            MyModel.metadata.create_all(self.engine)
+            to_add = [{
+                'ResourceId': res.get_id(),
+                'LastUpdated': None
+            } for res in self.available_resources]
+            stmt = insert(Resource).on_conflict_do_nothing()
+            self.session.execute(stmt, to_add)
+            self.session.commit()
+            self.presets_manager = PresetsManager(self.session, self.cached_presets)
+            self.create_default_presets()
+        except (sqlite3.OperationalError, sqlalchemy.exc.OperationalError) as e:
+            self.session.rollback()
+            self.session.close()
+            self.engine.dispose()
+            self.engine = None
+            self.session = None
+            self.presets_manager = None
+            raise e
 
     def is_initiated(self):
         return self.session is not None
@@ -189,7 +201,7 @@ class DbManager:
             'description': resource.get_resource_spec().get_description(),
             'messages': resource.get_messages(self.session),
             'actions_specs': list(map(lambda spec: spec.to_dict(self.session), resource.get_actions_specs())),
-            'related_tables': [{'namw': rt.__name__} for rt in resource.get_related_tables()],
+            'related_tables': [{'name': rt.__name__} for rt in resource.get_related_tables()],
             'depend_on_resources': list(map(lambda d: {
                 'resource_id': d.get_id(),
                 'resource_name': d.get_name()

@@ -11,6 +11,7 @@ from dbmanager.Errors import PresetNotExistError, PresetAlreadyExistError, Actio
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import ActionsGroupPresetObject
 from dbmanager.SharedData.CachedData import CachedData, refresh_function, DontRefreshCacheError
+from dbmanager.utils import safe_session_execute
 
 
 class PresetsManager:
@@ -65,11 +66,12 @@ class PresetsManager:
         if not preset_name_json.get(default_locale):
             raise LibraryValueError(f'received preset name is missing the default translation locale ({default_locale})')
         insert_stmt = insert(ActionsGroupPreset)
-        self.session.execute(insert_stmt, {
-            'ActionsGroupPresetId': preset_id,
-            'PresetTranslatableNameJson': json.dumps(preset_name_json)
-        })
-        self.session.commit()
+        with safe_session_execute(self.session):
+            self.session.execute(insert_stmt, {
+                'ActionsGroupPresetId': preset_id,
+                'PresetTranslatableNameJson': json.dumps(preset_name_json)
+            })
+            self.session.commit()
         return preset_id
 
     @refresh_function(get_presets_cache)
@@ -84,8 +86,9 @@ class PresetsManager:
             .where(ActionsGroupPreset.ActionsGroupPresetId == preset_id)
             .values(PresetTranslatableNameJson=json.dumps(preset_name_json))
         )
-        self.session.execute(update_stmt)
-        self.session.commit()
+        with safe_session_execute(self.session):
+            self.session.execute(update_stmt)
+            self.session.commit()
         return preset_id
 
     @refresh_function(get_presets_cache)
@@ -96,8 +99,9 @@ class PresetsManager:
             delete(ActionsGroupPreset)
             .where(ActionsGroupPreset.ActionsGroupPresetId == preset_id)
         )
-        self.session.execute(delete_stmt)
-        self.session.commit()
+        with safe_session_execute(self.session):
+            self.session.execute(delete_stmt)
+            self.session.commit()
         return preset_id
 
     @refresh_function(get_presets_cache)
@@ -119,26 +123,27 @@ class PresetsManager:
         insert_stmt = (
             insert(ActionRecipe)
         )
-        new_action_recipe_id = self.session.execute(insert_stmt, action_to_insert).lastrowid
-        # move other recipes down
-        update_rest_stmt = (
-            update(ActionRecipe)
-            .where(and_(ActionRecipe.ActionsGroupPresetId == preset_id, ActionRecipe.ActionRecipeId != new_action_recipe_id, ActionRecipe.Order >= order))
-            .values(Order=ActionRecipe.Order+1)
-        )
-        self.session.execute(update_rest_stmt)
-        # insert params
-        params_to_insert = [
-            {
-                'ActionRecipeId': new_action_recipe_id,
-                'ParamKey': key,
-                'ParamValue': value
-            }
-            for key, value in params.items()
-        ]
-        if params_to_insert:
-            self.session.execute(insert(ActionRecipeParam, params_to_insert))
-        self.session.commit()
+        with safe_session_execute(self.session):
+            new_action_recipe_id = self.session.execute(insert_stmt, action_to_insert).lastrowid
+            # move other recipes down
+            update_rest_stmt = (
+                update(ActionRecipe)
+                .where(and_(ActionRecipe.ActionsGroupPresetId == preset_id, ActionRecipe.ActionRecipeId != new_action_recipe_id, ActionRecipe.Order >= order))
+                .values(Order=ActionRecipe.Order+1)
+            )
+            self.session.execute(update_rest_stmt)
+            # insert params
+            params_to_insert = [
+                {
+                    'ActionRecipeId': new_action_recipe_id,
+                    'ParamKey': key,
+                    'ParamValue': value
+                }
+                for key, value in params.items()
+            ]
+            if params_to_insert:
+                self.session.execute(insert(ActionRecipeParam, params_to_insert))
+            self.session.commit()
         return new_action_recipe_id
 
     @refresh_function(get_presets_cache)
@@ -150,18 +155,19 @@ class PresetsManager:
         if not recipe:
             raise ActionRecipeNotExistError(preset, recipe_id)
         delete_stmt = delete(ActionRecipeParam).where(ActionRecipeParam.ActionRecipeId == recipe_id)
-        self.session.execute(delete_stmt)
-        params_to_insert = [
-            {
-                'ActionRecipeId': recipe_id,
-                'ParamKey': key,
-                'ParamValue': value
-            }
-            for key, value in params.items()
-        ]
-        if params_to_insert:
-            self.session.execute(insert(ActionRecipeParam, params_to_insert))
-        self.session.commit()
+        with safe_session_execute(self.session):
+            self.session.execute(delete_stmt)
+            params_to_insert = [
+                {
+                    'ActionRecipeId': recipe_id,
+                    'ParamKey': key,
+                    'ParamValue': value
+                }
+                for key, value in params.items()
+            ]
+            if params_to_insert:
+                self.session.execute(insert(ActionRecipeParam, params_to_insert))
+            self.session.commit()
         return recipe_id
 
     @refresh_function(get_presets_cache)
@@ -192,9 +198,10 @@ class PresetsManager:
                         ActionRecipe.Order >= lower_bound, ActionRecipe.Order <= higher_bound))
             .values(Order=ActionRecipe.Order+offset)
         )
-        self.session.execute(update_recipe_stmt)
-        self.session.execute(update_rest_stmt)
-        self.session.commit()
+        with safe_session_execute(self.session):
+            self.session.execute(update_recipe_stmt)
+            self.session.execute(update_rest_stmt)
+            self.session.commit()
         return recipe_id
 
     @refresh_function(get_presets_cache)
@@ -214,9 +221,10 @@ class PresetsManager:
             .where(and_(ActionRecipe.ActionsGroupPresetId == preset_id, ActionRecipe.ActionRecipeId != recipe_id, ActionRecipe.Order > recipe.order))
             .values(Order=ActionRecipe.Order-1)
         )
-        self.session.execute(delete_recipe_stmt)
-        self.session.execute(update_rest_stmt)
-        self.session.commit()
+        with safe_session_execute(self.session):
+            self.session.execute(delete_recipe_stmt)
+            self.session.execute(update_rest_stmt)
+            self.session.commit()
         return recipe_id
 
     def copy_action_recipe(self, preset_id: str, recipe_id: int, new_preset_id: str, order_in_new_preset: int) -> Optional[int]:

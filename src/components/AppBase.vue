@@ -72,6 +72,10 @@ export default {
 				this.connectedToServer = true; 
 				this.firstInitialTry();
 			});
+			source.addEventListener('task-update-created', (event) => {
+				let taskData = JSON.parse(event.data);
+				this.updateTask([taskData.task_path, taskData.task_message]);
+			});
 			source.addEventListener('task-update-start', (event) => {
 				let taskData = JSON.parse(event.data);
 				this.updateTask([taskData.task_path, taskData.task_message]);

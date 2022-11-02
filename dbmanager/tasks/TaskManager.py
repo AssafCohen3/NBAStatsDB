@@ -22,9 +22,11 @@ tasks_dictionary: Dict[int, TaskAbc] = {}
 
 
 def enqueue_task(task: TaskAbc, done_callback=None):
+    task.init_task(current_task_id, announcer, DEFAULT_CONFIG)
+    tasks_dictionary[task.get_task_id()] = task
+    announcer.announce_task_event('task-update-created', [task.get_task_id()], task)
+
     async def adder_coro():
-        task.init_task(current_task_id, announcer, DEFAULT_CONFIG)
-        tasks_dictionary[task.get_task_id()] = task
         await task
         task.after_execution_finished()
 

@@ -3,8 +3,9 @@
 		"cancelled": "בוטל",
 		"finished": "הסתיים",
 		"none": "לא קיים",
-		"received_recoverable_connection_error": "התקבלה שגיאת חיבור לאינטרנט. ניתן לנסות להמשיך את ביצוע הפעולה",
-		"received_recoverable_arbitrary_error": "התקבלה שגיאה. ניתן לנסות להמשיך את ריצת הפעולה"
+		"received_recoverable_connection_error": "התקבלה שגיאת חיבור לאינטרנט.",
+		"received_recoverable_database_error": "התקבלה שגיאה הקשורה לבסיס הנתונים.",
+		"received_recoverable_arbitrary_error": "התקבלה שגיאה."
 	},
 	"resources": {
 		"playerboxscore": {
@@ -12,10 +13,10 @@
 				"update_player_boxscores": {
 					"fetching_boxscores_of_type_since_date": "מוריד בוקססקורס מסוג %{season_type} החל מ- %{start_date}",
 					"fetching_boxscores_of_type_in_date_range": "מוריד בוקססקורס מסוג %{season_type} בין %{start_date} ל- %{end_date}",
-					"title": "עדכן בוקססקורס"
+					"title": "עדכן בוקססקורס אחרונים"
 				},
 				"reset_player_boxscores": {
-					"title": "הורד מחדש בוקססקורס"
+					"title": "הורד מחדש את כל הבוקססקורס"
 				},
 				"update_player_boxscores_in_date_range": {
 					"title": "השלם בוקססקורס חסרים בין תאריכים"
@@ -41,10 +42,10 @@
 				"update_team_boxscores": {
 					"fetching_boxscores_of_type_since_date": "מוריד בוקססקורס מסוג %{season_type} החל מ- %{start_date}",
 					"fetching_boxscores_of_type_in_date_range": "מוריד בוקססקורס מסוג %{season_type} בין %{start_date} ל- %{end_date}",
-					"title": "עדכן בוקססקורס"
+					"title": "עדכן בוקססקורס אחרונים"
 				},
 				"reset_team_boxscores": {
-					"title": "הורד מחדש בוקססקורס"
+					"title": "הורד מחדש את כל הבוקססקורס"
 				},
 				"update_team_boxscores_in_date_range": {
 					"title": "השלם בוקססקורס חסרים בין תאריכים"

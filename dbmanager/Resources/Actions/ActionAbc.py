@@ -7,6 +7,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import scoped_session
 from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
+from dbmanager.tasks.RetryManager import AttemptContextManager, DatabaseErrors
 from dbmanager.tasks.TaskAbc import TaskAbc
 from dbmanager.tasks.TaskMessage import TaskMessage
 
@@ -73,3 +74,8 @@ class ActionAbc(TaskAbc, ABC):
 
     def get_sub_tasks(self) -> List['TaskAbc']:
         return []
+
+    def handle_exception(self, attempt: AttemptContextManager):
+        super().handle_exception(attempt)
+        if isinstance(attempt.attempt_exception, DatabaseErrors):
+            self.session.rollback()

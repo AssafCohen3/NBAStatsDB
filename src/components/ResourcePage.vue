@@ -227,6 +227,9 @@ export default {
 				this.fetchResource([this.resourceId])
 					.then(resource => {
 						this.currentResource = resource;
+					})
+					.catch(err => {
+						this.currentResource = null;
 					});
 			}
 		},

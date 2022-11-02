@@ -91,6 +91,7 @@ const actions = {
 				.catch(err => {
 					toastError(err.response);
 					commit('postActionError');
+					reject(err.response);
 				});
 		});
 	},

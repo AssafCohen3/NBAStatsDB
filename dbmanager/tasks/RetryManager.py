@@ -2,6 +2,8 @@
 very inspired by the great library https://github.com/jd/tenacity which is sadly not fully supporting async currently
 """
 from __future__ import annotations
+
+import sqlite3
 import time
 import typing
 from dataclasses import dataclass
@@ -9,6 +11,7 @@ from functools import wraps
 from itertools import count
 from typing import Callable, Awaitable, TypeVar, Tuple, Type, Optional, Generator
 import requests.exceptions
+import sqlalchemy.exc
 
 from dbmanager.Errors import LibraryError
 
@@ -17,8 +20,22 @@ if typing.TYPE_CHECKING:
 
 
 MAX_WAIT_SECONDS = 60 * 30
-AfterFailCallbackType = Callable[['AttemptContextManager', float], Awaitable]
-RecoverableError: Tuple[Type[Exception], ...] = (requests.exceptions.ConnectionError, requests.exceptions.RetryError, requests.exceptions.ReadTimeout)
+AfterFailCallbackType = Callable[['AttemptContextManager'], None]
+AfterFailAsyncCallbackType = Callable[['AttemptContextManager', float], Awaitable]
+ConnectionErrors: Tuple[Type[Exception], ...] = (
+    requests.exceptions.ConnectionError,
+    requests.exceptions.RetryError,
+    requests.exceptions.ReadTimeout,
+)
+DatabaseErrors: Tuple[Type[Exception], ...] = (
+    sqlite3.OperationalError,
+    sqlalchemy.exc.OperationalError,
+)
+
+RecoverableError: Tuple[Type[Exception], ...] = (
+    *ConnectionErrors,
+    *DatabaseErrors,
+)
 
 
 @dataclass
@@ -73,6 +90,7 @@ class AttemptContextManager:
             self.to_recover = True
             self.fail_timestamp = time.time()
             self.attempt_exception = exc_val
+            self.retry_manager.after_fail_always_callback(self)
             if self.attempt_number < self.get_config().max_attempts_in_retry:
                 # not last attempt
                 await self.retry_manager.after_fail_attempt_callback(self,
@@ -88,12 +106,14 @@ class AttemptContextManager:
 
 class RetryManager:
     def __init__(self, retry_config: RetryConfig,
-                 after_fail_attempt_callback: AfterFailCallbackType,
-                 after_fail_retry_callback: AfterFailCallbackType,
+                 after_fail_always_callback: AfterFailCallbackType,
+                 after_fail_attempt_callback: AfterFailAsyncCallbackType,
+                 after_fail_retry_callback: AfterFailAsyncCallbackType,
                  forever: bool):
         self.retry_config: RetryConfig = retry_config
-        self.after_fail_attempt_callback: AfterFailCallbackType = after_fail_attempt_callback
-        self.after_fail_retry_callback: AfterFailCallbackType = after_fail_retry_callback
+        self.after_fail_always_callback: AfterFailCallbackType = after_fail_always_callback
+        self.after_fail_attempt_callback: AfterFailAsyncCallbackType = after_fail_attempt_callback
+        self.after_fail_retry_callback: AfterFailAsyncCallbackType = after_fail_retry_callback
         self.forever: bool = forever
         self.current_attempt: Optional[AttemptContextManager] = None
 

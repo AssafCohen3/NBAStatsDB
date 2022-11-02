@@ -5,11 +5,11 @@ from abc import ABC, abstractmethod
 from asyncio import TimerHandle
 from enum import Enum
 from typing import Optional, Union, List
-import requests.exceptions
 from dbmanager.AppI18n import gettext
 from dbmanager.Errors import TaskPathNotExistError, TaskDismissedError, TaskAlreadyFinishedError, TaskNotInitiatedError, \
     TaskNotFinishedError
-from dbmanager.tasks.RetryManager import RetryManager, RetryConfig, AttemptContextManager, RetryStatus
+from dbmanager.tasks.RetryManager import RetryManager, RetryConfig, AttemptContextManager, RetryStatus, \
+    ConnectionErrors, DatabaseErrors
 from dbmanager.tasks.TaskAnnouncer import AnnouncerAbc
 from dbmanager.tasks.TaskMessage import TaskMessage, ExceptionMessage
 
@@ -53,7 +53,7 @@ class TaskAbc(ABC):
     def init_task(self, counter: itertools.count, announcer: AnnouncerAbc, retry_config: RetryConfig):
         self.set_task_id(next(counter))
         self.set_announcer(announcer)
-        self.retry_manager = RetryManager(retry_config, self.after_attempt_fail, self.after_retry_fail, True)
+        self.retry_manager = RetryManager(retry_config, self.handle_exception, self.after_attempt_fail, self.after_retry_fail, True)
 
     def init_task_data(self) -> bool:
         if self.is_data_initiated():
@@ -236,8 +236,10 @@ class TaskAbc(ABC):
         if self.is_finished():
             return gettext('common.finished')
         if self.is_recover_mode():
-            if isinstance(self.get_last_failed_attempt().attempt_exception, requests.exceptions.RequestException):
+            if isinstance(self.get_last_failed_attempt().attempt_exception, ConnectionErrors):
                 return gettext('common.received_recoverable_connection_error')
+            elif isinstance(self.get_last_failed_attempt().attempt_exception, DatabaseErrors):
+                return gettext('common.received_recoverable_database_error')
             else:
                 return gettext('common.received_recoverable_arbitrary_error')
         return self.get_current_subtask_text_abs()
@@ -361,3 +363,6 @@ class TaskAbc(ABC):
 
     def is_data_initiated(self) -> bool:
         return self._data_init_status == InitStatus.INITIATED
+
+    def handle_exception(self, attempt: AttemptContextManager):
+        pass

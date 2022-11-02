@@ -45,6 +45,25 @@
 					link />
 			</v-list-group>
 		</v-list>
+		<v-list-item
+			no-action
+			prepend-icon="mdi-help-circle"
+			:title="$t('common.help')"
+			@click="openHelp" />		
+		<template #append>
+			<div
+				class="py-[50px] flex flex-col items-center justify-center">
+				<v-btn
+					class="!text-[40px] text-primary-light"
+					variant="plain"
+					icon="mdi-github"
+					@click="openGithub" />
+				<div
+					class="pt-[20px] font-bold text-dimmed-white">
+					{{ `NBAStatsDB` }}
+				</div>
+			</div>
+		</template>
 	</v-navigation-drawer>
 </template>
 
@@ -74,6 +93,12 @@ export default {
 				},
 			});
 		},
+		openHelp(){
+			window.open('https://github.com/AssafCohen3/NBAStatsDB/wiki', '_blank');
+		},
+		openGithub(){
+			window.open('https://github.com/AssafCohen3/NBAStatsDB', '_blank');
+		}
 	},
 	onLocaleChange(){
 		this.fetchResources();
@@ -114,5 +139,17 @@ export default {
 
 .v-list-item{
 	color: #d9e1ff !important;
+}
+
+
+</style>
+
+<style>
+.v-navigation-drawer{
+	overflow-y: auto;
+}
+
+.v-navigation-drawer__content{
+	overflow-y: unset;
 }
 </style>

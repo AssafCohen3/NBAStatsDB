@@ -6,6 +6,7 @@ import typing
 from abc import ABC, abstractmethod
 from dataclasses import asdict
 from queue import Queue
+from threading import Lock
 from typing import Dict, Tuple, List
 
 if typing.TYPE_CHECKING:
@@ -26,6 +27,7 @@ class TaskAnnouncer(AnnouncerAbc):
     def __init__(self):
         self.listeners: Dict[int, Queue] = {}
         self.next_id = itertools.count()
+        self._lock = Lock()
 
     def listen(self) -> Tuple[int, Queue]:
         q = Queue()
@@ -49,9 +51,10 @@ class TaskAnnouncer(AnnouncerAbc):
         self.announce(to_send)
 
     def announce(self, event_and_data: str):
-        logging.info(f'announcing {event_and_data}')
-        for q in self.listeners.values():
-            q.put_nowait(event_and_data)
+        with self._lock:
+            logging.info(f'announcing {event_and_data}')
+            for q in self.listeners.values():
+                q.put_nowait(event_and_data)
 
 
 def format_sse(event: str, data: str) -> str:

@@ -13,12 +13,12 @@
 			},
 			"actions": {
 				"reset_player_boxscores": {
-					"title": "Redownload boxscores"
+					"title": "Redownload all boxscores"
 				},
 				"update_player_boxscores": {
 					"fetching_boxscores_of_type_in_date_range": "fetching boxscores of type %{season_type} between %{start_date} and %{end_date}",
 					"fetching_boxscores_of_type_since_date": "fetching boxscores of type %{season_type} since %{start_date}",
-					"title": "Update boxscores"
+					"title": "Update last boxscores"
 				},
 				"update_player_boxscores_in_date_range": {
 					"title": "Update boxscores in date range"
@@ -42,12 +42,12 @@
 			},
 			"actions": {
 				"reset_team_boxscores": {
-					"title": "Redownload boxscores"
+					"title": "Redownload all boxscores"
 				},
 				"update_team_boxscores": {
 					"fetching_boxscores_of_type_in_date_range": "fetching boxscores of type %{season_type} between %{start_date} and %{end_date}",
 					"fetching_boxscores_of_type_since_date": "fetching boxscores of type %{season_type} since %{start_date}",
-					"title": "Update boxscores"
+					"title": "Update last boxscores"
 				},
 				"update_team_boxscores_in_date_range": {
 					"title": "Update boxscores in date range"
@@ -333,6 +333,7 @@
 		"finished": "Finished",
 		"none": "None",
 		"received_recoverable_connection_error": "Received a connection error.",
+		"received_recoverable_database_error": "Received a database error.",
 		"received_recoverable_arbitrary_error": "Received an error."
 	},
 	"errors": {},

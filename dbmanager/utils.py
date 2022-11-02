@@ -1,10 +1,14 @@
 import datetime
+import sqlite3
+from contextlib import contextmanager
 from functools import wraps
 from itertools import tee, islice, chain
 from typing import Iterable, TypeVar, Tuple, Optional, Callable
 
 import requests
+import sqlalchemy.exc
 from flask import request
+from sqlalchemy.orm import scoped_session
 from typeguard import typechecked
 from dbmanager.Errors import RequestTypeError
 
@@ -43,3 +47,12 @@ def protocol_retry_request(url: str, *args, **kwargs):
     if resp.status_code == 200:
         return resp
     return requests.get('http://' + without_protocol, *args, **kwargs)
+
+
+@contextmanager
+def safe_session_execute(session: scoped_session):
+    try:
+        yield session
+    except (sqlite3.OperationalError, sqlalchemy.exc.OperationalError) as e:
+        session.rollback()
+        raise e
