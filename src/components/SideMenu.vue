@@ -150,6 +150,7 @@ export default {
 }
 
 .v-navigation-drawer__content{
+	overflow-x: unset;
 	overflow-y: unset;
 }
 </style>

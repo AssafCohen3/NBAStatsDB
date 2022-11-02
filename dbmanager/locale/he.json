@@ -151,7 +151,8 @@
 				},
 				"update_bref_players": {
 					"title": "עדכן שחקנים חסרים",
-					"fetching_players": "מוריד שחקנים שמתחילים באות %{letter}"
+					"fetching_players": "מוריד שחקנים שמתחילים באות %{letter}",
+					"fetching_player": "מוריד את הפרטים של %{player}"
 				}
 			},
 			"messages": {

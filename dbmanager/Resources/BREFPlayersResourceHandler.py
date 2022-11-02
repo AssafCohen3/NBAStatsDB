@@ -37,8 +37,6 @@ class BREFPlayersResourceHandler(ResourceAbc):
             group_by(PlayerMapping.PlayerNBAId)
         )
         missing_players = session.execute(missing_players_stmt).fetchall()
-        missing_players = [(player_bref_id, player_nba_id) for player_bref_id, player_nba_id in missing_players
-                           if players_index.is_player_played_games(player_nba_id)]
         possible_players_count = len(missing_players) + saved_players_count
         return [
             ResourceMessage(
