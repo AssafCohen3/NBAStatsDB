@@ -38,7 +38,10 @@
 		"no": "No",
 		"remember_my_answer": "Remember my answer",
 		"read_less": "Read less",
-		"related_table": "Related table"
+		"related_table": "Related table",
+		"show_error": "Show error",
+		"edit": "Edit",
+		"help": "Help"
 	},
 	"generic": {
 		"home": "Home",

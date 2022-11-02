@@ -1,9 +1,9 @@
 from sqlalchemy import Column, PrimaryKeyConstraint, Date
 from sqlalchemy import Integer, Text
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class BREFPlayoffSerie(Base):
+class BREFPlayoffSerie(MyModel):
     __tablename__ = 'BREFPlayoffSerie'
     Season = Column(Integer)
     TeamAId = Column(Integer)

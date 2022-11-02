@@ -5,10 +5,10 @@ from sqlalchemy import Text
 from sqlalchemy.orm import relationship
 
 from dbmanager.Database.Models.ActionRecipe import ActionRecipe
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class ActionsGroupPreset(Base):
+class ActionsGroupPreset(MyModel):
     __tablename__ = 'ActionsGroupPreset'
     ActionsGroupPresetId = Column(Text, primary_key=True)
     PresetTranslatableNameJson = Column(Text, nullable=False)

@@ -7,7 +7,7 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.PlayerBoxScoreActions import UpdatePlayerBoxScoresAction, ResetPlayerBoxScoresAction, \
-    UpdatePlayerBoxScoresInDateRangeAction
+    UpdatePlayerBoxScoresInDateRangeAction, RedownloadPlayerBoxScoresInDateRangeAction
 from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.PlayerBoxScoreResourceSpecification import \
     PlayerBoxScoreResourceSpecification
@@ -25,7 +25,8 @@ class PlayerBoxScoreResourceHandler(ResourceAbc):
         return [
             UpdatePlayerBoxScoresAction,
             ResetPlayerBoxScoresAction,
-            UpdatePlayerBoxScoresInDateRangeAction
+            UpdatePlayerBoxScoresInDateRangeAction,
+            RedownloadPlayerBoxScoresInDateRangeAction,
         ]
 
     @classmethod

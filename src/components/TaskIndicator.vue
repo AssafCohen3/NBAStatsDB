@@ -13,12 +13,40 @@
 				:color="taskIconColor"
 				size="30"
 				indeterminate />
+			<template
+				v-else-if="hasError">
+				<v-tooltip
+					:text="$t('common.show_error')">
+					<template #activator="{props}">
+						<v-badge
+							v-if="isRecoverMode"
+							v-bind="props"
+							class="error-badge cursor-pointer"
+							icon="mdi-alert-circle"
+							color="transparent"
+							@click="errorClick">
+							<v-icon
+								:color="taskIconColor"
+								size="x-large">
+								{{ taskIcon }}
+							</v-icon>
+						</v-badge>
+						<v-icon
+							v-else
+							v-bind="props"
+							:color="taskIconColor"
+							class="cursor-pointer"
+							size="x-large"
+							@click="errorClick">
+							{{ taskIcon }}
+						</v-icon>
+					</template>
+				</v-tooltip>
+			</template>
 			<v-icon
 				v-else
 				:color="taskIconColor"
-				:class="hasError ? ['cursor-pointer'] : []"
-				size="x-large"
-				v-on="hasError ? {click: errorClick} : {}">
+				size="x-large">
 				{{ taskIcon }}
 			</v-icon>
 			<!-- main content -->
@@ -275,7 +303,6 @@ export default {
 	padding-inline: 20px;
 	padding-top: 10px;
 	padding-bottom: 5px;
-	cursor: pointer;
 }
 
 .child_task .task_body{
@@ -315,4 +342,13 @@ export default {
       transform:translateX(100%);
     }
 }
+
+.v-badge.error-badge :deep(.v-badge__badge .v-icon){
+	color: red;
+	font-size: 25px;
+	background: white;
+	border-radius: 10000px;
+	clip-path: circle(38% at 50% 50%);
+}
+
 </style>

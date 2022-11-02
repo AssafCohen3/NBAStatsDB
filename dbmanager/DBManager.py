@@ -19,7 +19,7 @@ from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHa
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.BREFStartersResourceHandler import BREFStartersResourceHandler
 from dbmanager.Resources.BREFTransactionsResourceHandler import BREFTransactionsResourceHandler
-from dbmanager.Resources.EventsResourceHandler import EventsResourceHandler
+from dbmanager.Resources.PBPEventsResourceHandler import PBPEventsResourceHandler
 from dbmanager.Resources.NBAAwardsResourceHandler import NBAAwardsResourceHandler
 from dbmanager.Resources.NBAHonoursResourceHandler import NBAHonoursResourceHandler
 from dbmanager.Resources.NBAPlayersBirthdateResourceHandler import NBAPlayersBirthdateResourceHandler
@@ -32,7 +32,7 @@ from dbmanager.Database.Models.Resource import Resource
 from dbmanager.Errors import ResourceNotExistError, PresetNotExistError
 from dbmanager.Resources.TeamBoxScoreResourceHandler import TeamBoxScoreResourceHandler
 from dbmanager.SharedData.CachedData import CachedData
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 # noinspection PyUnresolvedReferences
 import dbmanager.Database.Models
 # noinspection PyUnresolvedReferences
@@ -53,7 +53,7 @@ class DbManager:
             PlayersMappingsResourceHandler,
             BREFPlayersResourceHandler,
             NBAAwardsResourceHandler,
-            EventsResourceHandler,
+            PBPEventsResourceHandler,
             NBAHonoursResourceHandler,
             OddsResourceHandler,
             BREFStartersResourceHandler,
@@ -69,7 +69,7 @@ class DbManager:
     def init(self, engine: Engine, session: scoped_session):
         self.engine = engine
         self.session = session
-        Base.metadata.create_all(self.engine)
+        MyModel.metadata.create_all(self.engine)
         to_add = [{
             'ResourceId': res.get_id(),
             'LastUpdated': None
@@ -139,10 +139,10 @@ class DbManager:
                 action_to_run.get_action_spec().parse_params(self.session, params)
             )
             for depends_on_action in all_dependencies:
-                dependent_action_to_run = self.dispatch_action(depends_on_action.dependent_action_spec().get_resource().get_id(),
-                                                               depends_on_action.dependent_action_spec.get_action_id(),
-                                                               # TODO maybe recursive download?
-                                                               depends_on_action.parsed_params, False)
+                dependent_spec = depends_on_action.dependent_action_spec
+                resource = self.get_resource(dependent_spec.get_resource().get_id())
+                dependent_action_to_run = resource.get_action_cls(dependent_spec.get_action_id()).\
+                    create_action_from_parsed_params(self.session, depends_on_action.parsed_params)
                 depends_on_actions.append(dependent_action_to_run)
             to_ret = TasksGroup(f'action_with_dep-{action_id}', TranslatableFieldFromAction(action_to_run.get_action_spec()),
                                 [*depends_on_actions, to_ret])
@@ -189,7 +189,7 @@ class DbManager:
             'description': resource.get_resource_spec().get_description(),
             'messages': resource.get_messages(self.session),
             'actions_specs': list(map(lambda spec: spec.to_dict(self.session), resource.get_actions_specs())),
-            'related_tables': resource.get_related_tables(),
+            'related_tables': [{'namw': rt.__name__} for rt in resource.get_related_tables()],
             'depend_on_resources': list(map(lambda d: {
                 'resource_id': d.get_id(),
                 'resource_name': d.get_name()

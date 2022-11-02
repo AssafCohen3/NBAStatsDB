@@ -2,10 +2,7 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import List, Type
 
-
-@dataclass
-class RelatedTable:
-    name: str
+from dbmanager.base import MyModel
 
 
 @dataclass
@@ -31,7 +28,7 @@ class ResourceSpecificationAbc(ABC):
 
     @classmethod
     @abstractmethod
-    def get_related_tables(cls) -> List[RelatedTable]:
+    def get_related_tables(cls) -> List[Type[MyModel]]:
         """
         Get related tables.
         """

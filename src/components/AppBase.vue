@@ -16,7 +16,7 @@
 			<v-main>
 				<v-container
 					fluid
-					class="!p-[24px]">
+					class="!p-[24px] h-full w-full">
 					<router-view />
 				</v-container>
 			</v-main>
@@ -117,6 +117,9 @@ export default {
 			this.initDB([currentDBName, createDB])
 				.then((resp) => {
 					toastSuccess(this.$t('messages.connected_to_db', {dbName: resp}));
+					if(dbName != null){
+						localStorage.setItem('dbName', dbName);
+					}
 				});
 		}
 	}

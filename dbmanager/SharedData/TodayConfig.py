@@ -1,8 +1,5 @@
 import datetime
 import json
-
-import requests
-
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 from dbmanager.constants import DATA_PROD_TODAY_FILE
 from dbmanager.utils import protocol_retry_request

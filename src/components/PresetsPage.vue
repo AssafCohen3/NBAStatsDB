@@ -21,13 +21,19 @@
 							class="text-primary-light font-bold text-[30px] select-none">
 							{{ $t('generic.presets') }}
 						</div>
-						<v-btn
-							class="mx-[5px]"
-							variant="plain"
-							icon="mdi-plus-circle-outline"
-							size="x-large"
-							color="primary-light"
-							@click="creatingPreset = true" />
+						
+						<v-tooltip :text="$t('common.create_preset')">
+							<template #activator="{props}">
+								<v-btn
+									class="mx-[5px]"
+									v-bind="props"
+									variant="plain"
+									icon="mdi-plus-circle-outline"
+									size="x-large"
+									color="primary-light"
+									@click="creatingPreset = true" />
+							</template>
+						</v-tooltip>
 					</div>
 					<div
 						class="text-dimmed-white font-bold text-[18px] select-none">

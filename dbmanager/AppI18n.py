@@ -68,3 +68,11 @@ class TranslatableFieldFromAction(TranslatableField):
 
     def get_value(self):
         return self.action_spec.get_action_title()
+
+
+class TranslatableFieldFromPath(TranslatableField):
+    def __init__(self, path: str):
+        self.path = path
+
+    def get_value(self):
+        return gettext(self.path)

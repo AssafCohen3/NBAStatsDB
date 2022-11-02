@@ -11,6 +11,7 @@ log.info('starting log');
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
 
+// TODO ?
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const path = require('path');
 
@@ -68,12 +69,12 @@ const createPyProc = (pyPort) => {
 
 	console.log(`Starting python process at ${script}`);
 	if (guessPackaged()) {
-		pyProc = require('child_process').execFile(script, [pyPort, isDevelopment], {
+		pyProc = require('child_process').execFile(script, [pyPort, 'false'], {
 			stdio: 'ignore',
 		});
 	} else {
 		// TODO python 3.9?
-		pyProc = require('child_process').spawn('python3.9', [script, pyPort, isDevelopment], {
+		pyProc = require('child_process').spawn('python3.9', [script, pyPort, 'true'], {
 		});
 		if(pyProc){
 			pyProc.stdout.setEncoding('utf8');

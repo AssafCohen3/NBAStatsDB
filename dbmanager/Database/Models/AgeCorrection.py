@@ -1,9 +1,9 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Date
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class AgeCorrection(Base):
+class AgeCorrection(MyModel):
     __tablename__ = 'AgeCorrection'
     PlayerId = Column(Integer, primary_key=True)
     RealBirthDate = Column(Date)

@@ -19,15 +19,21 @@
 						class="text-primary-light font-bold text-[24px] select-none">
 						{{ preset.preset_name }}
 					</div>
-					<v-fade-transition>
-						<v-btn
-							v-show="isHovering"
-							class="mx-[5px]"
-							variant="plain"
-							icon="mdi-pencil"
-							color="primary-light"
-							@click="editingPreset = true" />
-					</v-fade-transition>
+					<v-tooltip
+						:text="$t('common.edit')">
+						<template #activator="{ props: tooltipProps }">
+							<v-fade-transition>
+								<v-btn
+									v-show="isHovering"
+									v-bind="tooltipProps"
+									class="mx-[5px]"
+									variant="plain"
+									icon="mdi-pencil"
+									color="primary-light"
+									@click="editingPreset = true" />
+							</v-fade-transition>
+						</template>
+					</v-tooltip>
 					<v-tooltip>
 						<template #activator="{ props: tooltipProps }">
 							<v-fade-transition>

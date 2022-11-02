@@ -20,8 +20,7 @@ from dbmanager.blueprints.suggestions import suggestions_bp
 from dbmanager.blueprints.tasks import tasks_bp
 from dbmanager.tasks.TaskManager import run_tasks_loop
 from dbmanager.blueprints.resources import resources_bp
-from dbmanager.extensions import db_manager, CustomJSONEncoder
-
+from dbmanager.extensions import db_manager, CustomJSONEncoder, setup_logging
 
 app = Flask(__name__)
 app.config.from_file("flask.config.json", load=json.load)
@@ -114,9 +113,12 @@ def init_db():
 
 if __name__ == "__main__":
     port = 5000
-    debug = True
+    debug = False
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
     if len(sys.argv) > 2:
         debug = sys.argv[2] == 'true'
+    # TODO some arg parse
+    if debug:
+        setup_logging('mylog')
     app.run('127.0.0.1', port=port, debug=debug, threaded=True)

@@ -5,10 +5,10 @@ from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relationship
 
 from dbmanager.Database.Models.ActionRecipeParam import ActionRecipeParam
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class ActionRecipe(Base):
+class ActionRecipe(MyModel):
     __tablename__ = 'ActionRecipe'
     ActionRecipeId = Column(Integer, primary_key=True)
     ActionsGroupPresetId = Column(Text, ForeignKey('ActionsGroupPreset.ActionsGroupPresetId', ondelete="CASCADE"), nullable=False)

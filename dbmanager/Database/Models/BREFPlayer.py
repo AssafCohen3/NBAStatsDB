@@ -1,9 +1,9 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Date, Float
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class BREFPlayer(Base):
+class BREFPlayer(MyModel):
     __tablename__ = 'BREFPlayer'
     PlayerId = Column(Text, primary_key=True)
     PlayerName = Column(Text)

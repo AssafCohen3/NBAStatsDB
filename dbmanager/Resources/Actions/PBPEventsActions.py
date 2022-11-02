@@ -8,11 +8,11 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
-from dbmanager.Database.Models.Event import Event
-from dbmanager.Downloaders.EventsDownloader import EventsDownloader
+from dbmanager.Database.Models.PBPEvent import PBPEvent
+from dbmanager.Downloaders.PBPEventsDownloader import EventsDownloader
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
-from dbmanager.Resources.ActionSpecifications.EventsActionSpecs import UpdateEvents, ResetEvents, \
-    UpdateEventsInDateRange, ResetEventsInDateRange
+from dbmanager.Resources.ActionSpecifications.PBPEventsActionSpecs import UpdatePBPEvents, ResetPBPEvents, \
+    UpdatePBPEventsInDateRange, ResetPBPEventsInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.pbp.MyPBPLoader import MyPBPLoader
@@ -145,7 +145,7 @@ async def transform_game_events(game_details: GameDetails, events: List[dict]):
     return tranformed_events
 
 
-class GeneralEventsAction(ActionAbc, ABC):
+class GeneralPBPEventsAction(ActionAbc, ABC):
     def __init__(self, session: scoped_session,
                  season_type_code: str,
                  start_date: datetime.date = None,
@@ -167,10 +167,10 @@ class GeneralEventsAction(ActionAbc, ABC):
         return len(self.games_to_fetch) > 0
 
     def insert_events(self, game_id: str, events: List[dict]):
-        delete_stmt = delete(Event).where(Event.GameId == game_id)
+        delete_stmt = delete(PBPEvent).where(PBPEvent.GameId == game_id)
         self.session.execute(delete_stmt)
         if events:
-            stmt = insert(Event).on_conflict_do_nothing()
+            stmt = insert(PBPEvent).on_conflict_do_nothing()
             self.session.execute(stmt, events)
         self.session.commit()
         self.update_resource()
@@ -226,12 +226,12 @@ class GeneralEventsAction(ActionAbc, ABC):
         self.insert_events(game_details.game_id, dicts)
 
     def get_games_without_events(self, season_type: SeasonType):
-        joined = outerjoin(BoxScoreT, Event, Event.GameId == BoxScoreT.GameId)
+        joined = outerjoin(BoxScoreT, PBPEvent, PBPEvent.GameId == BoxScoreT.GameId)
         stmt = (
             select(BoxScoreT.Season, BoxScoreT.GameId, BoxScoreT.GameDate,
                    BoxScoreT.TeamAId, BoxScoreT.TeamAName, BoxScoreT.TeamBId, BoxScoreT.TeamBName)
             .select_from(joined)
-            .where(and_(Event.GameId.is_(None),
+            .where(and_(PBPEvent.GameId.is_(None),
                         BoxScoreT.SeasonType == season_type.code,
                         or_(
                             and_(BoxScoreT.SeasonType.in_([2, 4, 5]), BoxScoreT.Season >= 1996).self_group(),
@@ -281,27 +281,27 @@ class GeneralEventsAction(ActionAbc, ABC):
                        game_date=self.current_game.game_date.isoformat() if self.current_game else '')
 
 
-class UpdateEventsAction(GeneralEventsAction):
+class UpdatePBPEventsAction(GeneralPBPEventsAction):
 
     def __init__(self, session: scoped_session, season_type_code: str):
         super().__init__(session, season_type_code, None, None, True)
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return UpdateEvents
+        return UpdatePBPEvents
 
 
-class ResetEventsAction(GeneralEventsAction):
+class ResetPBPEventsAction(GeneralPBPEventsAction):
 
     def __init__(self, session: scoped_session, season_type_code: str):
         super().__init__(session, season_type_code, None, None, False)
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return ResetEvents
+        return ResetPBPEvents
 
 
-class UpdateEventsInDateRangeAction(GeneralEventsAction):
+class UpdatePBPEventsInDateRangeAction(GeneralPBPEventsAction):
 
     def __init__(self, session: scoped_session, season_type_code: str,
                  start_date: datetime.date = None, end_date: datetime.date = None):
@@ -309,10 +309,10 @@ class UpdateEventsInDateRangeAction(GeneralEventsAction):
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return UpdateEventsInDateRange
+        return UpdatePBPEventsInDateRange
 
 
-class ResetEventsInDateRangeAction(GeneralEventsAction):
+class ResetPBPEventsInDateRangeAction(GeneralPBPEventsAction):
 
     def __init__(self, session: scoped_session, season_type_code: str,
                  start_date: datetime.date = None, end_date: datetime.date = None):
@@ -320,4 +320,4 @@ class ResetEventsInDateRangeAction(GeneralEventsAction):
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
-        return ResetEventsInDateRange
+        return ResetPBPEventsInDateRange

@@ -1,10 +1,11 @@
 from typing import List, Type
 
 from dbmanager.AppI18n import gettext
+from dbmanager.Database.Models.BREFPlayer import BREFPlayer
 from dbmanager.Resources.ResourceSpecifications.PlayersMappingsResourceSpecification import \
     PlayersMappingsResourceSpecification
-from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, RelatedTable, \
-    Source
+from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, Source
+from dbmanager.base import MyModel
 
 
 class BREFPlayersResourceSpecification(ResourceSpecificationAbc):
@@ -18,9 +19,9 @@ class BREFPlayersResourceSpecification(ResourceSpecificationAbc):
         return 'Players(BREF)'
 
     @classmethod
-    def get_related_tables(cls) -> List[RelatedTable]:
+    def get_related_tables(cls) -> List[Type[MyModel]]:
         return [
-            RelatedTable('BREFPlayer')
+            BREFPlayer
         ]
 
     @classmethod

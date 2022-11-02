@@ -46,7 +46,10 @@
 		"no": "לא",
 		"remember_my_answer": "זכור את התשובה שלי",
 		"read_less": "קרא פחות",
-		"related_table": "טבלה קשורה"
+		"related_table": "טבלה קשורה",
+		"show_error": "הצג שגיאה",
+		"edit": "ערוך",
+		"help": "עזרה"
 	},
 	"validations": {
 		"required": "השדה נדרש",

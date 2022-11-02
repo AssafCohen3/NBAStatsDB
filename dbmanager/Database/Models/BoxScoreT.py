@@ -1,9 +1,9 @@
 from sqlalchemy import Column, PrimaryKeyConstraint
 from sqlalchemy import Integer, Text, Date, Float
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class BoxScoreT(Base):
+class BoxScoreT(MyModel):
     __tablename__ = 'BoxScoreT'
     Season = Column(Integer)
     SeasonType = Column(Text)

@@ -1,2 +1,2 @@
 from sqlalchemy.orm import declarative_base
-Base = declarative_base()
+MyModel = declarative_base()

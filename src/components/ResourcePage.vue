@@ -1,45 +1,26 @@
 <template>
-	<div>
+	<div
+		class="h-full w-full">
 		<div
 			v-if="fetchingResource || currentResource == null"
-			class="app-section p-[30px] w-[fit-content]">
-			<v-progress-circular
-				v-if="fetchingResource || currentResource == null"
-				class="text-primary-light"
-				indeterminate />
+			class="flex h-full items-center justify-center">
+			<div
+				class="app-section p-[30px] w-[fit-content]">
+				<v-progress-circular
+					class=" text-primary-light "
+					indeterminate />
+			</div>
 		</div>
 		<!-- content wrappe -->
 		<div
 			v-else>
 			<!-- title -->
 			<div
-				class="flex flex-col w-[fit-content]">
+				class="px-[30px] flex items-center justify-start resource-extra overflow-x-auto">
 				<div
-					class="px-[20px] text-primary-light text-[50px] font-bold">
+					class="text-primary-light text-[50px] font-bold pe-5">
 					{{ currentResource.resource_name }}
 				</div>
-				<div
-					class="text-dimmed-white p-[30px]">
-					<v-icon
-						color="info"
-						class="pb-[5px]"
-						size="x-large">
-						mdi-information
-					</v-icon>
-					<span
-						class="ms-3 text-[24px] whitespace-pre-wrap">
-						{{ descriptionToShow }}
-					</span>
-					<span
-						v-if="showReadMoreButton"
-						class="ms-3 text-dimmed-white text-[16px] font-bold cursor-pointer"
-						@click="descriptionExpanded = !descriptionExpanded">
-						{{ expandCollapseDescriptionButtonText }}
-					</span>
-				</div>
-			</div>
-			<div
-				class="flex flex-row overflow-x-auto gap-[30px] items-center py-[10px] my-[30px]">
 				<div
 					class="custom-card flex items-center">
 					<v-icon
@@ -58,9 +39,7 @@
 					</div>
 				</div>
 				<div
-					v-for="table in [
-						currentResource.related_tables[0],
-					]"
+					v-for="table in currentResource.related_tables"
 					:key="table.name"
 					class="custom-card flex items-center">
 					<v-icon
@@ -79,9 +58,42 @@
 					</div>
 				</div>
 			</div>
+			<div
+				class="text-dimmed-white p-[30px]">
+				<v-icon
+					color="info"
+					class="pb-[5px]"
+					size="x-large">
+					mdi-information
+				</v-icon>
+				<span
+					class="ms-3 text-[24px] whitespace-pre-wrap">
+					{{ descriptionToShow }}
+				</span>
+				<span
+					v-if="showReadMoreButton"
+					class="ms-3 text-dimmed-white text-[16px] font-bold cursor-pointer"
+					@click="descriptionExpanded = !descriptionExpanded">
+					{{ expandCollapseDescriptionButtonText }}
+				</span>
+			</div>
+			<div
+				class="resource-extra flex flex-row overflow-x-auto gap-[30px] items-stretch" />
 			<!-- messages -->
 			<div
-				class="select-none">
+				class="select-none ps-4 pt-[40px]">
+				<div
+					class="flex items-center pb-[20px]">
+					<v-icon
+						class="text-[40px] font-bold"
+						color="primary-light">
+						mdi-message-outline
+					</v-icon>
+					<div
+						class="text-[30px] text-primary-light font-bold text-center px-[10px]">
+						{{ $t('common.messages') }}
+					</div>
+				</div>
 				<div
 					class="w-[80%] min-w-[500px] flex flex-wrap gap-[30px]">
 					<!-- bg-[#2c235a] -->
@@ -221,7 +233,7 @@ export default {
 		runAction(actionId, actionParams){
 			let action = this.currentResource.actions_specs.find((action) => action.action_id == actionId);
 			let downloadDependencies = localStorage.getItem('downloadDependencies', null);
-			if(action.action_dependencies && downloadDependencies === null){
+			if(action.action_dependencies.length > 0 && downloadDependencies === null){
 				this.actionIdForModal = actionId;
 				this.actionParamsForModal = actionParams;
 				this.actionDependenciesForModal = action.action_dependencies;
@@ -292,12 +304,20 @@ export default {
 	@apply text-[20px]
 }
 .custom-card{
-	border-radius: 10px;
+	/* border-radius: 10px;
 	border-color: #ffffff40;
 	border-width: 3px;
-	border-style: groove;
+	border-style: groove; */
+
 	padding: 20px;
-	box-shadow: 0px 0px 4px 1px #2a2b4e;
+	/* box-shadow: 0px 0px 4px 1px #0000002b; */
+	/* background: linear-gradient(172deg, #221562 3%, #1d0f959e, #160b4ef2); */
+}
+
+.resource-extra{
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(172deg, #22156250 3%, #1d0f9550, #160b4e50);
 }
 
 .message-card{

@@ -7,7 +7,7 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreT import BoxScoreT
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.Resources.Actions.TeamBoxScoreActions import UpdateTeamBoxScoresAction, ResetTeamBoxScoresAction, \
-    UpdateTeamBoxScoresInDateRangeAction
+    UpdateTeamBoxScoresInDateRangeAction, RedownloadTeamBoxScoresInDateRangeAction
 from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.TeamBoxScoreResourceSpecification import \
     TeamBoxScoreResourceSpecification
@@ -25,7 +25,8 @@ class TeamBoxScoreResourceHandler(ResourceAbc):
         return [
             UpdateTeamBoxScoresAction,
             ResetTeamBoxScoresAction,
-            UpdateTeamBoxScoresInDateRangeAction
+            UpdateTeamBoxScoresInDateRangeAction,
+            RedownloadTeamBoxScoresInDateRangeAction,
         ]
 
     @classmethod

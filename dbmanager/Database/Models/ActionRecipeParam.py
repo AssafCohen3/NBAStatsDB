@@ -1,9 +1,9 @@
 from sqlalchemy import Column, PrimaryKeyConstraint, ForeignKey
 from sqlalchemy import Integer, Text
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class ActionRecipeParam(Base):
+class ActionRecipeParam(MyModel):
     __tablename__ = 'ActionRecipeParam'
     ActionRecipeId = Column(Integer, ForeignKey('ActionRecipe.ActionRecipeId', ondelete="CASCADE"))
     ParamKey = Column(Text)

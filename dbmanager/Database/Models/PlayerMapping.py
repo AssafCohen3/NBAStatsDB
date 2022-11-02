@@ -1,9 +1,9 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Date
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class PlayerMapping(Base):
+class PlayerMapping(MyModel):
     __tablename__ = 'PlayerMapping'
     PlayerNBAId = Column(Integer, primary_key=True)
     PlayerNBAName = Column(Text)

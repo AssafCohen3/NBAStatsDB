@@ -21,6 +21,9 @@
 					"title": "Update boxscores"
 				},
 				"update_player_boxscores_in_date_range": {
+					"title": "Update boxscores in date range"
+				},
+				"redownload_player_boxscores_in_date_range": {
 					"title": "Redownload boxscores in date range"
 				}
 			},
@@ -47,6 +50,9 @@
 					"title": "Update boxscores"
 				},
 				"update_team_boxscores_in_date_range": {
+					"title": "Update boxscores in date range"
+				},
+				"redownload_team_boxscores_in_date_range": {
 					"title": "Redownload boxscores in date range"
 				}
 			},
@@ -181,28 +187,28 @@
 		"events": {
 			"actions": {
 				"update_events": {
-					"title": "Update missing Events"
+					"title": "Update missing PBP Events"
 				},
 				"reset_events": {
-					"title": "Redownload all Events"
+					"title": "Redownload all PBP Events"
 				},
 				"update_events_in_date_range": {
-					"title": "Update missing Events in date range"
+					"title": "Update missing PBP Events in date range"
 				},
 				"reset_events_in_date_range": {
-					"title": "Redownload all Events in date range"
+					"title": "Redownload all PBP Events in date range"
 				},
 				"download_events": {
-					"downloading_events": "Downloading Events of %{team_a} vs %{team_b} (%{game_date})"
+					"downloading_events": "Downloading PBP Events of %{team_a} vs %{team_b} (%{game_date})"
 				}
 			},
 			"messages": {
 				"games_message": {
-					"title": "%{season_type} Games with Events:",
+					"title": "%{season_type} Games with PBP Events:",
 					"text": "%{games_with_events} out of %{games_count} possible games"
 				}
 			},
-			"description": "Download Play-By-Play data from stats.nba. saves every event of every selected game.\nthe data is available for every game since 1996-97(except for the 98-02 allstar games).\nsince the actions relying on the Team Boxscore data to get the games to download, the data can be downloaded only for games which have a Team Boxscore(update the teams boxscores before running this)\nthis is the heaviest actions to execute from scratch since the data should be downloaded for every game seperately so downloading all of the data from scratch may take even a day."
+			"description": "Download Play-By-Play Events data from stats.nba. saves every event of every selected game.\nthe data is available for every game since 1996-97(except for the 98-02 allstar games).\nsince the actions relying on the Team Boxscore data to get the games to download, the data can be downloaded only for games which have a Team Boxscore(update the teams boxscores before running this)\nthis is the heaviest actions to execute from scratch since the data should be downloaded for every game seperately so downloading all of the data from scratch may take even a day."
 		},
 		"nba_honours": {
 			"messages": {

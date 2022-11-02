@@ -18,6 +18,9 @@
 					"title": "הורד מחדש בוקססקורס"
 				},
 				"update_player_boxscores_in_date_range": {
+					"title": "השלם בוקססקורס חסרים בין תאריכים"
+				},
+				"redownload_player_boxscores_in_date_range": {
 					"title": "הורד מחדש בוקססקורס בין תאריכים"
 				}
 			},
@@ -44,6 +47,9 @@
 					"title": "הורד מחדש בוקססקורס"
 				},
 				"update_team_boxscores_in_date_range": {
+					"title": "השלם בוקססקורס חסרים בין תאריכים"
+				},
+				"redownload_team_boxscores_in_date_range": {
 					"title": "הורד מחדש בוקססקורס בין תאריכים"
 				}
 			},
@@ -188,16 +194,16 @@
 		"events": {
 			"actions": {
 				"update_events": {
-					"title": "עדכן אירועים חסרים"
+					"title": "עדכן אירועי מהלך אחר מהלך חסרים"
 				},
 				"reset_events": {
-					"title": "הורד את כל האירועים מחדש"
+					"title": "הורד את כל אירועי המהלך אחר מהלך מחדש"
 				},
 				"update_events_in_date_range": {
-					"title": "עדכן אירועים חסרים בטווח תאריכים"
+					"title": "עדכן אירועי מהלך אחר מהלך חסרים בטווח תאריכים"
 				},
 				"reset_events_in_date_range": {
-					"title": "הורד מחדש את כל האירועים בטווח תאריכים"
+					"title": "הורד מחדש את כל אירועי המהלך אחר מהלך בטווח תאריכים"
 				},
 				"download_events": {
 					"downloading_events": "מוריד אירועים עבור %{team_a} נגד %{team_b} (%{game_date})"

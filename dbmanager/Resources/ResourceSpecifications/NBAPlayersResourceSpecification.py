@@ -1,8 +1,9 @@
 from typing import List, Type
 
 from dbmanager.AppI18n import gettext
-from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, RelatedTable, \
-    Source
+from dbmanager.Database.Models.NBAPlayer import NBAPlayer
+from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc, Source
+from dbmanager.base import MyModel
 
 
 class NBAPlayersResourceSpecification(ResourceSpecificationAbc):
@@ -16,9 +17,9 @@ class NBAPlayersResourceSpecification(ResourceSpecificationAbc):
         return 'Players(NBA)'
 
     @classmethod
-    def get_related_tables(cls) -> List[RelatedTable]:
+    def get_related_tables(cls) -> List[Type[MyModel]]:
         return [
-            RelatedTable('NBAPlayer')
+            NBAPlayer
         ]
 
     @classmethod

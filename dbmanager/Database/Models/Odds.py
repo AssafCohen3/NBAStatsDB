@@ -1,10 +1,10 @@
 from sqlalchemy import Column, PrimaryKeyConstraint
 from sqlalchemy import Integer, Text, Float
 
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class Odds(Base):
+class Odds(MyModel):
     __tablename__ = 'Odds'
     TeamId = Column(Integer)
     TeamName = Column(Text)

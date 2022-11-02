@@ -7,16 +7,16 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.ActionInput import SeasonTypeSelector, DateRangeSelector
 from dbmanager.Resources.ActionSpecifications.TeamBoxScoreActionSpecs import UpdateTeamBoxScores, \
     UpdateTeamBoxScoresInDateRange
-from dbmanager.Resources.ResourceSpecifications.EventsResourceSpecification import EventsResourceSpecification
+from dbmanager.Resources.ResourceSpecifications.PBPEventsResourceSpecification import PBPEventsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
 from dbmanager.SeasonType import get_season_types
 from dbmanager.constants import FIRST_NBA_SEASON
 
 
-class UpdateEvents(ActionSpecificationAbc):
+class UpdatePBPEvents(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return EventsResourceSpecification
+        return PBPEventsResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):
@@ -47,10 +47,10 @@ class UpdateEvents(ActionSpecificationAbc):
         ]
 
 
-class ResetEvents(ActionSpecificationAbc):
+class ResetPBPEvents(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return EventsResourceSpecification
+        return PBPEventsResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):
@@ -81,10 +81,10 @@ class ResetEvents(ActionSpecificationAbc):
         ]
 
 
-class UpdateEventsInDateRange(ActionSpecificationAbc):
+class UpdatePBPEventsInDateRange(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return EventsResourceSpecification
+        return PBPEventsResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):
@@ -119,10 +119,10 @@ class UpdateEventsInDateRange(ActionSpecificationAbc):
         ]
 
 
-class ResetEventsInDateRange(ActionSpecificationAbc):
+class ResetPBPEventsInDateRange(ActionSpecificationAbc):
     @classmethod
     def get_resource(cls) -> Type[ResourceSpecificationAbc]:
-        return EventsResourceSpecification
+        return PBPEventsResourceSpecification
 
     @classmethod
     def validate_request_abs(cls, session, params):

@@ -11,7 +11,7 @@ from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BoxScoreDownloader import BoxScoreDownloader
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.PlayerBoxScoreActionSpecs import UpdatePlayerBoxScores, \
-    ResetPlayerBoxScores, UpdatePlayerBoxScoresInDateRange
+    ResetPlayerBoxScores, UpdatePlayerBoxScoresInDateRange, RedownloadPlayerBoxScoresInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
 from dbmanager.SeasonType import get_season_types, SeasonType
 from dbmanager.constants import STATS_API_COUNT_THRESHOLD, NBA_GAME_IDS_GAME_DATE_CORRECTION
@@ -195,8 +195,19 @@ class UpdatePlayerBoxScoresInDateRangeAction(GeneralResetPlayerBoxScoresAction):
     def __init__(self, session: scoped_session,
                  season_type_code: str,
                  start_date: datetime.date = None, end_date: datetime.date = None):
-        super().__init__(session, season_type_code, start_date, end_date, True, False)
+        super().__init__(session, season_type_code, start_date, end_date, True, True)
 
     @classmethod
     def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
         return UpdatePlayerBoxScoresInDateRange
+
+
+class RedownloadPlayerBoxScoresInDateRangeAction(GeneralResetPlayerBoxScoresAction):
+    def __init__(self, session: scoped_session,
+                 season_type_code: str,
+                 start_date: datetime.date = None, end_date: datetime.date = None):
+        super().__init__(session, season_type_code, start_date, end_date, True, False)
+
+    @classmethod
+    def get_action_spec(cls) -> Type[ActionSpecificationAbc]:
+        return RedownloadPlayerBoxScoresInDateRange

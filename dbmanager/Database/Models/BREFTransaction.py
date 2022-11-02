@@ -1,9 +1,9 @@
 from sqlalchemy import Column, PrimaryKeyConstraint
 from sqlalchemy import Integer, Text
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class BREFTransaction(Base):
+class BREFTransaction(MyModel):
     __tablename__ = 'BREFTransaction'
     Season = Column(Integer, nullable=False)
     Year = Column(Integer, nullable=False)

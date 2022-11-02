@@ -6,6 +6,7 @@ import time
 import typing
 from dataclasses import dataclass
 from functools import wraps
+from itertools import count
 from typing import Callable, Awaitable, TypeVar, Tuple, Type, Optional, Generator
 import requests.exceptions
 
@@ -76,7 +77,7 @@ class AttemptContextManager:
                 # not last attempt
                 await self.retry_manager.after_fail_attempt_callback(self,
                                                                      self.get_config().seconds_delay_between_attempts)
-            elif self.retry_number <= self.get_config().max_retries_number:
+            elif self.retry_number < self.get_config().max_retries_number:
                 # last attempt of non last retry
                 await self.retry_manager.after_fail_retry_callback(self, self.get_wait_after_retry_time())
             else:
@@ -97,18 +98,12 @@ class RetryManager:
         self.current_attempt: Optional[AttemptContextManager] = None
 
     def _iter(self) -> Generator[AttemptContextManager, None, None]:
-        for retry_number in range(0, self.retry_config.max_retries_number + 1):
+        to_iterate = count(0) if self.forever else range(0, self.retry_config.max_retries_number+1)
+        for retry_number in to_iterate:
             for attempt_number in range(1, self.retry_config.max_attempts_in_retry + 1):
                 self.current_attempt = AttemptContextManager(self, retry_number, attempt_number)
                 yield self.current_attempt
                 # not certain to reach here(if the context manager passed fine)
-        if self.forever:
-            retry_number = self.retry_config.max_retries_number + 1
-            while True:
-                for attempt_number in range(1, self.retry_config.max_attempts_in_retry + 1):
-                    self.current_attempt = AttemptContextManager(self, retry_number, attempt_number)
-                    yield self.current_attempt
-                retry_number += 1
 
     def get_last_recoverable_failed_attempt(self) -> Optional[AttemptContextManager]:
         return self.current_attempt if self.current_attempt and self.current_attempt.to_recover else None

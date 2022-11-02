@@ -1,10 +1,10 @@
 from sqlalchemy import Column, PrimaryKeyConstraint
 from sqlalchemy import Integer, Text, Date
 
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class NBAAwards(Base):
+class NBAAwards(MyModel):
     __tablename__ = 'NBAAwards'
     PlayerId = Column(Integer)
     FullName = Column(Text)

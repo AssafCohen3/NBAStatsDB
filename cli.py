@@ -23,7 +23,7 @@ from dbmanager.Resources.NBAPlayersResourceHandler import PlayerResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import PlayoffSerieSummaryResourceHandler
 from dbmanager.Resources.TeamBoxScoreResourceHandler import TeamBoxScoreResourceHandler
 from dbmanager.Resources.BREFTransactionsResourceHandler import TransactionsResourceHandler
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 import dbmanager.Database.Models
 import re
 from bs4 import BeautifulSoup

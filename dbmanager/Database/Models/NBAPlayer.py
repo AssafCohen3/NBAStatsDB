@@ -1,9 +1,9 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Date
-from dbmanager.base import Base
+from dbmanager.base import MyModel
 
 
-class NBAPlayer(Base):
+class NBAPlayer(MyModel):
     __tablename__ = 'NBAPlayer'
     PlayerId = Column(Integer, primary_key=True)
     FirstName = Column(Text)

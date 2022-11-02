@@ -97,3 +97,35 @@ class UpdatePlayerBoxScoresInDateRange(ActionSpecificationAbc):
                               datetime.date.today(),
                               datetime.date.today())
         ]
+
+
+class RedownloadPlayerBoxScoresInDateRange(ActionSpecificationAbc):
+    @classmethod
+    def get_resource(cls) -> Type[ResourceSpecificationAbc]:
+        return PlayerBoxScoreResourceSpecification
+
+    @classmethod
+    def validate_request_abs(cls, session, params):
+        type_code = params['season_type_code']
+        season_types = get_season_types(type_code)
+        if len(season_types) == 0:
+            raise IlegalParameterValueError(cls, 'season_type_code',
+                                            params['season_type_code'], 'Season type code not exist')
+
+    @classmethod
+    def get_action_id(cls) -> str:
+        return 'redownload_player_boxscores_in_date_range'
+
+    @classmethod
+    def get_action_title(cls) -> str:
+        return gettext('resources.playerboxscore.actions.redownload_player_boxscores_in_date_range.title')
+
+    @classmethod
+    def get_action_inputs(cls, session) -> List[ActionInput]:
+        return [
+            SeasonTypeSelector(),
+            # TODO maybe dont use constant
+            DateRangeSelector(datetime.date(FIRST_NBA_SEASON, 1, 1),
+                              datetime.date.today(),
+                              datetime.date.today())
+        ]

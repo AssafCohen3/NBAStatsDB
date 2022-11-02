@@ -71,6 +71,3 @@ def setup_logging(file_name):
         format=logformat, datefmt="%Y-%m-%d %H:%M:%S",
         handlers=handlers, level=logging.DEBUG
     )
-
-
-setup_logging('mylog')

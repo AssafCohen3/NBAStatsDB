@@ -1,7 +1,6 @@
 import asyncio
 import itertools
 import logging
-import time
 from abc import ABC, abstractmethod
 from asyncio import TimerHandle
 from enum import Enum
@@ -322,7 +321,8 @@ class TaskAbc(ABC):
         return self._critical_error_msg
 
     def is_recover_mode(self) -> bool:
-        return self.started and self.retry_manager and self.retry_manager.get_last_recoverable_failed_attempt() is not None and not self.is_active()
+        return self.started and self.retry_manager and self.retry_manager.get_last_recoverable_failed_attempt() is not None \
+               and not self.is_active() and not self.is_finished()
 
     def get_last_failed_attempt(self) -> Optional[AttemptContextManager]:
         return self.retry_manager.get_last_recoverable_failed_attempt() if self.retry_manager else None
@@ -347,7 +347,7 @@ class TaskAbc(ABC):
     def get_task_error_message(self) -> Optional[ExceptionMessage]:
         if self.is_critical_error():
             return ExceptionMessage.build_from_exception(self.get_critical_error())
-        if self.is_recover_mode():
+        elif self.is_recover_mode():
             return ExceptionMessage.build_from_exception(self.get_last_failed_attempt().attempt_exception)
         return None
 
