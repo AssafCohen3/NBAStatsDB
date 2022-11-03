@@ -349,6 +349,32 @@
 				}
 			},
 			"description": "Download Awards from BREF."
+		},
+		"bref_coaches": {
+			"messages": {
+				"seasons_count": {
+					"title": "Seasons with Coaches data:",
+					"text": "%{seasons} Seasons"
+				},
+				"coaches_seasons_count": {
+					"title": "Saved Seasons of Coaches:",
+					"text": "%{coaches_seasons} Coaching seasons"
+				},
+				"coaches_count": {
+					"title": "Coaches with saved Seasons:",
+					"text": "%{coaches} Coaches"
+				}
+			},
+			"actions": {
+				"download_coaches": {
+					"downloading_coaches": "Downloading the Coaches of the %{season} Season",
+					"title": "Download all Coaches Seasons"
+				},
+				"download_coaches_in_seasons_range": {
+					"title": "Download Coaches Seasons in Seasons range"
+				}
+			},
+			"description": "Download data on Coaches seasons from BREF. the data contains for each coach and for each season who he coached in that season and for how many games"
 		}
 	},
 	"common": {

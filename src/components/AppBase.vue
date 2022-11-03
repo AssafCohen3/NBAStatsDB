@@ -40,10 +40,14 @@ import SideMenu from './SideMenu.vue';
 import axios from 'axios';
 import { mapActions, mapGetters, mapMutations } from 'vuex';
 import InitDbDialog from './InitDBDialog.vue';
-import {toastSuccess} from '../utils/errorToasts.js';
+import { useToast } from 'vue-toastification';
 
 export default {
 	components: { SideMenu, AppHeader, InitDbDialog },
+	setup(){
+		const toast = useToast();
+		return {toast};
+	},
 	data(){
 		return {
 			connectedToServer: false,
@@ -82,6 +86,9 @@ export default {
 			});
 			source.addEventListener('task-update-finish', (event) => {
 				let taskData = JSON.parse(event.data);
+				if(taskData.task_message.status == 'finished'){
+					this.toast.success(this.$t('messages.task_finished_successfully', {task_name: taskData.task_message.action_title}));
+				}
 				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-sub-finish', (event) => {
@@ -90,6 +97,9 @@ export default {
 			});
 			source.addEventListener('task-update-paused', (event) => {
 				let taskData = JSON.parse(event.data);
+				if(taskData.task_message.retry_status){
+					this.toast.warning(this.$t('messages.task_received_recoverable_error', {task_name: taskData.task_message.action_title}));
+				}
 				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-resume', (event) => {
@@ -99,6 +109,7 @@ export default {
 			source.addEventListener('task-update-error', (event) => {
 				let taskData = JSON.parse(event.data);
 				console.error(taskData.task_message.mini_title);
+				this.toast.error(this.$t('messages.task_received_critical_error', {task_name: taskData.task_message.action_title}));
 				this.updateTask([taskData.task_path, taskData.task_message]);
 			});
 			source.addEventListener('task-update-cancel', (event) => {
@@ -120,7 +131,7 @@ export default {
 			}
 			this.initDB([currentDBName, createDB])
 				.then((resp) => {
-					toastSuccess(this.$t('messages.connected_to_db', {dbName: resp}));
+					this.toast.success(this.$t('messages.connected_to_db', {dbName: resp}));
 					if(dbName != null){
 						localStorage.setItem('dbName', dbName);
 					}

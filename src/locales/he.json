@@ -84,7 +84,10 @@
 		"action_submited_successfully": "הפעולה הוגשה להרצה בהצלחה",
 		"preset_dispatched_successfully": "קבוצת הפעולות הוגשה להרצה בהצלחה",
 		"action_dependencies_description": "לפעולה קיימת תלות בפעולות הנל.\nזאת אומרת שהפעולה תלויה במידע שפעולות אלו אוספות כך שאם מידע זה אינו שלם או מעודכן הפעולה יכולה לא לעבוד כרצוי.\nמומלץ להריץ את פעולות אלה לפני הפעולה על מנת לוודא שהיא תרוץ בהצלחה.",
-		"run_dependent_action": "להריץ פעולות שהפעולה תלויה בהן?"
+		"run_dependent_action": "להריץ פעולות שהפעולה תלויה בהן?",
+		"task_received_recoverable_error": "המשימה {task_name} קיבלה שגיאה(ניתן להתאושש מהשגיאה)",
+		"task_received_critical_error": "המשימה {task_name} קיבלה שגיאה קריטית",
+		"task_finished_successfully": "המשימה {task_name} הסתיימה בהצלחה"
 	},
 	"errors": {
 		"error_message": "הודעת השגיאה",

@@ -357,6 +357,32 @@
 				}
 			},
 			"description": "הורד מידע על תארים ופרסים מאתר BREF."
+		},
+		"bref_coaches": {
+			"messages": {
+				"seasons_count": {
+					"title": "עונות עם מידע על מאמנים:",
+					"text": "%{seasons} עונות"
+				},
+				"coaches_seasons_count": {
+					"title": "עונות אימון שנשמרו:",
+					"text": "%{coaches_seasons} עונות אימון"
+				},
+				"coaches_count": {
+					"title": "מאמנים עם עונות עימון שנשמרו:",
+					"text": "%{coaches} מאמנים"
+				}
+			},
+			"actions": {
+				"download_coaches": {
+					"downloading_coaches": "מוריד את המאמנים של עונת %{season}",
+					"title": "הורד את כל עונות האימון בהיסטוריה"
+				},
+				"download_coaches_in_seasons_range": {
+					"title": "הורד עונות אימון בטווח עונות"
+				}
+			},
+			"description": "הורד מידע על עונות אימון של מאמנים מאתר BREF. המידע כולל עבור כל עונה של מאמן את מי הוא אימן באותה עונה ולכמה משחקים."
 		}
 	},
 	"errors": {},

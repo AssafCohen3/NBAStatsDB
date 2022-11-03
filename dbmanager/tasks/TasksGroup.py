@@ -49,7 +49,10 @@ class TasksGroup(TaskAbc, AnnouncerAbc):
     def get_delegated_current_status(self) -> str:
         if self.is_critical_error():
             return self.current_status()
-        return self.current_task.current_status() if self.current_task else self.current_status()
+        delegated_status = self.current_task.current_status() if self.current_task else None
+        if delegated_status and (delegated_status != 'finished' or self.is_finished()):
+            return delegated_status
+        return self.current_status()
 
     async def action(self):
         for task, next_task in iterate_with_next(self.tasks_to_run):

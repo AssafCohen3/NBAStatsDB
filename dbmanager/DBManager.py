@@ -19,6 +19,7 @@ from dbmanager.Resources.Actions.PlayersMappingsActions import CompleteMissingPl
 from dbmanager.Resources.Actions.TeamBoxScoreActions import UpdateTeamBoxScoresAction
 from dbmanager.Resources.ActionsGroupsPresets.ActionsGroupPresetObject import create_actions_group_preset, ActionsGroupPresetObject
 from dbmanager.Resources.BREFAwardsResourceHandler import BREFAwardsResourceHandler
+from dbmanager.Resources.BREFCoachesResourceHandler import BREFCoachesResourceHandler
 from dbmanager.Resources.BREFPlayersResourceHandler import BREFPlayersResourceHandler
 from dbmanager.Resources.BREFPlayoffSeriesResourceHandler import BREFPlayoffSeriesResourceHandler
 from dbmanager.Resources.BREFStartersResourceHandler import BREFStartersResourceHandler
@@ -64,6 +65,7 @@ class DbManager:
             NBAPlayersBirthdateResourceHandler,
             BREFTransactionsResourceHandler,
             BREFAwardsResourceHandler,
+            BREFCoachesResourceHandler,
         ]
         self.resources: Dict[str, Type[ResourceAbc]] = {
             res.get_id(): res for res in self.available_resources

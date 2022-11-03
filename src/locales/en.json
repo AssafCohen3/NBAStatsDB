@@ -84,7 +84,10 @@
 		"action_submited_successfully": "Action submitted successfully",
 		"preset_dispatched_successfully": "Actions group submitted to execution successfully",
 		"action_dependencies_description": "This action has the below dependencies.\nthats means that the action is dependent on the data that this actions collect and may act wrong if that data is not updated.\nits recomended to run this actions before to make sure the action will run successfully.",
-		"run_dependent_action": "Run actions that this action depends on?"
+		"run_dependent_action": "Run actions that this action depends on?",
+		"task_received_recoverable_error": "The task {task_name} recevied an error(the error is recoverable)",
+		"task_received_critical_error": "The task {task_name} recevied a critical error",
+		"task_finished_successfully": "Task {task_name} has finished successfully"
 	},
 	"errors": {
 		"error_message": "Error message",
