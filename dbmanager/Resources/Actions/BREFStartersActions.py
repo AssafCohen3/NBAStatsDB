@@ -13,7 +13,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.BREFStartersActionSpecs import get_starters_range, UpdateStarters, \
     RedownloadStarters, RedownloadStartersInSeasonsRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
-from dbmanager.SeasonType import PLAYIN_SEASON_TYPE
+from dbmanager.DataTypes.SeasonType import PLAYIN_SEASON_TYPE
 from dbmanager.SharedData.LiveMappings import live_mappings
 from dbmanager.utils import iterate_with_next
 from dbmanager.tasks.RetryManager import retry_wrapper

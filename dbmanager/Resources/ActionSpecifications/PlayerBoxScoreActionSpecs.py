@@ -7,7 +7,7 @@ from dbmanager.Resources.ActionSpecifications.ActionInput import SeasonTypeSelec
 from dbmanager.Resources.ResourceSpecifications.PlayerBoxScoreResourceSpecification import \
     PlayerBoxScoreResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.SeasonType import get_season_types
+from dbmanager.DataTypes.SeasonType import get_season_types
 from dbmanager.constants import FIRST_NBA_SEASON
 
 

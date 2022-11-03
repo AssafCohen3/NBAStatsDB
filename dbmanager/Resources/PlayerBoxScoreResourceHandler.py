@@ -12,7 +12,7 @@ from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, Status
 from dbmanager.Resources.ResourceSpecifications.PlayerBoxScoreResourceSpecification import \
     PlayerBoxScoreResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.SeasonType import SEASON_TYPES
+from dbmanager.DataTypes.SeasonType import SEASON_TYPES
 
 
 class PlayerBoxScoreResourceHandler(ResourceAbc):

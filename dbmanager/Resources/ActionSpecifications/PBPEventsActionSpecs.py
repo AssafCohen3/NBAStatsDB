@@ -9,7 +9,7 @@ from dbmanager.Resources.ActionSpecifications.TeamBoxScoreActionSpecs import Upd
     UpdateTeamBoxScoresInDateRange
 from dbmanager.Resources.ResourceSpecifications.PBPEventsResourceSpecification import PBPEventsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.SeasonType import get_season_types
+from dbmanager.DataTypes.SeasonType import get_season_types
 from dbmanager.constants import FIRST_NBA_SEASON
 
 

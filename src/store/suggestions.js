@@ -39,6 +39,17 @@ const actions = {
 				});
 		});
 	},
+	getAwards({commit}){
+		return new Promise((resolve, reject) => {
+			axios.get('/suggestions/awards')
+				.then(resp => {
+					resolve(resp.data);
+				})
+				.catch(err => {
+					toastError(err.response);
+				});
+		});
+	},
 };
 
 const mutations = {

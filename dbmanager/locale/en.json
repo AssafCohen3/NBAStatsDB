@@ -327,6 +327,28 @@
 				}
 			},
 			"description": "Download Transactions from BREF. \nthe transactions is parsed by a parser that i created.\nsince the format and the kind of transactions vary every season this may fail for new seasons or completly if the app version is old.\ni will try to update the parser to the new formats every season to allow this resource to be used always."
+		},
+		"bref_awards": {
+			"messages": {
+				"awards_count": {
+					"title": "Saved Awards:",
+					"text": "%{awards} Awards"
+				},
+				"players_with_awards_count": {
+					"title": "Players with Awards:",
+					"text": "%{players} Players"
+				}
+			},
+			"actions": {
+				"download_awards": {
+					"downloading_award": "Downloading %{award} titles",
+					"title": "Download All Awards"
+				},
+				"download_award": {
+					"title": "Download specific Award"
+				}
+			},
+			"description": "Download Awards from BREF."
 		}
 	},
 	"common": {

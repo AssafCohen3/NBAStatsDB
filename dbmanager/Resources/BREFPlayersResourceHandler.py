@@ -1,7 +1,6 @@
 from typing import Type, List
 from sqlalchemy import select, func, join
 from sqlalchemy.orm import scoped_session
-
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BREFPlayer import BREFPlayer
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
@@ -10,7 +9,6 @@ from dbmanager.Resources.Actions.BREFPlayersActions import UpdateBREFPlayersActi
 from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.BREFPlayersResourceSpecification import BREFPlayersResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.SharedData.PlayersIndex import players_index
 
 
 class BREFPlayersResourceHandler(ResourceAbc):

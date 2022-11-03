@@ -3,7 +3,7 @@ import json
 from typing import Optional
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from dbmanager.RequestHandlers.Sessions import stats_session
-from dbmanager.SeasonType import SeasonType
+from dbmanager.DataTypes.SeasonType import SeasonType
 from dbmanager.constants import BOXSCORES_ENDPOINT
 
 

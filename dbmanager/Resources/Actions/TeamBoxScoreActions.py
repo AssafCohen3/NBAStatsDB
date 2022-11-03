@@ -13,7 +13,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.TeamBoxScoreActionSpecs import UpdateTeamBoxScores, \
     ResetTeamBoxScores, UpdateTeamBoxScoresInDateRange, RedownloadTeamBoxScoresInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
-from dbmanager.SeasonType import get_season_types, SeasonType
+from dbmanager.DataTypes.SeasonType import get_season_types, SeasonType
 from dbmanager.constants import STATS_API_COUNT_THRESHOLD, NBA_GAME_IDS_GAME_DATE_CORRECTION
 from dbmanager.utils import iterate_with_next
 from dbmanager.tasks.RetryManager import retry_wrapper

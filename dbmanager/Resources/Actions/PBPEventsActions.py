@@ -14,7 +14,7 @@ from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import Acti
 from dbmanager.Resources.ActionSpecifications.PBPEventsActionSpecs import UpdatePBPEvents, ResetPBPEvents, \
     UpdatePBPEventsInDateRange, ResetPBPEventsInDateRange
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
-from dbmanager.SeasonType import get_season_types, SeasonType
+from dbmanager.DataTypes.SeasonType import get_season_types, SeasonType
 from dbmanager.pbp.MyPBPLoader import MyPBPLoader
 from dbmanager.utils import iterate_with_next
 from dbmanager.tasks.RetryManager import retry_wrapper

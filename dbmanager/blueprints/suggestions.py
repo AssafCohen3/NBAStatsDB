@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 
+from dbmanager.DataTypes.BREFAwardConst import AWARDS
 from dbmanager.SharedData.FranchisesHistory import franchises_history
 from dbmanager.SharedData.PlayersIndex import players_index
 
@@ -32,5 +33,17 @@ def suggest_teams():
             'last_season': t.span_end_year,
         }
         for t in to_ret
+    ]
+    return jsonify(to_ret)
+
+
+@suggestions_bp.route('/awards', methods=['GET'])
+def suggest_awards():
+    to_ret = [
+        {
+            'award_id': aw.award_id,
+            'award_name': aw.award_name,
+        }
+        for aw in AWARDS
     ]
     return jsonify(to_ret)

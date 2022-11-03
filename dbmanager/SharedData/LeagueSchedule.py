@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Tuple
 
 import requests
 
-from dbmanager.SeasonType import SeasonType, PLAYOFFS_SEASON_TYPE
+from dbmanager.DataTypes.SeasonType import SeasonType, PLAYOFFS_SEASON_TYPE
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
 from dbmanager.constants import STATS_HEADERS, BOXSCORES_ENDPOINT, STATS_API_COUNT_THRESHOLD, \
     NBA_GAME_IDS_GAME_DATE_CORRECTION

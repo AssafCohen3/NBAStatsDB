@@ -12,7 +12,7 @@ from dbmanager.Resources.Actions.PBPEventsActions import UpdatePBPEventsAction, 
 from dbmanager.Resources.ResourceAbc import ResourceAbc, ResourceMessage, StatusOption
 from dbmanager.Resources.ResourceSpecifications.PBPEventsResourceSpecification import PBPEventsResourceSpecification
 from dbmanager.Resources.ResourceSpecifications.ResourceSpecificationAbc import ResourceSpecificationAbc
-from dbmanager.SeasonType import SEASON_TYPES
+from dbmanager.DataTypes.SeasonType import SEASON_TYPES
 
 
 class PBPEventsResourceHandler(ResourceAbc):

@@ -21,6 +21,7 @@ BREF_SEASONS_INDEX_URL = 'https://www.basketball-reference.com/leagues/'
 BREF_PLAYOFFS_URL = 'https://www.basketball-reference.com/playoffs/%s_%s.html'
 BREF_PLAYER_PAGE_URL = 'https://www.basketball-reference.com/players/%s/%s.html'
 BREF_ROOKIES_PAGE_URL = 'https://www.basketball-reference.com/leagues/NBA_%s_rookies.html'
+BREF_AWARD_PAGE_URL = 'https://www.basketball-reference.com/awards/%s.html'
 DATA_PROD_TODAY_FILE = 'https://data.nba.net/prod/v3/today.json'
 
 STATS_API_DELAY_SECONDS = 0.5

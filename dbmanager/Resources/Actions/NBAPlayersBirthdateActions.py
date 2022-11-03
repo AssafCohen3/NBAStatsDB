@@ -13,7 +13,7 @@ from dbmanager.Downloaders.TeamRosterDownloader import TeamRosterDownloader
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.NBAPlayersBirthdateActionSpecs import UpdatePlayersBirthdate, DownloadPlayersBirthdateInSeasonRange, RedownloadPlayersBirthdate
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
-from dbmanager.SeasonType import REGULAR_SEASON_TYPE
+from dbmanager.DataTypes.SeasonType import REGULAR_SEASON_TYPE
 from dbmanager.utils import iterate_with_next
 from dbmanager.tasks.RetryManager import retry_wrapper
 
