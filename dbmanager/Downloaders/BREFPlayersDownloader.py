@@ -11,9 +11,9 @@ class BREFPlayersDownloader(DownloaderAbs):
     def __init__(self, letter):
         self.letter = letter
 
-    def download(self):
+    async def download(self):
         to_send = BREF_PLAYERS_URL % self.letter
-        r = bref_session.get(to_send)
+        r = await bref_session.async_get(to_send)
         return self.from_html(r.text)
 
     @staticmethod

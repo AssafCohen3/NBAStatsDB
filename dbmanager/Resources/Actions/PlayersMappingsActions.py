@@ -89,7 +89,7 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
     @retry_wrapper
     async def get_player_stats_id(self, candidate: MappingCandidateLink) -> Tuple[int, str]:
         downloader = BREFPlayerPageDownloader(candidate.candidate_bref_id)
-        player_resp = downloader.download()
+        player_resp = await downloader.download()
         player_soup = BeautifulSoup(player_resp, 'html.parser')
         player_birth_date = player_soup.select('span#necro-birth')[0]['data-birth']
         nba_stats_links = player_soup.select('#div_stats-nba-com a')
@@ -105,7 +105,7 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
     @retry_wrapper
     async def find_season_players_links(self, season: int) -> List[MappingCandidateLink]:
         downloader = BREFRookiesDownloader(season)
-        resp = downloader.download()
+        resp = await downloader.download()
         soup = BeautifulSoup(resp, 'html.parser')
         player_ids = soup.select('table#rookies tbody tr td[data-stat="player"]')
         candidates = [MappingCandidateLink(p['data-append-csv'],
@@ -118,7 +118,7 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
     @retry_wrapper
     async def find_draft_players_links(self, season: int) -> List[MappingCandidateLink]:
         downloader = BREFDraftDownloader(season)
-        resp = downloader.download()
+        resp = await downloader.download()
         soup = BeautifulSoup(resp, 'html.parser')
         picks = soup.select('table#stats tbody tr')
         current_pick = 1
@@ -170,8 +170,8 @@ class CompleteMissingPlayersMappingsAction(PlayersMappingActionGeneral):
             await self.finish_subtask()
         if len(target_resource.resource_targets.keys()) > 0:
             log_message(f'couldnt find mapping for {len(target_resource.resource_targets.keys())} players. consider add it mannualy')
-            for player_id, (player_name, _) in target_resource.resource_targets.items():
-                log_message(f'\tPlayer Id: {player_id}, Player Name: {player_name}')
+            for player_id, mapping_target in target_resource.resource_targets.items():
+                log_message(f'\tPlayer Id: {player_id}, Player Name: {mapping_target.target_nba_name}')
 
     async def action(self):
         current_mappings_stmt = (

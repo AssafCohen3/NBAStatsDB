@@ -2,7 +2,7 @@ import itertools
 from typing import Optional
 from requests import Session
 from requests.sessions import Request, PreparedRequest
-from dbmanager.RequestHandlers.Limiter import stats_limiter, StatsLimiter
+from dbmanager.RequestHandlers.Limiter import stats_limiter, StatsLimiter, bref_limiter
 from dbmanager.constants import STATS_API_SESSION_MAX_REQUESTS, STATS_HEADERS
 
 
@@ -51,6 +51,22 @@ class MyStatsSession(TimeoutSession):
         return to_ret
 
 
+class MyBREFSession(TimeoutSession):
+
+    def __init__(self, timeout: float, limiter: StatsLimiter) -> None:
+        super().__init__(timeout)
+        self.requests_counter: ThreadSafeCounter = ThreadSafeCounter()
+        self.limiter = limiter
+
+    def prepare_request(self, request: Request) -> PreparedRequest:
+        return super().prepare_request(request)
+
+    async def async_get(self, url, *args, **kwargs):
+        async with self.limiter:
+            to_ret = self.get(url, *args, **kwargs)
+        return to_ret
+
+
 stats_session = MyStatsSession(10, STATS_API_SESSION_MAX_REQUESTS, stats_limiter)
-bref_session = TimeoutSession(10)
+bref_session = MyBREFSession(10, bref_limiter)
 timeout_session = TimeoutSession(10)

@@ -6,6 +6,7 @@ from sqlalchemy.orm import scoped_session
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BREFPlayoffSerie import BREFPlayoffSerie
 from dbmanager.Downloaders.BREFPlayoffSeriesDownloader import BREFPlayoffSeriesDownloader
+from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFPlayoffSeriesActionSpecs import UpdateBREFPlayoffSeries, \
     RedownloadBREFPlayoffSeries, RedownloadBREFPlayoffSeriesInSeasonsRange
@@ -46,6 +47,7 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
     def insert_series_of_season(self, season_link: BREFSeasonLink, series):
         if not series:
             return
+        log_message(f'inserting {len(series)} bref playoff sereies from season {season_link.season}')
         delete_stmt = (
             delete(BREFPlayoffSerie).where(BREFPlayoffSerie.Season == season_link.season)
         )
@@ -59,7 +61,7 @@ class UpdateBREFPlayoffSeriesGeneralAction(ActionAbc, ABC):
     @retry_wrapper
     async def update_playoff_summary(self, season_link: BREFSeasonLink):
         handler = BREFPlayoffSeriesDownloader(season_link)
-        data = handler.download()
+        data = await handler.download()
         if not data:
             return
         headers = [

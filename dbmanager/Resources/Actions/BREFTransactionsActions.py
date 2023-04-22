@@ -106,7 +106,7 @@ class GeneralDownloadTransactionsAction(ActionAbc, ABC):
     async def collect_season_transactions(self, season: BREFSeasonLink):
         to_insert = []
         downloader = BREFTransactionsDownloader(season.leagu_id, season.season)
-        transactions_html = downloader.download()
+        transactions_html = await downloader.download()
         scrapped_transactions = self.scrapper.scrap_transactions(transactions_html)
         try:
             for transaction_year, transaction_month, transaction_day, transaction_number, transaction_text, transaction_to_find in scrapped_transactions:

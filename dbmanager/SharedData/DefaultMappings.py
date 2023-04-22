@@ -4,6 +4,7 @@ import os.path
 from dataclasses import dataclass
 from typing import List, Optional, Dict
 from dbmanager.SharedData.SharedDataResourceAbs import SharedDataResourceAbc
+from dbmanager.utils import get_application_path
 
 
 @dataclass
@@ -29,8 +30,8 @@ class DefaultPlayerMapping:
 class DefaultMappings(SharedDataResourceAbc[Dict[int, DefaultPlayerMapping]]):
     def _fetch_data(self):
         mappings: List[DefaultPlayerMapping] = []
-        file_name = os.path.join(os.path.dirname(__file__), '../players_ids/players.csv')
-        with open(file_name, encoding='ISO-8859-1') as f:
+        file_path = get_application_path() / 'dbmanager/players_ids/players.csv'
+        with open(file_path, encoding='ISO-8859-1') as f:
             csvreader = csv.reader(f, )
             headers = next(csvreader)
             bref_id_idx = headers.index('PlayerBREFId')

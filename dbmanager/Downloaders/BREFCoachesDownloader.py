@@ -8,7 +8,7 @@ class BREFCoachesDownloader(DownloaderAbs):
         self.league = league
         self.season = season
 
-    def download(self):
+    async def download(self):
         to_send = BREF_COACHES_URL % (self.league, self.season + 1)
-        r = bref_session.get(to_send)
+        r = await bref_session.async_get(to_send)
         return r.text

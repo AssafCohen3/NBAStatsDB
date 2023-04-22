@@ -15,6 +15,7 @@ from dbmanager.Database.Models.BREFPlayer import BREFPlayer
 from dbmanager.Database.Models.PlayerMapping import PlayerMapping
 from dbmanager.Downloaders.BREFPlayerPageDownloader import BREFPlayerPageDownloader
 from dbmanager.Downloaders.BREFPlayersDownloader import BREFPlayersDownloader
+from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFPlayersActionSpecs import UpdateBREFPlayers, RedownloadBREFPlayers
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
@@ -44,7 +45,8 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
         self.current_letter = self.missing_letters[0] if self.missing_letters else ''
         return len(self.missing_letters) > 0
 
-    def insert_bref_players(self, bref_players):
+    def insert_bref_players(self, bref_players: list[dict]):
+        log_message(f'inserting {len(bref_players)} bref players')
         if not bref_players:
             return
         insert_stmt = insert(BREFPlayer)
@@ -68,7 +70,7 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_bref_player_from_page(self, player: PlayerToDownlad):
         downloader = BREFPlayerPageDownloader(player.player_bref_id)
-        resp = downloader.download()
+        resp = await downloader.download()
         soup = BeautifulSoup(resp, 'html.parser')
         meta_div = soup.select('#meta')[0]
         player_name = unidecode(meta_div.select('h1 span')[0].getText())
@@ -140,7 +142,7 @@ class UpdateBREFPlayersGeneralAction(ActionAbc, ABC):
             'HOF',
         ]
         handler = BREFPlayersDownloader(letter)
-        data = handler.download()
+        data = await handler.download()
         data = [dict(zip(headers, p)) for p in data]
         self.insert_bref_players(data)
 

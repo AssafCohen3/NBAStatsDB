@@ -2,7 +2,7 @@ import asyncio
 from asyncio import Event
 from typing import Optional
 
-from dbmanager.constants import STATS_API_DELAY_SECONDS
+from dbmanager.constants import STATS_API_DELAY_SECONDS, BREF_DELAY_SECONDS
 
 
 class StatsLimiter:
@@ -33,3 +33,5 @@ class StatsLimiter:
 
 # to be initiated in the asyncio thread
 stats_limiter = StatsLimiter(STATS_API_DELAY_SECONDS)
+
+bref_limiter = StatsLimiter(BREF_DELAY_SECONDS)

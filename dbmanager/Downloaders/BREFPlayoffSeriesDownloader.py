@@ -1,4 +1,5 @@
 import datetime
+import logging
 import re
 from dbmanager.Downloaders.DownloaderAbs import DownloaderAbs
 from bs4 import BeautifulSoup
@@ -13,9 +14,9 @@ class BREFPlayoffSeriesDownloader(DownloaderAbs):
     def __init__(self, season_link: BREFSeasonLink):
         self.season_link = season_link
 
-    def download(self):
+    async def download(self):
         to_send = BREF_PLAYOFFS_URL % (self.season_link.leagu_id, self.season_link.season+1)
-        r = bref_session.get(to_send)
+        r = await bref_session.async_get(to_send)
         if r.status_code == 404:
             return None
         return self.from_html(r.text)
@@ -45,8 +46,8 @@ class BREFPlayoffSeriesDownloader(DownloaderAbs):
                 continue
             summary_col = row.select('td')[1]
             status = summary_col.contents[1].getText().strip()
-            if status not in ['over', 'lead', 'trail']:
-                raise Exception('what')
+            if status not in ['over', 'lead', 'trail', 'tied with']:
+                logging.info(f'found new series status: {status}')
             is_over = 1 if status == 'over' else 0
             teams_tags = summary_col.select('a')
             winner_bref_abbr = re.findall(r'/teams/(.+?)/', teams_tags[0]['href'])[0]

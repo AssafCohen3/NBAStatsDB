@@ -5,6 +5,7 @@ import i18n from '@/i18n';
 import { useI18n } from 'vue-i18n';
 import { createVuetify } from 'vuetify';
 import { computed, watch } from 'vue';
+import { aliases, mdi } from 'vuetify/iconsets/mdi';
 
 function wrapScope (scope) {
 	return {
@@ -68,5 +69,12 @@ export default createVuetify({
 	// 	defaultLocale: currentLocale
 	// }
 	
-	locale: createVueI18nAdapter({ i18n, useI18n })
+	locale: createVueI18nAdapter({ i18n, useI18n }),
+	icons: {
+		defaultSet: 'mdi',
+		aliases,
+		sets: {
+			mdi,
+		}
+	}
 });

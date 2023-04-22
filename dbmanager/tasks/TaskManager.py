@@ -2,7 +2,7 @@ import asyncio
 import itertools
 from typing import Dict, List
 from dbmanager.Errors import EmptyTaskPathError, TaskNotExistError
-from dbmanager.RequestHandlers.Limiter import stats_limiter
+from dbmanager.RequestHandlers.Limiter import stats_limiter, bref_limiter
 from dbmanager.extensions import announcer
 from dbmanager.tasks.RetryManager import DEFAULT_CONFIG
 from dbmanager.tasks.TaskAbc import TaskAbc
@@ -13,6 +13,7 @@ def run_tasks_loop():
     asyncio.set_event_loop(tasks_loop)
     # TODO check this
     stats_limiter.init_async()
+    bref_limiter.init_async()
     tasks_loop.run_forever()
 
 

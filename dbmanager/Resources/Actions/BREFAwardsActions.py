@@ -1,4 +1,5 @@
 import datetime
+import logging
 import re
 from abc import ABC, abstractmethod
 from typing import Optional, List, Union, Type, Dict
@@ -14,6 +15,7 @@ from dbmanager.Database.Models.BREFAwards import BREFAwards
 from dbmanager.Downloaders.BREFAwardDownloader import BREFAwardDownloader
 from dbmanager.Downloaders.BREFPlayerPageDownloader import BREFPlayerPageDownloader
 from dbmanager.Errors import ActionFailedError
+from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFAwardsActionSpecs import DownloadAllAwards, DownloadSpecificAward
 from dbmanager.Resources.Actions.ActionAbc import ActionAbc
@@ -26,9 +28,9 @@ def get_team_id_by_bref_abbr(abbr: str, season: int):
     return [a for a in BREF_ABBREVATION_TO_NBA_TEAM_ID[abbr] if a[0] <= season <= a[1]][0][2]
 
 
-def get_player_last_team_in_season(player_id: str, season: int):
+async def get_player_last_team_in_season(player_id: str, season: int):
     downloader = BREFPlayerPageDownloader(player_id)
-    resp = downloader.download()
+    resp = await downloader.download()
     soup = BeautifulSoup(resp, 'html.parser')
     last_team_in_season = soup.select(rf'#per_game tbody tr#per_game\.{season + 1}')[-1]
     team_tag = last_team_in_season.select('[data-stat="team_id"]')[0]
@@ -36,7 +38,7 @@ def get_player_last_team_in_season(player_id: str, season: int):
     return team_id
 
 
-def fetch_season_award(award: BREFAwardToFetch, award_page_html: str):
+async def fetch_season_award(award: BREFAwardToFetch, award_page_html: str):
     soup = BeautifulSoup(award_page_html, 'html.parser')
     to_ret = []
     awards_rows = soup.select(f'#{award.award_id}_NBA tbody tr, #{award.award_id}NBA tbody tr', {'class': ''})
@@ -49,9 +51,11 @@ def fetch_season_award(award: BREFAwardToFetch, award_page_html: str):
         team_tag = row.select('[data-stat="team_id"]')[0]
         team_abbr = team_tag.select('a')
         team_abbr = team_abbr[0].get_text() if team_abbr else team_tag.get_text()
-        team_id = get_team_id_by_bref_abbr(team_abbr,
-                                           season) if team_abbr != 'TOT' else get_player_last_team_in_season(
-            player_id, season)
+        team_id = (
+            get_team_id_by_bref_abbr(team_abbr, season)
+            if team_abbr != 'TOT' else
+            await get_player_last_team_in_season(player_id, season)
+        )
         team_name = TEAM_NBA_ID_TO_NBA_NAME[team_id]
         to_ret.append({
             'PersonId': player_id,
@@ -174,6 +178,7 @@ class GeneralDownloadAwardsAction(ActionAbc, ABC):
         pass
 
     def insert_awards(self, award_id: str, awards: List[Dict]):
+        log_message(f'inserting {len(awards)} bref awards of type {award_id}')
         delete_stmt = delete(BREFAwards).where(BREFAwards.AwardId == award_id)
         self.session.execute(delete_stmt)
         if awards:
@@ -185,9 +190,9 @@ class GeneralDownloadAwardsAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_award(self, award: BREFAwardToFetch):
         downloader = BREFAwardDownloader(award.award_id)
-        award_html = downloader.download()
+        award_html = await downloader.download()
         if award.award_type == AwardTypes.SEASON_PLAYER:
-            to_insert = fetch_season_award(award, award_html)
+            to_insert = await fetch_season_award(award, award_html)
         elif award.award_type == AwardTypes.SEASON_ALL_NBA_TEAM:
             to_insert = fetch_season_all_nba_team_award(award, award_html)
         elif award.award_type == AwardTypes.MONTHLY:

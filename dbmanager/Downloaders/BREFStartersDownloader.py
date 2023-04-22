@@ -13,9 +13,9 @@ class BREFStartersDownloader(DownloaderAbs):
         self.team_id = team_id
         self.players_mapping = players_mapping
 
-    def download(self):
+    async def download(self):
         to_send = BREF_STARTERS_URL % (self.get_team_abbrevation(), self.season+1)
-        r = bref_session.get(to_send)
+        r = await bref_session.async_get(to_send)
         return self.from_html(r.text)
 
     def from_html(self, html_resp):

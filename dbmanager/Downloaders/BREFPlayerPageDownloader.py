@@ -8,6 +8,7 @@ class BREFPlayerPageDownloader(DownloaderAbs):
     def __init__(self, player_id: str):
         self.player_id: str = player_id
 
-    def download(self):
+    async def download(self):
         to_send = BREF_PLAYER_PAGE_URL % (self.player_id[0], self.player_id)
-        return bref_session.get(to_send).text
+        resp = await bref_session.async_get(to_send)
+        return resp.text

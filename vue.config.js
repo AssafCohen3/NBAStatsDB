@@ -18,6 +18,7 @@ module.exports = {
 			externals: [
 				'electron-log'
 			],
+			customFileProtocol: './',
 			nodeIntegration: false,
 			preload: 'src/preload.js',
 			builderOptions: {
@@ -74,10 +75,10 @@ module.exports = {
 					installerIcon: './src/assets/app-icons/logo.png'
 				},
 				// TODO replace
-				publish: {
-					provider: 'github',
-					repository: 'https://github.com/AssafCohen3/NBAStatsDB.git'
-				}
+				// publish: {
+				// 	provider: 'github',
+				// 	repository: 'https://github.com/AssafCohen3/NBAStatsDB.git'
+				// }
 			}
 		},
 		i18n: {

@@ -1,3 +1,4 @@
+from asyncio import run
 from dataclasses import dataclass
 from typing import List, Callable
 from dbmanager.Downloaders.BREFPlayoffSeriesDownloader import BREFPlayoffSeriesDownloader
@@ -22,7 +23,8 @@ class SeasonPlayoffs(SharedDataResourceAbc[List[SerieDetails]]):
 
     def _fetch_data(self):
         downloader = BREFPlayoffSeriesDownloader(self._season_link_func())
-        data = downloader.download()
+        # TODO fucked up
+        data = run(downloader.download())
         if not data:
             return []
         headers = [

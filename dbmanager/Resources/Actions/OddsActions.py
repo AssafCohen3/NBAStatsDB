@@ -69,7 +69,7 @@ class OddsGeneralAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_season_odds(self, season: int):
         downloader = OddsDownloader(season)
-        odds_to_add = downloader.download()
+        odds_to_add = await downloader.download()
         if odds_to_add is None:
             return
         self.insert_odds(season, odds_to_add)

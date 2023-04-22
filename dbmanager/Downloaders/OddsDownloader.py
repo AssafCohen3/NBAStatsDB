@@ -11,7 +11,7 @@ class OddsDownloader(DownloaderAbs):
     def __init__(self, season: int):
         self.season: int = season
 
-    def download(self):
+    async def download(self):
         to_send = ODDS_ENDPOINT % f"{self.season}-{self.season + 1}"
         r = timeout_session.get(to_send)
         soup = BeautifulSoup(r.content, 'html.parser')

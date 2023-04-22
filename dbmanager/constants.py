@@ -25,6 +25,8 @@ BREF_ROOKIES_PAGE_URL = 'https://www.basketball-reference.com/leagues/NBA_%s_roo
 BREF_AWARD_PAGE_URL = 'https://www.basketball-reference.com/awards/%s.html'
 DATA_PROD_TODAY_FILE = 'https://data.nba.net/prod/v3/today.json'
 
+BREF_DELAY_SECONDS = 1.0
+
 STATS_API_DELAY_SECONDS = 0.5
 STATS_API_SESSION_MAX_REQUESTS = 550
 STATS_API_COUNT_THRESHOLD = 30000

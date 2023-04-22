@@ -8,6 +8,7 @@ class BREFRookiesDownloader(DownloaderAbs):
     def __init__(self, season: int):
         self.season: int = season
 
-    def download(self):
+    async def download(self):
         to_send = BREF_ROOKIES_PAGE_URL % (self.season + 1)
-        return bref_session.get(to_send).text
+        r = await bref_session.async_get(to_send)
+        return r.text

@@ -1,8 +1,10 @@
 import datetime
 import sqlite3
+import sys
 from contextlib import contextmanager
 from functools import wraps
 from itertools import tee, islice, chain
+from pathlib import Path
 from typing import Iterable, TypeVar, Tuple, Optional, Callable
 
 import requests
@@ -56,3 +58,11 @@ def safe_session_execute(session: scoped_session):
     except (sqlite3.OperationalError, sqlalchemy.exc.OperationalError) as e:
         session.rollback()
         raise e
+
+
+def get_application_path() -> Path:
+    if getattr(sys, 'frozen', False):
+        application_path = Path(getattr(sys, '_MEIPASS'))
+    else:
+        application_path = Path.cwd()
+    return application_path

@@ -9,6 +9,7 @@ from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BoxScoreP import BoxScoreP
 from dbmanager.Downloaders.BREFStartersDownloader import BREFStartersDownloader
 from dbmanager.Downloaders.NBAStartersDownloader import NBAStartersDownloader
+from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFStartersActionSpecs import get_starters_range, UpdateStarters, \
     RedownloadStarters, RedownloadStartersInSeasonsRange
@@ -82,7 +83,7 @@ class GeneralStartersAction(ActionAbc, ABC):
         )
         available_seasons = self.session.execute(stmt).fetchall()
         # return all seasons with missing games
-        grouped = defaultdict(dict)
+        grouped: dict[tuple[int, int, str], dict[datetime.date, str]] = defaultdict(dict)
         play_in_games_to_ret = []
         for season, team_id, team_name, matchup, season_type, game_id, game_date in available_seasons:
             if season_type == PLAYIN_SEASON_TYPE.code:
@@ -130,7 +131,7 @@ class GeneralStartersAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_team_season_starters(self, season: MissingTeamSeason):
         downloader = BREFStartersDownloader(season.season, season.team_id, live_mappings.get_data(self.session))
-        games_with_starters = downloader.download()
+        games_with_starters = await downloader.download()
         starters_to_update = [
             GameToUpdateWithStarter(
                 season.games_map[game_date],

@@ -6,13 +6,16 @@ from typing import Dict, Type
 
 # noinspection PyPackageRequirements
 import i18n
+
+from dbmanager.utils import get_application_path
+
 if typing.TYPE_CHECKING:
     from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 
 i18n.set('file_format', 'json')
 i18n.set('filename_format', '{locale}.{format}')
 i18n.set('skip_locale_root_data', True)
-i18n.load_path.append('dbmanager/locale/')
+i18n.load_path.append(get_application_path() / 'dbmanager/locale/')
 
 
 def gettext(path: str, **kwargs) -> str:

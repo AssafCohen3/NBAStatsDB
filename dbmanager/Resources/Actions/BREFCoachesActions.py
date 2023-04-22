@@ -11,6 +11,7 @@ from unidecode import unidecode
 from dbmanager.AppI18n import gettext
 from dbmanager.Database.Models.BREFCoachSeason import BREFCoachSeason
 from dbmanager.Downloaders.BREFCoachesDownloader import BREFCoachesDownloader
+from dbmanager.Logger import log_message
 from dbmanager.Resources.ActionSpecifications.ActionSpecificationAbc import ActionSpecificationAbc
 from dbmanager.Resources.ActionSpecifications.BREFCoachesActionSpecs import DownloadAllCoaches, \
     DownloadCoachesInSeasonsRange
@@ -39,6 +40,7 @@ class GeneralDownloadCoachesAction(ActionAbc, ABC):
         return len(self.seasons_to_collect) > 0
 
     def insert_coaches(self, season: int, coaches: List[dict]):
+        log_message(f'inserting {len(coaches)} bref coaches from season {season}')
         delete_stmt = delete(BREFCoachSeason).where(BREFCoachSeason.Season == season)
         self.session.execute(delete_stmt)
         if coaches:
@@ -50,7 +52,7 @@ class GeneralDownloadCoachesAction(ActionAbc, ABC):
     @retry_wrapper
     async def collect_season_coaches(self, season_link: BREFSeasonLink):
         downloader = BREFCoachesDownloader(season_link.leagu_id, season_link.season)
-        resp = downloader.download()
+        resp = await downloader.download()
         soup = BeautifulSoup(resp, 'html.parser')
         coaches_rows = soup.select(f'#{season_link.leagu_id}_coaches tbody tr')
         # to contain the coaches we found for now
